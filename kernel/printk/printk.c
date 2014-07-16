@@ -236,7 +236,7 @@ DECLARE_WAIT_QUEUE_HEAD(log_wait);
 /* the next printk record to read by syslog(READ) or /proc/kmsg */
 static u64 syslog_seq;
 static u32 syslog_idx;
-static enum log_flags syslog_prev;
+static enum log_flags syslog_prev = LOG_NEWLINE;
 static size_t syslog_partial;
 
 /* index and sequence number of the first record stored in the buffer */
@@ -250,7 +250,7 @@ static u32 log_next_idx;
 /* the next printk record to write to the console */
 static u64 console_seq;
 static u32 console_idx;
-static enum log_flags console_prev;
+static enum log_flags console_prev = LOG_NEWLINE;
 
 /* the next printk record to read after the last 'clear' command */
 static u64 clear_seq;
@@ -1074,10 +1074,14 @@ static int syslog_print(char __user *buf, int size)
 
 		raw_spin_lock_irq(&logbuf_lock);
 		if (syslog_seq < log_first_seq) {
-			/* messages are gone, move to first one */
+			/*
+			 * Messages are gone, move to first one.
+			 * Don't discard what we know about the
+			 * previously-formatted record.
+			 */
 			syslog_seq = log_first_seq;
 			syslog_idx = log_first_idx;
-			syslog_prev = 0;
+			syslog_prev &= LOG_NEWLINE|LOG_CONT;
 			syslog_partial = 0;
 		}
 		if (syslog_seq == log_next_seq) {
@@ -1150,7 +1154,7 @@ static int syslog_print_all(char __user *buf, int size, bool clear)
 		 */
 		seq = clear_seq;
 		idx = clear_idx;
-		prev = 0;
+		prev = LOG_NEWLINE;
 		while (seq < log_next_seq) {
 			struct printk_log *msg = log_from_idx(idx);
 
@@ -1163,7 +1167,7 @@ static int syslog_print_all(char __user *buf, int size, bool clear)
 		/* move first record forward until length fits into the buffer */
 		seq = clear_seq;
 		idx = clear_idx;
-		prev = 0;
+		prev = LOG_NEWLINE;
 		while (len > size && seq < log_next_seq) {
 			struct printk_log *msg = log_from_idx(idx);
 
@@ -1199,10 +1203,14 @@ static int syslog_print_all(char __user *buf, int size, bool clear)
 			raw_spin_lock_irq(&logbuf_lock);
 
 			if (seq < log_first_seq) {
-				/* messages are gone, move to next one */
+				/*
+				 * Messages are gone, move to first one.
+				 * Don't discard what we know about the
+				 * previously-formatted record.
+				 */
 				seq = log_first_seq;
 				idx = log_first_idx;
-				prev = 0;
+				prev &= LOG_NEWLINE|LOG_CONT;
 			}
 		}
 	}
@@ -1304,10 +1312,14 @@ int do_syslog(int type, char __user *buf, int len, bool from_file)
 	case SYSLOG_ACTION_SIZE_UNREAD:
 		raw_spin_lock_irq(&logbuf_lock);
 		if (syslog_seq < log_first_seq) {
-			/* messages are gone, move to first one */
+			/*
+			 * Messages are gone, move to first one.
+			 * Don't discard what we know about the
+			 * previously-formatted record.
+			 */
 			syslog_seq = log_first_seq;
 			syslog_idx = log_first_idx;
-			syslog_prev = 0;
+			syslog_prev &= LOG_NEWLINE|LOG_CONT;
 			syslog_partial = 0;
 		}
 		if (from_file) {
@@ -2152,10 +2164,10 @@ again:
 				      "%s** %u printk messages dropped **\n",
 				      (console_prev & LOG_CONT) ? "\n" : "",
 				      (unsigned)(log_first_seq - console_seq));
-			/* messages are gone, move to first one */
+			/* Messages are gone, move to first one. */
 			console_seq = log_first_seq;
 			console_idx = log_first_idx;
-			console_prev = 0;
+			console_prev = LOG_NEWLINE;
 		} else {
 			len = 0;
 		}
@@ -2869,7 +2881,7 @@ bool kmsg_dump_get_buffer(struct kmsg_dumper *dumper, bool syslog,
 	/* calculate length of entire buffer */
 	seq = dumper->cur_seq;
 	idx = dumper->cur_idx;
-	prev = 0;
+	prev = LOG_NEWLINE;
 	while (seq < dumper->next_seq) {
 		struct printk_log *msg = log_from_idx(idx);
 
@@ -2882,7 +2894,7 @@ bool kmsg_dump_get_buffer(struct kmsg_dumper *dumper, bool syslog,
 	/* move first record forward until length fits into the buffer */
 	seq = dumper->cur_seq;
 	idx = dumper->cur_idx;
-	prev = 0;
+	prev = LOG_NEWLINE;
 	while (l > size && seq < dumper->next_seq) {
 		struct printk_log *msg = log_from_idx(idx);
 
