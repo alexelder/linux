@@ -1006,11 +1006,9 @@ static size_t msg_print_text(const struct printk_log *msg, enum log_flags prev,
 		prefix = false;
 
 	if (msg->flags & LOG_CONT) {
-		if ((prev & LOG_CONT) && !(prev & LOG_NEWLINE))
+		if (prev & LOG_CONT)
 			prefix = false;
-
-		if (!(msg->flags & LOG_NEWLINE))
-			newline = false;
+		newline = false;
 	}
 
 	if ((prev & LOG_CONT) && (msg->flags & LOG_PREFIX) && len < size) {
@@ -1657,10 +1655,16 @@ asmlinkage int vprintk_emit(int facility, int level,
 	text_len += vscnprintf(text + text_len,
 			       sizeof(textbuf) - text_len, fmt, args);
 
-	/* mark and strip a trailing newline */
+	/*
+	 * If there's a trailing newline, flag it and strip it off.
+	 * Otherwise we assume this is a partial log message, to be
+	 * continued with the next call.
+	 */
 	if (text_len && text[text_len-1] == '\n') {
 		text_len--;
-		lflags |= LOG_NEWLINE;
+		lflags = LOG_NEWLINE;
+	} else {
+		lflags = LOG_CONT;
 	}
 
 	/* strip kernel syslog prefix and extract log level or control flags */
@@ -1690,7 +1694,7 @@ asmlinkage int vprintk_emit(int facility, int level,
 		level = default_message_loglevel;
 
 	if (dict)
-		lflags |= LOG_PREFIX|LOG_NEWLINE;
+		lflags = LOG_PREFIX|LOG_NEWLINE;
 
 	if (!(lflags & LOG_NEWLINE)) {
 		/*
@@ -1704,8 +1708,7 @@ asmlinkage int vprintk_emit(int facility, int level,
 		if (cont_add(facility, level, text, text_len))
 			printed_len += text_len;
 		else
-			printed_len += log_store(facility, level,
-						 lflags | LOG_CONT, 0,
+			printed_len += log_store(facility, level, lflags, 0,
 						 dict, dictlen, text, text_len);
 	} else {
 		bool stored = false;
