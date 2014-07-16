@@ -1013,6 +1013,12 @@ static size_t msg_print_text(const struct printk_log *msg, enum log_flags prev,
 			newline = false;
 	}
 
+	if ((prev & LOG_CONT) && (msg->flags & LOG_PREFIX) && len < size) {
+		if (buf)
+			buf[len++] = '\n';
+		else
+			len++;
+	}
 	do {
 		const char *next = memchr(text, '\n', text_size);
 		size_t text_len;
