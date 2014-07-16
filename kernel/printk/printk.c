@@ -1006,11 +1006,8 @@ static size_t msg_print_text(const struct printk_log *msg, enum log_flags prev,
 	if ((prev & LOG_CONT) && !(msg->flags & LOG_PREFIX))
 		prefix = false;
 
-	if (msg->flags & LOG_CONT) {
-		if (prev & LOG_CONT)
-			prefix = false;
+	if (msg->flags & LOG_CONT)
 		newline = false;
-	}
 
 	if ((prev & LOG_CONT) && (msg->flags & LOG_PREFIX) && len < size) {
 		if (buf)
