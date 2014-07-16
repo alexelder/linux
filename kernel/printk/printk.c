@@ -572,7 +572,7 @@ static ssize_t devkmsg_read(struct file *file, char __user *buf,
 	struct printk_log *msg;
 	u64 ts_usec;
 	size_t i;
-	char cont = '-';
+	char cont;
 	size_t len;
 	ssize_t ret;
 
@@ -619,11 +619,12 @@ static ssize_t devkmsg_read(struct file *file, char __user *buf,
 	 * better readable output. 'c' in the record flags mark the first
 	 * fragment of a line, '+' the following.
 	 */
-	if (msg->flags & LOG_CONT && !(user->prev & LOG_CONT))
-		cont = 'c';
-	else if ((msg->flags & LOG_CONT) ||
-		 ((user->prev & LOG_CONT) && !(msg->flags & LOG_PREFIX)))
+	if ((user->prev & LOG_CONT) && !(msg->flags & LOG_PREFIX))
 		cont = '+';
+	else if (msg->flags & LOG_CONT)
+		cont = 'c';
+	else
+		cont = '-';
 
 	len = sprintf(user->buf, "%u,%llu,%llu,%c;",
 		      (msg->facility << 3) | msg->level,
