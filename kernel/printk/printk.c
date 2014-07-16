@@ -201,7 +201,7 @@ static int console_may_schedule;
  *
  * The optional key/value pairs are attached as continuation lines starting
  * with a space character and terminated by a newline. All possible
- * non-prinatable characters are escaped in the "\xff" notation.
+ * non-printable characters are escaped in the "\xff" notation.
  *
  * Users of the export format should ignore possible additional values
  * separated by ',', and find the message after the ';' character.
@@ -614,7 +614,7 @@ static ssize_t devkmsg_read(struct file *file, char __user *buf,
 	/*
 	 * If we couldn't merge continuation line fragments during the print,
 	 * export the stored flags to allow an optional external merge of the
-	 * records. Merging the records isn't always neccessarily correct, like
+	 * records. Merging the records isn't always necessarily correct, like
 	 * when we hit a race during printing. In most cases though, it produces
 	 * better readable output. 'c' in the record flags mark the first
 	 * fragment of a line, '+' the following.
@@ -2905,7 +2905,7 @@ bool kmsg_dump_get_buffer(struct kmsg_dumper *dumper, bool syslog,
 		prev = msg->flags;
 	}
 
-	/* last message in next interation */
+	/* last message in next iteration */
 	next_seq = seq;
 	next_idx = idx;
 
@@ -2931,7 +2931,7 @@ out:
 EXPORT_SYMBOL_GPL(kmsg_dump_get_buffer);
 
 /**
- * kmsg_dump_rewind_nolock - reset the interator (unlocked version)
+ * kmsg_dump_rewind_nolock - reset the iterator (unlocked version)
  * @dumper: registered kmsg dumper
  *
  * Reset the dumper's iterator so that kmsg_dump_get_line() and
@@ -2949,7 +2949,7 @@ void kmsg_dump_rewind_nolock(struct kmsg_dumper *dumper)
 }
 
 /**
- * kmsg_dump_rewind - reset the interator
+ * kmsg_dump_rewind - reset the iterator
  * @dumper: registered kmsg dumper
  *
  * Reset the dumper's iterator so that kmsg_dump_get_line() and
