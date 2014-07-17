@@ -211,7 +211,6 @@ enum log_flags {
 	LOG_NOCONS	= 1,	/* already flushed, do not print to console */
 	LOG_NEWLINE	= 2,	/* text ended with a newline */
 	LOG_PREFIX	= 4,	/* text started with a prefix */
-	LOG_CONT	= 8,	/* text is a fragment of a continuation line */
 };
 
 struct printk_log {
@@ -612,16 +611,18 @@ static ssize_t devkmsg_read(struct file *file, char __user *buf,
 	do_div(ts_usec, 1000);
 
 	/*
-	 * If we couldn't merge continuation line fragments during the print,
-	 * export the stored flags to allow an optional external merge of the
-	 * records. Merging the records isn't always necessarily correct, like
-	 * when we hit a race during printing. In most cases though, it produces
-	 * better readable output. 'c' in the record flags mark the first
-	 * fragment of a line, '+' the following.
+	 * Sometimes it's necessary to flush an incomplete record to the log.
+	 * When this happens, consecutive records should be merged to produce
+	 * a logically complete message.
+	 *
+	 * Indicate this to user space with a flag character.  A 'c' indicates
+	 * the first of a series of incomplete log records.  A '+' indicates
+	 * a record that should be merged with one or more earlier records.
+	 * And a '-' indicates a "normal" self-contained single record.
 	 */
-	if ((user->prev & LOG_CONT) && !(msg->flags & LOG_PREFIX))
+	if (!(user->prev & LOG_NEWLINE) && !(msg->flags & LOG_PREFIX))
 		cont = '+';
-	else if (msg->flags & LOG_CONT)
+	else if (!(msg->flags & LOG_NEWLINE))
 		cont = 'c';
 	else
 		cont = '-';
@@ -1003,18 +1004,19 @@ static size_t msg_print_text(const struct printk_log *msg, enum log_flags prev,
 	bool newline = true;
 	size_t len = 0;
 
-	if ((prev & LOG_CONT) && !(msg->flags & LOG_PREFIX))
+	if (!(prev & LOG_NEWLINE) && !(msg->flags & LOG_PREFIX))
 		prefix = false;
 
-	if (msg->flags & LOG_CONT)
+	if (!(msg->flags & LOG_NEWLINE))
 		newline = false;
 
-	if ((prev & LOG_CONT) && (msg->flags & LOG_PREFIX) && len < size) {
+	if (!(prev & LOG_NEWLINE) && (msg->flags & LOG_PREFIX) && len < size) {
 		if (buf)
 			buf[len++] = '\n';
 		else
 			len++;
 	}
+
 	do {
 		const char *next = memchr(text, '\n', text_size);
 		size_t text_len;
@@ -1077,7 +1079,7 @@ static int syslog_print(char __user *buf, int size)
 			 */
 			syslog_seq = log_first_seq;
 			syslog_idx = log_first_idx;
-			syslog_prev &= LOG_NEWLINE|LOG_CONT;
+			syslog_prev &= LOG_NEWLINE;
 			syslog_partial = 0;
 		}
 		if (syslog_seq == log_next_seq) {
@@ -1206,7 +1208,7 @@ static int syslog_print_all(char __user *buf, int size, bool clear)
 				 */
 				seq = log_first_seq;
 				idx = log_first_idx;
-				prev &= LOG_NEWLINE|LOG_CONT;
+				prev &= LOG_NEWLINE;
 			}
 		}
 	}
@@ -1315,7 +1317,7 @@ int do_syslog(int type, char __user *buf, int len, bool from_file)
 			 */
 			syslog_seq = log_first_seq;
 			syslog_idx = log_first_idx;
-			syslog_prev &= LOG_NEWLINE|LOG_CONT;
+			syslog_prev &= LOG_NEWLINE;
 			syslog_partial = 0;
 		}
 		if (from_file) {
@@ -1530,7 +1532,7 @@ static bool cont_add(int facility, int level, const char *text, size_t len)
 
 	if (cont.len + len > sizeof(cont.buf)) {
 		/* the line gets too long, split it up in separate records */
-		cont_flush(LOG_CONT);
+		cont_flush(0);
 		return false;
 	}
 
@@ -1548,7 +1550,7 @@ static bool cont_add(int facility, int level, const char *text, size_t len)
 	cont.len += len;
 
 	if (cont.len > (sizeof(cont.buf) * 80) / 100)
-		cont_flush(LOG_CONT);
+		cont_flush(0);
 
 	return true;
 }
@@ -1661,8 +1663,6 @@ asmlinkage int vprintk_emit(int facility, int level,
 	if (text_len && text[text_len-1] == '\n') {
 		text_len--;
 		lflags = LOG_NEWLINE;
-	} else {
-		lflags = LOG_CONT;
 	}
 
 	/* strip kernel syslog prefix and extract log level or control flags */
@@ -2163,7 +2163,7 @@ again:
 		if (console_seq < log_first_seq) {
 			len = sprintf(text,
 				      "%s** %u printk messages dropped **\n",
-				      (console_prev & LOG_CONT) ? "\n" : "",
+				      (console_prev & LOG_NEWLINE) ? "" : "\n",
 				      (unsigned)(log_first_seq - console_seq));
 			/* Messages are gone, move to first one. */
 			console_seq = log_first_seq;
