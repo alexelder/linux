@@ -141,6 +141,12 @@ EXPORT_SYMBOL(console_set_on_cmdline);
 static int console_may_schedule;
 
 /*
+ * Each call to printk() fills a record in a circular log buffer.
+ * The contents of the log buffer are read by various subsystems
+ * (including the console subsystem), each of which formats the
+ * content of log buffers for human consumption.  Flags in each
+ * log record are used to track formatting-related state.
+ *
  * The printk log buffer consists of a chain of concatenated variable
  * length records. Every record starts with a record header, containing
  * the overall length of the record.
@@ -150,7 +156,7 @@ static int console_may_schedule;
  * are stored..
  *
  * If the heads indicate available messages, the length in the header
- * tells the start next message. A length == 0 for the next message
+ * tells the start of the next message. A length == 0 for the next message
  * indicates a wrap-around to the beginning of the buffer.
  *
  * Every record carries the monotonic timestamp in microseconds, as well as
@@ -191,6 +197,16 @@ static int console_may_schedule;
  *         52 49 56 45 52 3d 62 75      "RIVER=bu"
  *         67                           "g"
  *   0032     00 00 00                  padding to next message header
+ *
+ * If a printk() call contains no newline, its content is saved in a
+ * special "cont" buffer rather than being written directly into the
+ * log.  One or more follow-in printk() calls from the same source
+ * can then be combined into a single newline-terminated message (if
+ * possible) before the combined result is saved into a log record.
+ * Occasionally a buffered/partial message needs to be flushed to
+ * the log before the logically next printk() call is seen.  When
+ * this occurs, the incomplete record (with no LOG_NEWLINE) will
+ * be followed by a new record marked LOG_PREFIX.
  *
  * The 'struct printk_log' buffer header must never be directly exported to
  * userspace, it is a kernel-private implementation detail that might
@@ -1000,17 +1016,14 @@ static size_t msg_print_text(const struct printk_log *msg, enum log_flags prev,
 {
 	const char *text = log_text(msg);
 	size_t text_size = msg->text_len;
-	bool prefix = true;
-	bool newline = true;
 	size_t len = 0;
+	bool prefix;
+	bool newline;
 
-	if (!(prev & LOG_NEWLINE) && !(msg->flags & LOG_PREFIX))
-		prefix = false;
-
-	if (!(msg->flags & LOG_NEWLINE))
-		newline = false;
-
-	if (!(prev & LOG_NEWLINE) && (msg->flags & LOG_PREFIX) && len < size) {
+	prefix = (prev & LOG_NEWLINE) || (msg->flags & LOG_PREFIX);
+	newline = !!(msg->flags & LOG_NEWLINE);
+	/* Insert a newline if we're terminating the previous line early */
+	if (prefix && !(prev & LOG_NEWLINE) && len < size) {
 		if (buf)
 			buf[len++] = '\n';
 		else
@@ -1596,6 +1609,7 @@ asmlinkage int vprintk_emit(int facility, int level,
 	int this_cpu;
 	int printed_len = 0;
 	bool in_sched = false;
+	bool flush_cont = false;
 	/* cpu currently holding logbuf_lock in this function */
 	static volatile unsigned int logbuf_cpu = UINT_MAX;
 
@@ -1694,12 +1708,16 @@ asmlinkage int vprintk_emit(int facility, int level,
 	if (dict)
 		lflags = LOG_PREFIX|LOG_NEWLINE;
 
+	/*
+	 * If the previous printk() call had no newline, it will be buffered.
+	 * If the buffered message was produced by someone else, or if this
+	 * call is forcing a new record, we will need to flush the buffer
+	 * rather than merge this message into it.
+	 */
+	flush_cont = (cont.owner != current) || (lflags & LOG_PREFIX);
 	if (!(lflags & LOG_NEWLINE)) {
-		/*
-		 * Flush the conflicting buffer. An earlier newline was missing,
-		 * or another task also prints continuation lines.
-		 */
-		if (cont.len && (lflags & LOG_PREFIX || cont.owner != current))
+		/* If the buffered record conflicts, flush it first. */
+		if (cont.len && flush_cont)
 			cont_flush(LOG_NEWLINE);
 
 		/* buffer line if possible, otherwise store it right away */
@@ -1712,20 +1730,21 @@ asmlinkage int vprintk_emit(int facility, int level,
 		bool stored = false;
 
 		/*
-		 * If an earlier newline was missing and it was the same task,
-		 * either merge it with the current buffer and flush, or if
-		 * there was a race with interrupts (prefix == true) then just
-		 * flush it out and store this line separately.
-		 * If the preceding printk was from a different task and missed
-		 * a newline, flush and append the newline.
+		 * If there's a buffered message, try to merge with
+		 * it, then flush whatever's buffered to the log.
 		 */
 		if (cont.len) {
-			if (cont.owner == current && !(lflags & LOG_PREFIX))
+			if (!flush_cont)
 				stored = cont_add(facility, level, text,
 						  text_len);
 			cont_flush(LOG_NEWLINE);
 		}
 
+		/*
+		 * Record how much we just formatted.  If cont_add() didn't
+		 * combine this message with the buffered one we still have
+		 * to store this one to the log.
+		 */
 		if (stored)
 			printed_len += text_len;
 		else
