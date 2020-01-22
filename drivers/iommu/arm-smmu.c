@@ -1409,6 +1409,9 @@ static int arm_smmu_add_device(struct device *dev)
 	device_link_add(dev, smmu->dev,
 			DL_FLAG_PM_RUNTIME | DL_FLAG_AUTOREMOVE_SUPPLIER);
 
+	if (smmu->impl && smmu->impl->req_domain)
+		return smmu->impl->req_domain(dev);
+
 	return 0;
 
 out_cfg_free:

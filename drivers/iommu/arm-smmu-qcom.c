@@ -3,6 +3,7 @@
  * Copyright (c) 2019, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/of_device.h>
 #include <linux/qcom_scm.h>
 
 #include "arm-smmu.h"
@@ -10,6 +11,43 @@
 struct qcom_smmu {
 	struct arm_smmu_device smmu;
 };
+
+static const struct arm_smmu_client_match_data qcom_adreno = {
+	.direct_mapping = true,
+};
+
+static const struct arm_smmu_client_match_data qcom_mdss = {
+	.direct_mapping = true,
+};
+
+static const struct of_device_id qcom_smmu_client_of_match[] = {
+	{ .compatible = "qcom,adreno", .data = &qcom_adreno },
+	{ .compatible = "qcom,mdp4", .data = &qcom_mdss },
+	{ .compatible = "qcom,mdss", .data = &qcom_mdss },
+	{ .compatible = "qcom,sc7180-mdss", .data = &qcom_mdss },
+	{ .compatible = "qcom,sdm845-mdss", .data = &qcom_mdss },
+	{},
+};
+
+static const struct arm_smmu_client_match_data *
+qcom_smmu_client_data(struct device *dev)
+{
+	const struct of_device_id *match =
+		of_match_device(qcom_smmu_client_of_match, dev);
+
+	return match ? match->data : NULL;
+}
+
+static int qcom_smmu_request_domain(struct device *dev)
+{
+	const struct arm_smmu_client_match_data *client;
+
+	client = qcom_smmu_client_data(dev);
+	if (client && client->direct_mapping)
+		iommu_request_dm_for_dev(dev);
+
+	return 0;
+}
 
 static int qcom_sdm845_smmu500_reset(struct arm_smmu_device *smmu)
 {
@@ -31,6 +69,7 @@ static int qcom_sdm845_smmu500_reset(struct arm_smmu_device *smmu)
 }
 
 static const struct arm_smmu_impl qcom_smmu_impl = {
+	.req_domain = qcom_smmu_request_domain,
 	.reset = qcom_sdm845_smmu500_reset,
 };
 

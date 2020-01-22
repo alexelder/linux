@@ -217,6 +217,10 @@ enum arm_smmu_arch_version {
 	ARM_SMMU_V2,
 };
 
+struct arm_smmu_client_match_data {
+	bool direct_mapping;
+};
+
 enum arm_smmu_implementation {
 	GENERIC_SMMU,
 	ARM_MMU500,
@@ -332,6 +336,7 @@ struct arm_smmu_impl {
 	int (*init_context)(struct arm_smmu_domain *smmu_domain);
 	void (*tlb_sync)(struct arm_smmu_device *smmu, int page, int sync,
 			 int status);
+	int (*req_domain)(struct device *dev);
 };
 
 static inline void __iomem *arm_smmu_page(struct arm_smmu_device *smmu, int n)
