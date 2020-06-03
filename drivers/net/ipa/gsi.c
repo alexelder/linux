@@ -2364,6 +2364,11 @@ int gsi_init(struct gsi *gsi, struct platform_device *pdev,
 	gsi->dev = &pdev->dev;
 	gsi->version = version;
 
+	/* Exceeding 128 bytes makes the transaction pool *much* larger */
+	if (sizeof(struct gsi_trans) > 128)
+		dev_warn(gsi->dev, "WARNING: sizeof(struct gsi_trans) = %zu\n",
+			 sizeof(struct gsi_trans));
+
 	/* GSI uses NAPI on all channels.  Create a dummy network device
 	 * for the channel NAPI contexts to be associated with.
 	 */
