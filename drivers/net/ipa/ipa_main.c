@@ -810,6 +810,10 @@ static int ipa_probe(struct platform_device *pdev)
 	int ret;
 
 	ipa_validate_build();
+	/* Exceeding 128 bytes makes the transaction pool *much* larger */
+	if (sizeof(struct gsi_trans) > 128)
+		dev_warn_once(dev, "WARNING: sizeof(struct gsi_trans) = %zu\n",
+			      sizeof(struct gsi_trans));
 
 	/* Get configuration data early; needed for power initialization */
 	data = of_device_get_match_data(dev);
