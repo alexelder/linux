@@ -1,0 +1,138 @@
+
+Device tree information based on IPA version
+
+--------------------------
+IPA v3.5.1 (SDM845):
+- ipa_fw_mem:		base 0x8c400000 size 0x00010000
+- SMMU stream ids:
+ - General:		0x0720
+ - uC:		0x0722
+- Memory ranges:
+ - ipa-reg:		base 0x01e40000 size 0x00002000
+ - ipa-ee:		base 0x01e43000 size 0x00004000
+ - ipa-shared:	base 0x01e47000 size 0x00008000
+ - gsi:		base 0x01e04000 size 0x00028000
+- IRQs:
+    - SDM845
+	- IPA:		311 edge rising
+	- GSI:		432 level high
+- Interconnects:
+--------------------------
+IPA v4.2 (SC7180):
+- ipa_fw_mem:		base 0x94300000 size 0x00010000
+- SMMU stream ids:
+ - General:		0x0440
+ - uC:			0x0442
+- Memory ranges:
+ - ipa-reg:		base 0x01e40000 size 0x00002000
+ - ipa-ee:		base 0x01e43000 size 0x00004000
+ - ipa-shared:		base 0x01e47000 size 0x00008000
+ - gsi:			base 0x01e04000 size 0x00028000
+- IRQs:
+     - SC7180/SM6250 (?)
+	- IPA:		311 edge rising
+	- GSI:		432 level high
+- Interconnects:
+--------------------------
+IPA v4.0:
+- ipa_fw_mem:	base 0x8fced000 size 0x00010000
+- SMMU stream ids:
+    - General:		0x0520
+    - uC:		0x0522
+- Memory ranges:
+    - ipa-reg:		base 0x01e40000 size 0x00002000
+    - ipa-ee:		base 0x01e43000 size 0x00004000
+    - ipa-shared:	base 0x01e47000 size 0x00008000
+    - gsi:		base 0x01e04000 size 0x00028000
+- IRQs:
+    - SDX24, SDM855 (?):
+	- IPA:		311 edge rising
+	- GSI:		432 level high
+- Interconnects:
+--------------------------
+IPA v4.1:
+- ipa_fw_mem:		base 0x92400000 size 0x00010000
+- SMMU stream ids:
+    - General:		0x05e0
+    - uC:		0x05e2
+- Memory ranges:
+    - ipa-reg:		base 0x01e40000 size 0x00002000
+    - ipa-ee:		base 0x01e43000 size 0x00004000
+    - ipa-shared:	base 0x01e47000 size 0x00008000
+    - gsi:		base 0x01e04000 size 0x00028000
+- IRQs:
+    - SC8150
+	- IPA:		311 (?) edge rising
+	- GSI:		432 (?) level high
+- Interconnects:
+--------------------------
+IPA v4.5 (SM8250, SDX55):
+- ipa_fw_mem:	base 0x8fced000 size 0x00010000
+- SMMU stream ids:
+    - General:		0x05c0
+    - uC:		0x05c2
+- Memory ranges:
+    - ipa-reg:		base 0x01e40000 size 0x00002000
+    - ipa-ee:		base 0x01e43000 size 0x00004000
+    - ipa-shared:	base 0x01e50000 size 0x00004b20
+    - gsi:		base 0x01e04000 size 0x00023000
+- IRQs:
+    - SM8250:
+	- IPA:		311 edge rising
+	- GSI:		432 level high
+    - SDX55:
+	- IPA:		241 edge rising
+	- GSI:		47 level high
+- Interconnects:
+--------------------------
+IPA v4.7 (SM7250):
+- ipa_fw_mem:		base 0x97a00000 size 0x00010000
+- SMMU stream ids:
+    - General:		0x0520
+    - uC:		0x0522
+- Memory ranges:
+    - ipa-reg:		base 0x01e40000 size 0x00002000
+    - ipa-ee:		base 0x01e43000 size 0x00004000
+    - ipa-shared:	base 0x01e50000 size 0x00003000
+    - gsi:		base 0x01e04000 size 0x00023000
+- IRQs:
+    - SM7250
+	- IPA:		311 edge rising
+	- GSI:		432 level high
+- Interconnects:
+--------------------------
+IPA v4.9 (SM8350):
+- ipa_fw_mem:		base 0x8b500000 size 0x00010000
+- SMMU stream ids:
+    - General:		0x05c0
+    - uC:		0x05c2
+- Memory ranges:
+    - ipa-reg:		base 0x01e40000 size 0x00002000
+    - ipa-ee:		base 0x01e44000 size 0x00004000
+    - ipa-shared:	base 0x01e50000 size 0x00004b20
+    - gsi:		base 0x01e04000 size 0x00023000
+- IRQs:
+    - SM8350
+	- IPA:		655 (?) edge rising
+	- GSI:		432 level high
+- Interconnects:
+--------------------------
+IPA v4.11 (SC7280):
+- ipa_fw_mem:		base 0x86700000 size 0x00010000
+- SMMU stream ids:
+    - General:		0x0480
+    - uC:		0x0482
+- Memory ranges:
+    - ipa-reg:		base 0x01e40000 size 0x00002000
+    - ipa-ee:		base 0x01e44000 size 0x00004000
+    - ipa-shared:	base 0x01e50000 size 0x00004ad0
+    - gsi:		base 0x01e04000 size 0x00023000
+- IRQs:
+    - SC7280
+	- IPA:		654 edge rising (spec says 655)
+	- GSI:		432 level high
+- Interconnects:
+	<&aggre2_noc MASTER_IPA 0 &gem_noc SLAVE_LLCC 0>
+	<&mc_virt MASTER_LLCC 0 &mc_virt SLAVE_EBI1 0>
+	<&gem_noc MASTER_APPSS_PROC 0 &cnoc2 SLAVE_IPA_CFG 0>
+--------------------------
