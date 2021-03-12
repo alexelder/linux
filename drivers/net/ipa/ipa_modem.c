@@ -199,16 +199,77 @@ static int ipa_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 {
 	struct ipa_priv *priv = netdev_priv(netdev);
 	struct rmnet_ioctl_extended_s edata = { };
+	char name[sizeof(edata.u.add_mux_channel.name) + 1];
 	struct ipa_endpoint *endpoint;
 	struct ipa *ipa = priv->ipa;
+	char *channel_name;
 	void __user *data;
+	u32 unsupported;
 
-	/* These features are implied; alternatives are not supported */
-	if (cmd == RMNET_IOCTL_SET_LLP_IP || cmd == RMNET_IOCTL_OPEN)
-		return 0;
-
-	if (cmd != RMNET_IOCTL_EXTENDED)
+	if (cmd == RMNET_IOCTL_SET_LLP_ETHERNET) {
+		netdev_err(netdev, "SET_LLP_ETHERNET requested!\n");
 		return -EINVAL;
+	}
+
+	if (cmd == RMNET_IOCTL_SET_LLP_IP) {
+		netdev_info(netdev, "SET_LLP_IP requested (ignoring)\n");
+		return 0;
+	}
+
+	if (cmd == RMNET_IOCTL_GET_LLP) {
+		netdev_err(netdev, "GET_LLP requested!\n");
+		return -EINVAL;
+	}
+
+	if (cmd == RMNET_IOCTL_SET_QOS_ENABLE) {
+		netdev_err(netdev, "SET_QOS_ENABLE requested!\n");
+		return -EINVAL;
+	}
+
+	if (cmd == RMNET_IOCTL_SET_QOS_DISABLE) {
+		netdev_err(netdev, "SET_QOS_DISABLE requested!\n");
+		return -EINVAL;
+	}
+
+	if (cmd == RMNET_IOCTL_GET_QOS) {
+		netdev_err(netdev, "GET_QOS requested!\n");
+		return -EINVAL;
+	}
+
+	if (cmd == RMNET_IOCTL_GET_OPMODE) {
+		netdev_err(netdev, "GET_OPMODE requested!\n");
+		return -EINVAL;
+	}
+
+	if (cmd == RMNET_IOCTL_OPEN) {
+		netdev_info(netdev, "OPEN requested (ignoring)\n");
+		return 0;
+	}
+
+	if (cmd == RMNET_IOCTL_CLOSE) {
+		netdev_err(netdev, "CLOSE requested!\n");
+		return -EINVAL;
+	}
+
+	if (cmd == RMNET_IOCTL_FLOW_ENABLE) {
+		netdev_err(netdev, "FLOW_ENABLE requested!\n");
+		return -EINVAL;
+	}
+
+	if (cmd == RMNET_IOCTL_FLOW_DISABLE) {
+		netdev_err(netdev, "FLOW_DISABLE requested!\n");
+		return -EINVAL;
+	}
+
+	if (cmd == RMNET_IOCTL_FLOW_SET_HANDLE) {
+		netdev_err(netdev, "FLOW_SET_HANDLE requested!\n");
+		return -EINVAL;
+	}
+
+	if (cmd != RMNET_IOCTL_EXTENDED) {
+		netdev_err(netdev, "unsupported ioctl 0x%x requested!\n", cmd);
+		return -EINVAL;
+	}
 
 	data = ifr->ifr_ifru.ifru_data;
 
@@ -216,47 +277,139 @@ static int ipa_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 		return -EFAULT;
 
 	switch (edata.extended_ioctl) {
-	case RMNET_IOCTL_GET_SUPPORTED_FEATURES:	/* Get features */
+	case RMNET_IOCTL_GET_SUPPORTED_FEATURES:
+		netdev_info(netdev, "GET_SUPPORTED_FEATURES requested\n");
 		edata.u.data = RMNET_IOCTL_FEAT_NOTIFY_MUX_CHANNEL;
 		edata.u.data |= RMNET_IOCTL_FEAT_SET_EGRESS_DATA_FORMAT;
 		edata.u.data |= RMNET_IOCTL_FEAT_SET_INGRESS_DATA_FORMAT;
 		goto copy_out;
 
-	case RMNET_IOCTL_GET_EPID:			/* Get endpoint ID */
+	case RMNET_IOCTL_SET_MRU:
+		netdev_err(netdev, "SET_MRU %u requested!\n", edata.u.data);
+		return -EINVAL;
+
+	case RMNET_IOCTL_GET_EPID:
+		netdev_info(netdev, "GET_EPID requested (returning 1)\n");
 		edata.u.data = 1;
 		goto copy_out;
 
-	case RMNET_IOCTL_SET_EGRESS_DATA_FORMAT:	/* Egress data format */
+	case RMNET_IOCTL_ADD_MUX_CHANNEL:
+		/* Assume the name is printable, but maybe not NUL-terminated */
+		channel_name = &edata.u.add_mux_channel.name[0];
+		/* Target buffer is the right size; won't be truncated */
+		strscpy(name, channel_name, sizeof(name));
+		netdev_err(netdev, "ADD_MUX_CHANNEL %s mux_id %u requested!\n",
+			   channel_name, edata.u.add_mux_channel.mux_id);
+		return -EINVAL;
+
+	case RMNET_IOCTL_SET_EGRESS_DATA_FORMAT:
+		unsupported = edata.u.data & ~RMNET_IOCTL_EGRESS_FORMAT_ALL;
+		if (unsupported) {
+			netdev_err(netdev, "SET_EGRESS_DATA_FORMAT "
+				  "includes 0x%08x!\n", unsupported);
+			return -EINVAL;
+		}
+
+		if (edata.u.data & RMNET_IOCTL_EGRESS_FORMAT_MAP) {
+			netdev_err(netdev, "SET_EGRESS_DATA_FORMAT "
+				   "includes MAP!\n");
+			return -EINVAL;
+		}
+		if (edata.u.data & RMNET_IOCTL_EGRESS_FORMAT_AGGREGATION) {
+			netdev_err(netdev, "SET_EGRESS_DATA_FORMAT "
+				  "includes AGGREGATION!\n");
+			return -EINVAL;
+		}
+		if (edata.u.data & RMNET_IOCTL_EGRESS_FORMAT_MUXING) {
+			netdev_err(netdev, "SET_EGRESS_DATA_FORMAT "
+				  "includes MUXING!\n");
+			return -EINVAL;
+		}
+
 		/* Endpoint is configured for checksum offload enabled */
-		if (!(edata.u.data & RMNET_IOCTL_EGRESS_FORMAT_CHECKSUM))
+		if (edata.u.data & RMNET_IOCTL_EGRESS_FORMAT_CHECKSUM) {
+			netdev_info(netdev, "SET_EGRESS_DATA_FORMAT "
+				    "CHECKSUM requested\n");
+		} else {
+			netdev_err(netdev, "SET_EGRESS_DATA_FORMAT "
+				  "does *not* include CHECKSUM!\n");
 			return -EINVAL;
-		/* Endpoint is configured for no (de)aggregation */
-		if (edata.u.data & RMNET_IOCTL_EGRESS_FORMAT_AGGREGATION)
+		}
+
+		if (edata.u.data & RMNET_IOCTL_EGRESS_FORMAT_IP_ROUTE) {
+			netdev_err(netdev, "SET_EGRESS_DATA_FORMAT "
+				  "includes IP_ROUTE!\n");
 			return -EINVAL;
+		}
 
 		return 0;
 
-	case RMNET_IOCTL_SET_INGRESS_DATA_FORMAT:	/* Ingress format */
-		/* Endpoint is configured for checksum offload enabled */
-		if (!(edata.u.data & RMNET_IOCTL_INGRESS_FORMAT_CHECKSUM))
+	case RMNET_IOCTL_SET_INGRESS_DATA_FORMAT:
+		unsupported = edata.u.data & ~RMNET_IOCTL_INGRESS_FORMAT_ALL;
+		if (unsupported) {
+			netdev_err(netdev, "SET_INGRESS_DATA_FORMAT "
+				  "includes 0x%08x!\n", unsupported);
 			return -EINVAL;
-		/* Endpoint is configured for no aggregation */
-		if (edata.u.data & RMNET_IOCTL_INGRESS_FORMAT_AGG_DATA)
+		}
+
+		if (edata.u.data & RMNET_IOCTL_INGRESS_FORMAT_MAP) {
+			netdev_err(netdev, "SET_INGRESS_DATA_FORMAT "
+				   "includes MAP!\n");
 			return -EINVAL;
+		}
+
+		if (edata.u.data & RMNET_IOCTL_INGRESS_FORMAT_DEAGGREGATION) {
+			netdev_err(netdev, "SET_INGRESS_DATA_FORMAT "
+				  "includes DEAGGREGATION!\n");
+			return -EINVAL;
+		}
+
+		if (edata.u.data & RMNET_IOCTL_INGRESS_FORMAT_DEMUXING) {
+			netdev_err(netdev, "SET_INGRESS_DATA_FORMAT "
+				  "includes DEMUXING!\n");
+			return -EINVAL;
+		}
+
+		if (edata.u.data & RMNET_IOCTL_INGRESS_FORMAT_CHECKSUM) {
+			netdev_info(netdev, "SET_INGRESS_DATA_FORMAT "
+				    "CHECKSUM requested\n");
+		} else {
+			netdev_err(netdev, "SET_INGRESS_DATA_FORMAT "
+				  "does *not* include CHECKSUM!\n");
+			return -EINVAL;
+		}
+
+		if (edata.u.data & RMNET_IOCTL_INGRESS_FORMAT_AGG_DATA) {
+			netdev_err(netdev, "SET_INGRESS_DATA_FORMAT "
+				  "includes AGG_DATA!\n");
+			return -EINVAL;
+		}
+
+		if (edata.u.data & RMNET_IOCTL_INGRESS_FORMAT_IP_ROUTE) {
+			netdev_err(netdev, "SET_INGRESS_DATA_FORMAT "
+				  "includes IP_ROUTE!\n");
+			return -EINVAL;
+		}
 
 		return 0;
 
-	case RMNET_IOCTL_GET_EP_PAIR:			/* Get endpoint pair */
+	case RMNET_IOCTL_GET_EP_PAIR:
 		endpoint = ipa->name_map[IPA_ENDPOINT_AP_MODEM_TX];
 		edata.u.ipa_endpoint_pair.consumer_pipe_num =
 				endpoint->endpoint_id;
 		endpoint = ipa->name_map[IPA_ENDPOINT_AP_MODEM_RX];
 		edata.u.ipa_endpoint_pair.producer_pipe_num =
 				endpoint->endpoint_id;
+		netdev_info(netdev, "GET_EP_PAIR requested "
+			    "(returning TX %u RX %u)\n",
+			    edata.u.ipa_endpoint_pair.consumer_pipe_num,
+			    edata.u.ipa_endpoint_pair.producer_pipe_num);
 		goto copy_out;
 
 	default:
-		return -EINVAL;		/* Invalid (unrecognized) command */
+		netdev_err(netdev, "unsupported EXTENDED ioctl "
+			   "0x%x requested!\n", edata.extended_ioctl);
+		return -EINVAL;
 	}
 
 copy_out:
