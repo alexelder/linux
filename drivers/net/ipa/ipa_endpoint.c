@@ -436,8 +436,8 @@ int ipa_endpoint_modem_exception_reset_all(struct ipa *ipa)
 
 	ipa_cmd_pipeline_clear_add(trans);
 
-	/* XXX This should have a 1 second timeout */
-	gsi_trans_commit_wait(trans);
+	if (gsi_trans_commit_wait_timeout(trans, PIPELINE_CLEAR_TIMEOUT))
+		ipa_reg_dump(ipa);
 
 	ipa_cmd_pipeline_clear_wait(ipa);
 

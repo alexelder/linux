@@ -57,6 +57,9 @@ struct ipa_cmd_info {
 	enum dma_data_direction direction;
 };
 
+/* Timeout for a pipeline clear command */
+#define PIPELINE_CLEAR_TIMEOUT		1000	/* milliseconds */
+
 /**
  * ipa_cmd_table_valid() - Validate a memory region holding a table
  * @ipa:	- IPA pointer

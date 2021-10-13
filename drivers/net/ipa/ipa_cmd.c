@@ -660,7 +660,9 @@ void ipa_cmd_pipeline_clear(struct ipa *ipa)
 	trans = ipa_cmd_trans_alloc(ipa, count);
 	if (trans) {
 		ipa_cmd_pipeline_clear_add(trans);
-		gsi_trans_commit_wait(trans);
+		if (gsi_trans_commit_wait_timeout(trans,
+						  PIPELINE_CLEAR_TIMEOUT))
+			ipa_reg_dump(ipa);
 		ipa_cmd_pipeline_clear_wait(ipa);
 	} else {
 		dev_err(&ipa->pdev->dev,
