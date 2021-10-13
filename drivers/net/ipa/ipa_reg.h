@@ -209,6 +209,28 @@ static inline u32 ipa_reg_filt_rout_hash_flush_offset(enum ipa_version version)
 #define IPV4_ROUTER_HASH_FMASK			GENMASK(8, 8)
 #define IPV4_FILTER_HASH_FMASK			GENMASK(12, 12)
 
+/* The next register is present for IPA v4.0+ */
+#define IPA_REG_STATE_TX1_OFFSET			0x00000094
+
+static inline u32 ipa_reg_state_offset(enum ipa_version version)
+{
+	if (version < IPA_VERSION_4_0)
+		return 0x00000100;
+
+	return 0x000000a8;
+}
+
+static inline u32 ipa_reg_state_rx_active_offset(enum ipa_version version)
+{
+	if (version < IPA_VERSION_4_0)
+		return 0x00000104;
+
+	return 0x000000ac;
+}
+
+/* The next register is present for IPA v4.0+ */
+#define IPA_REG_STATE_TX0_OFFSET			0x000000b0
+
 /* ipa->available defines the valid bits in the STATE_AGGR_ACTIVE register */
 static inline u32 ipa_reg_state_aggr_active_offset(enum ipa_version version)
 {
@@ -843,6 +865,8 @@ ipa_reg_irq_suspend_clr_offset(enum ipa_version version)
 {
 	return ipa_reg_irq_suspend_clr_ee_n_offset(version, GSI_EE_AP);
 }
+
+void ipa_reg_dump(struct ipa *ipa);
 
 int ipa_reg_init(struct ipa *ipa);
 void ipa_reg_exit(struct ipa *ipa);

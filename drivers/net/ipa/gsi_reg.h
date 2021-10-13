@@ -134,6 +134,16 @@ static inline u32 r_length_encoded(enum ipa_version version, u32 length)
 #define GSI_EE_N_CH_C_CNTXT_3_OFFSET(ch, ee) \
 		(0x0001c00c + 0x4000 * (ee) + 0x80 * (ch))
 
+#define GSI_CH_C_CNTXT_4_OFFSET(ch) \
+		GSI_EE_N_CH_C_CNTXT_4_OFFSET((ch), GSI_EE_AP)
+#define GSI_EE_N_CH_C_CNTXT_4_OFFSET(ch, ee) \
+		(0x0001c010 + 0x4000 * (ee) + 0x80 * (ch))
+
+#define GSI_CH_C_CNTXT_6_OFFSET(ch) \
+		GSI_EE_N_CH_C_CNTXT_6_OFFSET((ch), GSI_EE_AP)
+#define GSI_EE_N_CH_C_CNTXT_6_OFFSET(ch, ee) \
+		(0x0001c018 + 0x4000 * (ee) + 0x80 * (ch))
+
 #define GSI_CH_C_QOS_OFFSET(ch) \
 		GSI_EE_N_CH_C_QOS_OFFSET((ch), GSI_EE_AP)
 #define GSI_EE_N_CH_C_QOS_OFFSET(ch, ee) \
