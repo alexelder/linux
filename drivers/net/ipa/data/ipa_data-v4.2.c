@@ -139,6 +139,28 @@ static const struct ipa_gsi_endpoint_data ipa_gsi_endpoint_data[] = {
 			},
 		},
 	},
+	[IPA_ENDPOINT_AP_MONITOR_RX] = {
+		.ee_id		= GSI_EE_AP,
+		.channel_id	= 10,
+		.endpoint_id	= 13,
+		.toward_ipa	= false,
+		.channel = {
+			.tre_count	= 128,
+			.event_count	= 128,
+			.tlv_count	= 6,
+		},
+		.endpoint = {
+			.config = {
+				.resource_group	= IPA_RSRC_GROUP_DST_UL_DL_DPL,
+				.aggregation	= true,
+				.rx = {
+					.buffer_size		= 16384,
+					.aggr_hard_limit	= true,
+					.holb_drop		= true,
+				},
+			},
+		},
+	},
 	[IPA_ENDPOINT_MODEM_COMMAND_TX] = {
 		.ee_id		= GSI_EE_MODEM,
 		.channel_id	= 1,
