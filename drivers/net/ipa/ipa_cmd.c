@@ -469,19 +469,14 @@ void ipa_cmd_hdr_init_local_add(struct gsi_trans *trans, u32 offset, u16 size,
 }
 
 void ipa_cmd_register_write_add(struct gsi_trans *trans, u32 offset, u32 value,
-				u32 mask, bool clear_full)
+				u32 mask)
 {
 	struct ipa *ipa = container_of(trans->gsi, struct ipa, gsi);
 	struct ipa_cmd_register_write *payload;
 	union ipa_cmd_payload *cmd_payload;
 	u32 opcode = IPA_CMD_REGISTER_WRITE;
 	dma_addr_t payload_addr;
-	u32 clear_option;
-	u32 options;
 	u16 flags;
-
-	/* pipeline_clear_src_grp is not used */
-	clear_option = clear_full ? pipeline_clear_full : pipeline_clear_hps;
 
 	/* IPA v4.0+ represents the pipeline clear options in the opcode.  It
 	 * also supports a larger offset by encoding additional high-order
@@ -489,13 +484,10 @@ void ipa_cmd_register_write_add(struct gsi_trans *trans, u32 offset, u32 value,
 	 */
 	if (ipa->version >= IPA_VERSION_4_0) {
 		u16 offset_high;
-		u32 val;
 
-		/* Opcode encodes pipeline clear options */
+		/* Opcode encodes pipeline clear options, however... */
 		/* SKIP_CLEAR is always 0 (don't skip pipeline clear) */
-		val = u16_encode_bits(clear_option,
-				      REGISTER_WRITE_OPCODE_CLEAR_OPTION_FMASK);
-		opcode |= val;
+		/* CLEAR_OPTION is always 0 (pipeline_clear_hps) */
 
 		/* Extract the high 4 bits from the offset */
 		offset_high = (u16)u32_get_bits(offset, GENMASK(19, 16));
@@ -504,12 +496,10 @@ void ipa_cmd_register_write_add(struct gsi_trans *trans, u32 offset, u32 value,
 		/* Extract the top 4 bits and encode it into the flags field */
 		flags = u16_encode_bits(offset_high,
 				REGISTER_WRITE_FLAGS_OFFSET_HIGH_FMASK);
-		options = 0;	/* reserved */
 
 	} else {
 		flags = 0;	/* SKIP_CLEAR flag is always 0 */
-		options = u16_encode_bits(clear_option,
-					  REGISTER_WRITE_CLEAR_OPTIONS_FMASK);
+		/* clear_options is always 0 (pipeline_clear_hps) */
 	}
 
 	cmd_payload = ipa_cmd_payload_alloc(ipa, &payload_addr);
@@ -519,7 +509,8 @@ void ipa_cmd_register_write_add(struct gsi_trans *trans, u32 offset, u32 value,
 	payload->offset = cpu_to_le16((u16)offset);
 	payload->value = cpu_to_le32(value);
 	payload->value_mask = cpu_to_le32(mask);
-	payload->clear_options = cpu_to_le32(options);
+	/* clear_options is reserved for IPAv4.0+; always zero otherwise */
+	payload->clear_options = 0;
 
 	gsi_trans_cmd_add(trans, payload, sizeof(*payload), payload_addr,
 			  DMA_NONE, opcode);
@@ -634,7 +625,7 @@ void ipa_cmd_pipeline_clear_add(struct gsi_trans *trans)
 	reinit_completion(&ipa->completion);
 
 	/* Issue a no-op register write command (mask 0 means no write) */
-	ipa_cmd_register_write_add(trans, 0, 0, 0, true);
+	ipa_cmd_register_write_add(trans, 0, 0, 0);
 
 	/* Send a data packet through the IPA pipeline.  The packet_init
 	 * command says to send the next packet directly to the exception

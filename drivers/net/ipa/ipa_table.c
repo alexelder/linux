@@ -402,7 +402,7 @@ int ipa_table_hash_flush(struct ipa *ipa)
 	val = IPV4_FILTER_HASH_FMASK | IPV6_FILTER_HASH_FMASK;
 	val |= IPV6_ROUTER_HASH_FMASK | IPV4_ROUTER_HASH_FMASK;
 
-	ipa_cmd_register_write_add(trans, offset, val, val, false);
+	ipa_cmd_register_write_add(trans, offset, val, val);
 
 	gsi_trans_commit_wait(trans);
 

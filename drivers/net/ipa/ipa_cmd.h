@@ -127,10 +127,9 @@ void ipa_cmd_hdr_init_local_add(struct gsi_trans *trans, u32 offset, u16 size,
  * @offset:	Offset of register to be written
  * @value:	Value to be written
  * @mask:	Mask of bits in register to update with bits from value
- * @clear_full: Pipeline clear option; true means full pipeline clear
  */
 void ipa_cmd_register_write_add(struct gsi_trans *trans, u32 offset, u32 value,
-				u32 mask, bool clear_full);
+				u32 mask);
 
 /**
  * ipa_cmd_dma_shared_mem_add() - Add a DMA memory command to a transaction

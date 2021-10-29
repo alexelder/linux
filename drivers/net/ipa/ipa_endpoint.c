@@ -416,7 +416,7 @@ int ipa_endpoint_modem_exception_reset_all(struct ipa *ipa)
 		 * means status is disabled on the endpoint, and as a
 		 * result all other fields in the register are ignored.
 		 */
-		ipa_cmd_register_write_add(trans, offset, 0, ~0, false);
+		ipa_cmd_register_write_add(trans, offset, 0, ~0);
 	}
 
 	ipa_cmd_pipeline_clear_add(trans);
