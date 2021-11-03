@@ -868,6 +868,10 @@ static void ipa_endpoint_init_hol_block_timer(struct ipa_endpoint *endpoint,
 	u32 offset;
 	u32 val;
 
+	/* This register is valid only for RX endpoints */
+	if (endpoint->toward_ipa)
+		return;
+
 	/* This should only be changed when HOL_BLOCK_EN is disabled */
 	offset = IPA_REG_ENDP_INIT_HOL_BLOCK_TIMER_N_OFFSET(endpoint_id);
 	val = hol_block_timer_val(ipa, microseconds);
@@ -880,6 +884,10 @@ ipa_endpoint_init_hol_block_enable(struct ipa_endpoint *endpoint, bool enable)
 	u32 endpoint_id = endpoint->endpoint_id;
 	u32 offset;
 	u32 val;
+
+	/* This register is valid only for RX endpoints */
+	if (endpoint->toward_ipa)
+		return;
 
 	val = enable ? HOL_BLOCK_EN_FMASK : 0;
 	offset = IPA_REG_ENDP_INIT_HOL_BLOCK_EN_N_OFFSET(endpoint_id);
@@ -896,7 +904,7 @@ void ipa_endpoint_modem_hol_block_clear_all(struct ipa *ipa)
 	for (i = 0; i < IPA_ENDPOINT_MAX; i++) {
 		struct ipa_endpoint *endpoint = &ipa->endpoint[i];
 
-		if (endpoint->toward_ipa || endpoint->ee_id != GSI_EE_MODEM)
+		if (endpoint->ee_id != GSI_EE_MODEM)
 			continue;
 
 		ipa_endpoint_init_hol_block_enable(endpoint, false);
@@ -1546,6 +1554,10 @@ static void ipa_endpoint_program(struct ipa_endpoint *endpoint)
 	ipa_endpoint_init_hdr_metadata_mask(endpoint);
 	ipa_endpoint_init_mode(endpoint);
 	ipa_endpoint_init_aggr(endpoint);
+	/* Disable dropping packets to avoid head-of-line blocking */
+	ipa_endpoint_init_hol_block_enable(endpoint, false);
+	/* Zero the timer (even though it's ignored while disabled) */
+	ipa_endpoint_init_hol_block_timer(endpoint, 0);
 	ipa_endpoint_init_deaggr(endpoint);
 	ipa_endpoint_init_rsrc_grp(endpoint);
 	ipa_endpoint_init_seq(endpoint);
