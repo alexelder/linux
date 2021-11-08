@@ -115,8 +115,6 @@ struct gsi_channel {
 	u16 tre_count;
 	u16 event_count;
 
-	struct completion completion;	/* signals channel command completion */
-
 	struct gsi_ring tre_ring;
 	u32 evt_ring_id;
 
@@ -142,7 +140,6 @@ enum gsi_evt_ring_state {
 
 struct gsi_evt_ring {
 	struct gsi_channel *channel;
-	struct completion completion;	/* signals event ring state changes */
 	struct gsi_ring ring;
 };
 
@@ -159,7 +156,7 @@ struct gsi {
 	u32 type_enabled_bitmap;	/* GSI IRQ types enabled */
 	u32 ieob_enabled_bitmap;	/* IEOB IRQ enabled (event rings) */
 	int result;			/* Negative errno (generic commands) */
-	struct completion completion;	/* for global EE commands */
+	struct completion completion;	/* Signals GSI command completion */
 	struct mutex mutex;		/* protects commands, programming */
 	struct gsi_channel channel[GSI_CHANNEL_COUNT_MAX];
 	struct gsi_evt_ring evt_ring[GSI_EVT_RING_COUNT_MAX];
