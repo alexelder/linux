@@ -370,12 +370,15 @@ ipa_endpoint_modem_pause_one(struct ipa_endpoint *endpoint, bool enable)
 		return;
 	}
 
-	/* DELAY mode doesn't work correctly on IPA v4.2 */
+	/* Prevent TX endpoints from injecting any more packets.  Normally
+	 * IPA endpoint DELAY mode does this, but that doesn't work correctly
+	 * on IPA v4.2, so we use GSI channel flow control in that case.
+	 */
 	if (ipa->version == IPA_VERSION_4_2)
-		return;
-
-	/* Prevent TX endpoints from injecting any more packets */
-	ipa_endpoint_program_delay(endpoint, enable);
+		gsi_modem_channel_flow_control(&ipa->gsi, endpoint->channel_id,
+					       enable);
+	else
+		ipa_endpoint_program_delay(endpoint, enable);
 }
 
 /* Enable or disable delay or suspend mode on all modem endpoints */

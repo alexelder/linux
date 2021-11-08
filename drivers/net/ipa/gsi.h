@@ -101,6 +101,7 @@ enum gsi_channel_state {
 	GSI_CHANNEL_STATE_STARTED		= 0x2,
 	GSI_CHANNEL_STATE_STOPPED		= 0x3,
 	GSI_CHANNEL_STATE_STOP_IN_PROC		= 0x4,
+	GSI_CHANNEL_STATE_FLOW_CONTROLLED	= 0x5,
 	GSI_CHANNEL_STATE_ERROR			= 0xf,
 };
 
@@ -217,6 +218,17 @@ int gsi_channel_start(struct gsi *gsi, u32 channel_id);
  * Return:	0 if successful, or a negative error code
  */
 int gsi_channel_stop(struct gsi *gsi, u32 channel_id);
+
+/**
+ * gsi_modem_channel_flow_control() - Enable/disable channel flow control
+ * @gsi:	GSI pointer returned by gsi_setup()
+ * @channel_id:	Modem TX channel to to control
+ * @prevent:	Whether to prevent or allow flow
+ *
+ * Return:	0 if successful, or a negative error code
+ */
+int gsi_modem_channel_flow_control(struct gsi *gsi, u32 channel_id,
+				   bool enable);
 
 /**
  * gsi_channel_reset() - Reset an allocated GSI channel
