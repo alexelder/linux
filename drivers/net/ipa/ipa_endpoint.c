@@ -355,26 +355,38 @@ ipa_endpoint_program_suspend(struct ipa_endpoint *endpoint, bool enable)
 	return suspended;
 }
 
-/* Enable or disable delay or suspend mode on all modem endpoints */
-void ipa_endpoint_modem_pause_all(struct ipa *ipa, bool enable)
+/* Enable or disable delay or suspend mode on one modem endpoint */
+static void
+ipa_endpoint_modem_pause_one(struct ipa_endpoint *endpoint, bool enable)
 {
-	u32 endpoint_id;
+	struct ipa *ipa = endpoint->ipa;
+
+	if (endpoint->ee_id != GSI_EE_MODEM)
+		return;
+
+	/* Put RX endpoints into suspend mode */
+	if (!endpoint->toward_ipa) {
+		(void)ipa_endpoint_program_suspend(endpoint, enable);
+		return;
+	}
 
 	/* DELAY mode doesn't work correctly on IPA v4.2 */
 	if (ipa->version == IPA_VERSION_4_2)
 		return;
 
+	/* Prevent TX endpoints from injecting any more packets */
+	ipa_endpoint_program_delay(endpoint, enable);
+}
+
+/* Enable or disable delay or suspend mode on all modem endpoints */
+void ipa_endpoint_modem_pause_all(struct ipa *ipa, bool enable)
+{
+	u32 endpoint_id;
+
 	for (endpoint_id = 0; endpoint_id < IPA_ENDPOINT_MAX; endpoint_id++) {
 		struct ipa_endpoint *endpoint = &ipa->endpoint[endpoint_id];
 
-		if (endpoint->ee_id != GSI_EE_MODEM)
-			continue;
-
-		/* Set TX delay mode or RX suspend mode */
-		if (endpoint->toward_ipa)
-			ipa_endpoint_program_delay(endpoint, enable);
-		else
-			(void)ipa_endpoint_program_suspend(endpoint, enable);
+		ipa_endpoint_modem_pause_one(endpoint, enable);
 	}
 }
 
