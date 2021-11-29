@@ -882,7 +882,7 @@ hp_i2c: &i2c9 {
 
 	/* This gets overridden for SKUs with LTE support. */
 	firmware-name = "qcom/sc7180-trogdor/modem-nolte/mba.mbn",
-			"qcom/sc7180-trogdor/modem-nolte/qdsp6sw.mbn";
+			"qcom/sc7180-trogdor/modem-nolte/modem.mdt";
 
 	resets = <&aoss_reset AOSS_CC_MSS_RESTART>,
 		 <&pdc_reset PDC_MODEM_SYNC_RESET>;
