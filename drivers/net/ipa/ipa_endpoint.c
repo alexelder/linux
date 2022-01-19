@@ -21,6 +21,7 @@
 #include "ipa_interrupt.h"
 #include "ipa_mem.h"
 #include "ipa_modem.h"
+#include "ipa_monitor.h"
 #include "ipa_power.h"
 #include "ipa_reg.h"
 #include "ipa_table.h"
@@ -1300,14 +1301,19 @@ static void ipa_endpoint_status(struct ipa_endpoint *endpoint)
 static int ipa_endpoint_replenish_one(struct ipa_endpoint *endpoint,
 				      struct gsi_trans *trans)
 {
+	gfp_t gfp_mask = GFP_ATOMIC | __GFP_NOWARN;
 	struct page *page;
 	u32 buffer_size;
 	u32 offset;
 	u32 len;
 	int ret;
 
+	/* Monitor buffers aren't released right away so don't use reserves */
+	if (endpoint == endpoint->ipa->name_map[IPA_ENDPOINT_AP_MONITOR_RX])
+		gfp_mask |= __GFP_NOMEMALLOC;
+
 	buffer_size = endpoint->config.rx.buffer_size;
-	page = dev_alloc_pages(get_order(buffer_size));
+	page = __dev_alloc_pages(gfp_mask, get_order(buffer_size));
 	if (!page)
 		return -ENOMEM;
 
@@ -1335,7 +1341,7 @@ static int ipa_endpoint_replenish_one(struct ipa_endpoint *endpoint,
  * an endpoint can be disabled, in which case buffers are not queued to
  * the hardware.
  */
-static void ipa_endpoint_replenish(struct ipa_endpoint *endpoint)
+void ipa_endpoint_replenish(struct ipa_endpoint *endpoint)
 {
 	struct gsi_trans *trans;
 
@@ -1597,7 +1603,8 @@ static void ipa_endpoint_status_parse(struct ipa_endpoint *endpoint,
 void ipa_endpoint_trans_complete(struct ipa_endpoint *endpoint,
 				 struct gsi_trans *trans)
 {
-	struct page *page;
+	struct page *page = trans->data;
+	u32 len = trans->len;
 
 	if (endpoint->toward_ipa)
 		return;
@@ -1605,12 +1612,17 @@ void ipa_endpoint_trans_complete(struct ipa_endpoint *endpoint,
 	if (trans->cancelled)
 		goto done;
 
+	/* Monitor endpoint buffers are replenished separately */
+	if (ipa_monitor_receive(endpoint, page, len)) {
+		trans->data = NULL;	/* Monitor consumes page */
+		return;
+	}
+
 	/* Parse or build a socket buffer using the actual received length */
-	page = trans->data;
 	if (endpoint->config.status_enable)
-		ipa_endpoint_status_parse(endpoint, page, trans->len);
-	else if (ipa_endpoint_skb_build(endpoint, page, trans->len))
-		trans->data = NULL;	/* Pages have been consumed */
+		ipa_endpoint_status_parse(endpoint, page, len);
+	else if (ipa_endpoint_skb_build(endpoint, page, len))
+		trans->data = NULL;	/* Page has been consumed */
 done:
 	ipa_endpoint_replenish(endpoint);
 }
@@ -1911,12 +1923,16 @@ void ipa_endpoint_suspend(struct ipa *ipa)
 
 	ipa_endpoint_suspend_one(ipa->name_map[IPA_ENDPOINT_AP_LAN_RX]);
 	ipa_endpoint_suspend_one(ipa->name_map[IPA_ENDPOINT_AP_COMMAND_TX]);
+
+	ipa_monitor_suspend(ipa);
 }
 
 void ipa_endpoint_resume(struct ipa *ipa)
 {
 	if (!ipa->setup_complete)
 		return;
+
+	ipa_monitor_resume(ipa);
 
 	ipa_endpoint_resume_one(ipa->name_map[IPA_ENDPOINT_AP_COMMAND_TX]);
 	ipa_endpoint_resume_one(ipa->name_map[IPA_ENDPOINT_AP_LAN_RX]);
