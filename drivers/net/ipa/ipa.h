@@ -69,6 +69,8 @@ struct ipa_interrupt;
  * @modem_state:	State of modem (stopped, running)
  * @modem_netdev:	Network device structure used for modem
  * @qmi:		QMI information
+ * @monitor_rx:		Monitor endpoint, if opened
+ * @monitor:		Monitor endpoint information
  */
 struct ipa {
 	struct gsi gsi;
@@ -129,6 +131,9 @@ struct ipa {
 	atomic_t modem_state;		/* enum ipa_modem_state */
 	struct net_device *modem_netdev;
 	struct ipa_qmi qmi;
+
+	struct ipa_endpoint *monitor_rx;
+	struct ipa_monitor *monitor;
 };
 
 /**

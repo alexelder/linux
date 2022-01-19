@@ -22,6 +22,7 @@
 #include "ipa_power.h"
 #include "ipa_data.h"
 #include "ipa_endpoint.h"
+#include "ipa_monitor.h"
 #include "ipa_resource.h"
 #include "ipa_cmd.h"
 #include "ipa_reg.h"
@@ -895,10 +896,14 @@ static int ipa_probe(struct platform_device *pdev)
 	if (ret)
 		goto err_table_exit;
 
+	ret = ipa_monitor_init(ipa);
+	if (ret)
+		goto err_smp2p_exit;
+
 	/* Power needs to be active for config and setup */
 	ret = pm_runtime_get_sync(dev);
 	if (WARN_ON(ret < 0))
-		goto err_power_put;
+		goto err_monitor_exit;
 
 	ret = ipa_config(ipa, data);
 	if (ret)
@@ -933,6 +938,9 @@ err_deconfig:
 	ipa_deconfig(ipa);
 err_power_put:
 	pm_runtime_put_noidle(dev);
+err_monitor_exit:
+	ipa_monitor_exit(ipa);
+err_smp2p_exit:
 	ipa_smp2p_exit(ipa);
 err_table_exit:
 	ipa_table_exit(ipa);
@@ -1002,6 +1010,7 @@ static void ipa_remove(struct platform_device *pdev)
 	ipa_deconfig(ipa);
 out_power_put:
 	pm_runtime_put_noidle(dev);
+	ipa_monitor_exit(ipa);
 	ipa_smp2p_exit(ipa);
 	ipa_table_exit(ipa);
 	ipa_endpoint_exit(ipa);

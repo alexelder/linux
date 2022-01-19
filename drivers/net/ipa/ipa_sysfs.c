@@ -136,10 +136,12 @@ static ssize_t endpoint_id_attr_show(struct device *dev,
 
 ENDPOINT_ID_ATTR(modem_rx, IPA_ENDPOINT_AP_MODEM_RX);
 ENDPOINT_ID_ATTR(modem_tx, IPA_ENDPOINT_AP_MODEM_TX);
+ENDPOINT_ID_ATTR(monitor_rx, IPA_ENDPOINT_AP_MONITOR_RX);
 
 static struct attribute *ipa_endpoint_id_attrs[] = {
 	&dev_attr_endpoint_id_modem_rx.attr.attr,
 	&dev_attr_endpoint_id_modem_tx.attr.attr,
+	&dev_attr_endpoint_id_monitor_rx.attr.attr,
 	NULL
 };
 
