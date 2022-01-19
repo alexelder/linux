@@ -29,6 +29,7 @@ enum ipa_endpoint_name {
 	IPA_ENDPOINT_AP_LAN_RX,
 	IPA_ENDPOINT_AP_MODEM_TX,
 	IPA_ENDPOINT_AP_MODEM_RX,
+	IPA_ENDPOINT_AP_MONITOR_RX,
 	IPA_ENDPOINT_MODEM_COMMAND_TX,
 	IPA_ENDPOINT_MODEM_LAN_TX,
 	IPA_ENDPOINT_MODEM_LAN_RX,
@@ -203,5 +204,7 @@ void ipa_endpoint_trans_complete(struct ipa_endpoint *endpoint,
 				 struct gsi_trans *trans);
 void ipa_endpoint_trans_release(struct ipa_endpoint *endpoint,
 				struct gsi_trans *trans);
+
+void ipa_endpoint_replenish(struct ipa_endpoint *endpoint);
 
 #endif /* _IPA_ENDPOINT_H_ */
