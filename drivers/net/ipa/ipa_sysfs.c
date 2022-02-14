@@ -87,14 +87,45 @@ static ssize_t tx_offload_show(struct device *dev,
 
 static DEVICE_ATTR_RO(tx_offload);
 
+static const char *ipa_monitor_string(struct ipa *ipa)
+{
+	return ipa->version < IPA_VERSION_4_5 ? "ODLv2" : "ODLv3";
+}
+
+static ssize_t monitor_show(struct device *dev,
+			    struct device_attribute *attr, char *buf)
+{
+	struct ipa *ipa = dev_get_drvdata(dev);
+
+	return scnprintf(buf, PAGE_SIZE, "%s\n", ipa_monitor_string(ipa));
+}
+static DEVICE_ATTR_RO(monitor);
+
+static umode_t
+ipa_feature_is_visible(struct kobject *kobj, struct attribute *attr, int n)
+{
+	struct ipa *ipa;
+
+	/* The monitor attribute is the only one that might not be visible */
+	if (attr != &dev_attr_monitor.attr)
+		return attr->mode;
+
+	/* It's visible only when the monitor RX endpoint is defined */
+	ipa = dev_get_drvdata(kobj_to_dev(kobj));
+
+	return ipa->name_map[IPA_ENDPOINT_AP_MONITOR_RX] ? attr->mode : 0;
+}
+
 static struct attribute *ipa_feature_attrs[] = {
 	&dev_attr_rx_offload.attr,
 	&dev_attr_tx_offload.attr,
+	&dev_attr_monitor.attr,
 	NULL
 };
 
 const struct attribute_group ipa_feature_attribute_group = {
 	.name		= "feature",
+	.is_visible	= ipa_feature_is_visible,
 	.attrs		= ipa_feature_attrs,
 };
 

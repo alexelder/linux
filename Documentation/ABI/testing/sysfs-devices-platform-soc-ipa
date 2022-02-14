@@ -26,6 +26,19 @@ Description:
 		attributes describing features implemented by the IPA
 		hardware.
 
+What:		.../XXXXXXX.ipa/feature/monitor
+Date:		May 2022
+KernelVersion:	v5.18
+Contact:	Alex Elder <elder@kernel.org>
+Description:
+		The .../XXXXXXX.ipa/feature/monitor file contains a
+		string indicating the format of headers that precede
+		packet data supplied by the IPA "monitor" device.
+		This file is present only if the hardware supports
+		this feature.  The possible values are "ODLv2" or
+		"ODLv3".  ("ODL" stands for On-Device Logging, which
+		is Qualcomm's internal name for this functionality.)
+
 What:		.../XXXXXXX.ipa/feature/rx_offload
 Date:		June 2021
 KernelVersion:	v5.14
