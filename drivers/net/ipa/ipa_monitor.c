@@ -2,9 +2,14 @@
 
 /* Copyright (C) 2022 Linaro Ltd. */
 
+#include <linux/types.h>
+#include <linux/mm_types.h>
 #include <linux/device.h>
 #include <linux/errno.h>
 #include <linux/pm_runtime.h>
+#include <linux/miscdevice.h>
+#include <linux/poll.h>
+#include <linux/stat.h>
 
 #include <uapi/linux/qcom_ipa_monitor.h>
 
@@ -12,6 +17,9 @@
 #include "ipa_data.h"
 #include "ipa_endpoint.h"
 #include "ipa_monitor.h"
+
+/* Name of the IPA monitor misc device; %u is replaced with the IPA instance */
+#define IPA_MONITOR_NAME	"qcom_ipa%u_monitor"
 
 /**
  * struct ipa_monitor_buffer - IPA buffer for monitor data
@@ -42,6 +50,9 @@ enum ipa_monitor_flag {
  * @count:	Number of entries in the buffers[] array
  * @free:	Index of next available buffer (modulo count)
  * @used:	If != free, index of first used (modulo count)
+ * @file:	File pointer if the monitor device file is open
+ * @wait:	Wait queue head for monitor device file blocking read
+ * @misc:	Monitor miscellaneous device structure
  * @flags:	Bitmap of flags (including open flag)
  *
  * The @buffers[] array is used as a circular FIFO, with each entry able
@@ -51,6 +62,13 @@ enum ipa_monitor_flag {
  * Entries are allocated by incrementing @free, and freed by incrementing
  * @used.  The index values are always taken modulo @count, so there's no
  * need to reset them to 0 to ensure they're in range.
+ *
+ * When the device file is opened, we stash the address of the monitor
+ * structure in the file's private data.  The @file pointer is non-null
+ * when the device file is open.  If the file was open at the time the
+ * driver exits, we reset the file's private_data pointer to NULL.  The
+ * file operations check for this and return an error if it occurs, to
+ * avoid bad pointer references.
  */
 struct ipa_monitor {
 	struct ipa_endpoint *endpoint;
@@ -59,6 +77,10 @@ struct ipa_monitor {
 	u32 count;
 	atomic_t free;
 	atomic_t used;
+
+	struct file *file;
+	wait_queue_head_t wait;
+	struct miscdevice misc;
 
 	DECLARE_BITMAP(flags, IPA_MONITOR_FLAG_COUNT);
 };
@@ -112,6 +134,9 @@ static void ipa_monitor_buffer_hold(struct ipa_monitor *monitor,
 	/* Make sure buffer entry is up-to-date before we let it be used */
 	smp_mb__before_atomic();
 	atomic_inc(&monitor->free);
+
+	/* There could be reader waiting for a buffer to arrive */
+	wake_up_interruptible(&monitor->wait);
 }
 
 /* Drop the first used buffer structure */
@@ -119,7 +144,6 @@ static void ipa_monitor_buffer_drop(struct ipa_monitor *monitor,
 				    struct ipa_monitor_buffer *buffer)
 {
 	put_page(buffer->page);
-	buffer->page = NULL;
 
 	atomic_inc(&monitor->used);
 }
@@ -374,6 +398,145 @@ ipa_monitor_read(struct ipa_monitor *monitor, char __user *buf, size_t size)
 	return -EAGAIN;
 }
 
+/* Update the monitor pointer stashed in the given file structure */
+static void file_monitor_stash(struct file *file, struct ipa_monitor *monitor)
+{
+	/* We use the file private_data field to hold the monitor pointer.
+	 * The pointer is reset to NULL if the driver shuts down.
+	 */
+	file->private_data = monitor;
+
+	wmb();	/* XXX Check this */
+}
+
+/* Get the monitor pointer stashed in the given file structure */
+static struct ipa_monitor *file_monitor_fetch(struct file *file)
+{
+	rmb();	/* XXX Check this*/
+
+	return file->private_data;
+}
+
+/* Returns true when more data available, false if interrupted */
+static bool ipa_monitor_wait(struct ipa_monitor *monitor)
+{
+	return !wait_event_interruptible(monitor->wait,
+					 !!ipa_monitor_buffer_next(monitor));
+}
+
+/* We set this file up as a stream, so the offset is always a null pointer */
+static ssize_t
+monitor_read(struct file *file, char __user *buf, size_t size, loff_t *off)
+{
+	struct ipa_monitor *monitor;
+	char __user *bufp = buf;
+	u32 resid = size;
+	int ret;
+
+	monitor = file_monitor_fetch(file);
+	if (!monitor)
+		return -EIO;		/* Device went away */
+
+	/* Keep reading until there isn't room for the next entry */
+	while (resid) {
+		ret = ipa_monitor_read(monitor, bufp, resid);
+		if (ret > 0) {
+			/* We read some bytes, update and get some more */
+			bufp += ret;
+			resid -= ret;
+			continue;
+		}
+
+		/* Return now if insufficient space in the user buffer */
+		if (!ret)
+			break;
+
+		/* If any "real" error occurred, return it */
+		if (ret != -EAGAIN)
+			return ret;
+
+		/* Nothing to read; we're done if we've copied anything */
+		if (size > resid)
+			break;
+
+		/* Avoid blocking if requested */
+		if (file->f_flags & O_NONBLOCK)
+			return -EAGAIN;
+
+		/* Otherwise, wait for something to arrive and try again */
+		if (!ipa_monitor_wait(monitor))
+			return -EINTR;
+
+		if (!file_monitor_fetch(file))
+			return -EIO;	/* Device went away */
+	}
+
+	return size - resid;	/* Return the number of bytes consumed */
+}
+
+static __poll_t monitor_poll(struct file *file, poll_table *wait)
+{
+	struct ipa_monitor *monitor = file_monitor_fetch(file);
+
+	if (!monitor)
+		return EPOLLERR;	/* Device went away */
+
+	poll_wait(file, &monitor->wait, wait);
+
+	if (!file_monitor_fetch(file))
+		return EPOLLERR;	/* Device went away */
+
+	if (!!ipa_monitor_buffer_next(monitor))
+		return EPOLLIN | EPOLLRDNORM;
+
+	return 0;			/* No buffers to read */
+}
+
+static int monitor_open(struct inode *inode, struct file *file)
+{
+	struct miscdevice *misc = file->private_data;
+	struct ipa_monitor *monitor;
+	int ret;
+
+	monitor = container_of(misc, struct ipa_monitor, misc);
+	ret = ipa_monitor_open(monitor->endpoint->ipa);
+	if (ret)
+		return ret;
+
+	/* Stash the monitor pointer (instead of the misc device) */
+	file_monitor_stash(file, monitor);
+
+	/* This produces a stream of data; there is no "current position." */
+	(void)stream_open(inode, file);
+
+	monitor->file = file;	/* Mark the device file as open */
+
+	return 0;
+}
+
+static int monitor_release(struct inode *inode, struct file *file)
+{
+	struct ipa_monitor *monitor = file_monitor_fetch(file);
+
+	if (!monitor)
+		return -EIO;		/* Device went away */
+
+	monitor->file = NULL;
+
+	ipa_monitor_close(monitor->endpoint->ipa);
+
+	return 0;
+}
+
+static const struct file_operations ipa_monitor_fops = {
+	.owner		= THIS_MODULE,
+	.llseek		= no_llseek,
+	.read		= monitor_read,
+	.poll		= monitor_poll,
+	.open		= monitor_open,
+	.release	= monitor_release,
+};
+
 /* Preallocate an array of buffer structures.  There will be one for each
  * possible "in flight" receive buffer in the monitor endpoint transfer ring.
  * Round it up to the next power of 2, so we can use a simple counter to keep
@@ -414,13 +577,33 @@ static void ipa_monitor_buffer_exit(struct ipa_monitor *monitor)
 	monitor->buffers = NULL;
 }
 
+static char *ipa_monitor_file_name(struct ipa *ipa, const char *proto)
+{
+	size_t size = strlen(proto) + 1;
+	u32 unit = ipa->dev->id;
+	char *name;
+
+	/* We replace "%u" in the prototype with the IPA instance number */
+	if (WARN_ON(unit > 99))
+		return NULL;
+
+	name = kzalloc(size, GFP_KERNEL);
+	if (!name)
+		return NULL;
+
+	/* Incorporate the IPA instance number in the file name */
+	(void)snprintf(name, size, proto, unit);
+
+	return name;
+}
+
 int ipa_monitor_init(struct ipa *ipa)
 {
 	struct ipa_endpoint *endpoint;
 	struct ipa_monitor *monitor;
+	struct miscdevice *misc;
+	const char *name;
 	int ret;
-
-	(void)ipa_monitor_read;		/* XXX */
 
 	/* No monitor function if there's no monitor endoint */
 	endpoint = ipa->name_map[IPA_ENDPOINT_AP_MONITOR_RX];
@@ -439,10 +622,36 @@ int ipa_monitor_init(struct ipa *ipa)
 
 	clear_bit(IPA_MONITOR_FLAG_OPEN, monitor->flags);
 
+	/* Now set up the monitor device file */
+	name = ipa_monitor_file_name(ipa, IPA_MONITOR_NAME);
+	if (!name) {
+		ret = -ENOMEM;
+		goto err_buffer_exit;
+	}
+
+	monitor->file = NULL;
+	init_waitqueue_head(&monitor->wait);
+
+	misc = &monitor->misc;
+	misc->minor = MISC_DYNAMIC_MINOR;
+	misc->name = name;
+	misc->fops = &ipa_monitor_fops;
+	misc->mode = S_IRUSR;
+
+	ret = misc_register(misc);
+	if (ret) {
+		dev_err(ipa->dev, "error %d registering %s\n", ret, name);
+		goto err_free_name;
+	}
+
 	ipa->monitor = monitor;
 
 	return 0;
 
+err_free_name:
+	kfree(name);
+err_buffer_exit:
+	ipa_monitor_buffer_exit(monitor);
 err_monitor_free:
 	kfree(monitor);
 
@@ -456,6 +665,15 @@ void ipa_monitor_exit(struct ipa *ipa)
 	if (!monitor)
 		return;
 	ipa->monitor = NULL;
+
+	/* Try to prevent bad accesses if the monitor device file was open */
+	if (monitor->file)
+		file_monitor_stash(monitor->file, NULL);
+
+	/* Unblock any waiters so they can return an error */
+	wake_up_interruptible(&monitor->wait);
+
+	misc_deregister(&monitor->misc);
 
 	ipa_monitor_buffer_exit(monitor);
 
