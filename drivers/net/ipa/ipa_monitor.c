@@ -21,6 +21,37 @@
 /* Name of the IPA monitor misc device; %u is replaced with the IPA instance */
 #define IPA_MONITOR_NAME	"qcom_ipa%u_monitor"
 
+/* Name of the IPA ADPL and ODL control misc devices */
+#define IPA_ADPL_NAME		"ipa_adpl"
+#define IPA_ODL_CTL_NAME	"ipa_odl_ctl"
+
+/* Definitions for /dev/ipa_odl_ctl IOCTL requests */
+
+struct ipa_odl_ep_info {
+	u32 cons_pipe_num;
+	u32 prod_pipe_num;
+	u32 peripheral_iface_id;
+	u32 ep_type;
+};
+
+#define IPA_IOC_ODL_QUERY_ADAPL_EP_INFO \
+		_IOWR(0xcf, 61, struct ipa_odl_ep_info)
+
+struct ipa_odl_modem_config {
+	u8 config_status;
+};
+
+#define IPA_IOC_ODL_QUERY_MODEM_CONFIG \
+		_IOWR(0xcf, 63, struct ipa_odl_modem_config)
+
+/* Definitions for /dev/ipa_adpl IOCTL requests */
+struct odl_agg_pipe_info {
+         u16 agg_byte_limit;
+};
+
+#define IPA_IOC_ODL_GET_AGG_BYTE_LIMIT \
+		_IOWR(0xcf, 62, struct odl_agg_pipe_info)
+
 /**
  * struct ipa_monitor_buffer - IPA buffer for monitor data
  * @page:	Page (possibly compound) holding received data
@@ -53,6 +84,11 @@ enum ipa_monitor_flag {
  * @file:	File pointer if the monitor device file is open
  * @wait:	Wait queue head for monitor device file blocking read
  * @misc:	Monitor miscellaneous device structure
+ * @adpl_misc:	ADPL miscellaneous device structure
+ * @odl_ctl_file: File pointer for /dev/ipa_odl_ctl (when open)
+ * @saved_file:	Copy of monitor file, used by ODL control file
+ * @odl_ctl_wait: Wait queue head for ODL control file blocking read
+ * @odl_ctl_misc: ODL control file device structure
  * @flags:	Bitmap of flags (including open flag)
  *
  * The @buffers[] array is used as a circular FIFO, with each entry able
@@ -81,6 +117,12 @@ struct ipa_monitor {
 	struct file *file;
 	wait_queue_head_t wait;
 	struct miscdevice misc;
+	struct miscdevice adpl_misc;
+
+	struct file *odl_ctl_file;
+	struct file *saved_file;
+	wait_queue_head_t odl_ctl_wait;
+	struct miscdevice odl_ctl_misc;
 
 	DECLARE_BITMAP(flags, IPA_MONITOR_FLAG_COUNT);
 };
@@ -492,13 +534,11 @@ static __poll_t monitor_poll(struct file *file, poll_table *wait)
 	return 0;			/* No buffers to read */
 }
 
-static int monitor_open(struct inode *inode, struct file *file)
+static int monitor_open_common(struct inode *inode, struct file *file,
+			       struct ipa_monitor *monitor)
 {
-	struct miscdevice *misc = file->private_data;
-	struct ipa_monitor *monitor;
 	int ret;
 
-	monitor = container_of(misc, struct ipa_monitor, misc);
 	ret = ipa_monitor_open(monitor->endpoint->ipa);
 	if (ret)
 		return ret;
@@ -512,6 +552,16 @@ static int monitor_open(struct inode *inode, struct file *file)
 	monitor->file = file;	/* Mark the device file as open */
 
 	return 0;
+}
+
+static int monitor_open(struct inode *inode, struct file *file)
+{
+	struct miscdevice *misc = file->private_data;
+	struct ipa_monitor *monitor;
+
+	monitor = container_of(misc, struct ipa_monitor, misc);
+
+	return monitor_open_common(inode, file, monitor);
 }
 
 static int monitor_release(struct inode *inode, struct file *file)
@@ -535,6 +585,209 @@ static const struct file_operations ipa_monitor_fops = {
 	.poll		= monitor_poll,
 	.open		= monitor_open,
 	.release	= monitor_release,
+};
+
+static int adpl_open(struct inode *inode, struct file *file)
+{
+	struct miscdevice *misc = file->private_data;
+	struct ipa_monitor *monitor;
+
+	monitor = container_of(misc, struct ipa_monitor, adpl_misc);
+
+	return monitor_open_common(inode, file, monitor);
+}
+
+static long adpl_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	struct ipa_monitor *monitor = file_monitor_fetch(file);
+	struct odl_agg_pipe_info agg_pipe_info = { };
+	struct odl_agg_pipe_info __user *dest;
+	u32 limit;
+
+	if (!monitor)
+		return -EIO;		/* Device went away */
+
+	if (cmd != IPA_IOC_ODL_GET_AGG_BYTE_LIMIT)
+		return -EINVAL;
+
+	limit = ipa_endpoint_aggr_bytes(monitor->endpoint);
+	if (!limit)
+		return -ENOTTY;
+
+	agg_pipe_info.agg_byte_limit = limit;
+
+	dest = (struct odl_agg_pipe_info __user *)arg;
+	if (copy_to_user(dest, &agg_pipe_info, sizeof(*dest)))
+		return -EFAULT;
+
+	dev_info(monitor->endpoint->ipa->dev, "ODL buffer size %u\n",
+		 agg_pipe_info.agg_byte_limit);
+
+	return 0;
+}
+
+static const struct file_operations ipa_adpl_fops = {
+	.owner		= THIS_MODULE,
+	.llseek		= no_llseek,
+	.read		= monitor_read,
+	.poll		= monitor_poll,
+	.unlocked_ioctl	= adpl_ioctl,
+	.compat_ioctl	= adpl_ioctl,
+	.open		= adpl_open,
+	.release	= monitor_release,
+};
+
+static ssize_t
+odl_ctl_read(struct file *file, char __user *buf, size_t size, loff_t *off)
+{
+	struct ipa_monitor *monitor = file_monitor_fetch(file);
+	u8 adpl_open;
+
+	if (!monitor)
+		return -EIO;		/* Device went away */
+
+	if (*off)
+		return 0;		/* File is only one byte long */
+
+	adpl_open = monitor->file ? 1 : 0;
+	if (copy_to_user(buf, &adpl_open, sizeof(adpl_open)))
+		return -EFAULT;
+
+	*off += sizeof(adpl_open);
+
+	return sizeof(adpl_open);
+}
+
+/* This is assumed to not be called concurrently */
+static bool monitor_status_changed(struct ipa_monitor *monitor)
+{
+	if (monitor->file == monitor->saved_file)
+		return false;
+
+	monitor->saved_file = monitor->file;
+
+	return true;
+}
+
+static __poll_t odl_ctl_poll(struct file *file, poll_table *wait)
+{
+	struct ipa_monitor *monitor = file_monitor_fetch(file);
+
+	if (!monitor)
+		return EPOLLERR;	/* Device went away */
+
+	if (monitor_status_changed(monitor))
+		return EPOLLIN | EPOLLRDNORM;
+
+	/* Wait for the ADPL file to be opened/closed */
+	poll_wait(file, &monitor->odl_ctl_wait, wait);
+
+	if (!file_monitor_fetch(file))
+		return EPOLLERR;	/* Device went away */
+
+	if (monitor_status_changed(monitor))
+		return EPOLLIN | EPOLLRDNORM;
+
+	return 0;			/* No buffers to read */
+}
+
+static long
+odl_ctl_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	struct ipa_monitor *monitor = file_monitor_fetch(file);
+	struct ipa_odl_modem_config modem_config = { };
+	struct ipa_odl_modem_config __user *src;
+	struct ipa_odl_ep_info __user *dest;
+	struct ipa_odl_ep_info ep_info;
+	struct ipa_endpoint *endpoint;
+	struct device *dev;
+	u8 config_status;
+
+	if (!monitor)
+		return -EIO;		/* Device went away */
+
+	endpoint = monitor->endpoint;
+	dev = endpoint->ipa->dev;
+
+	switch (cmd) {
+	case IPA_IOC_ODL_QUERY_ADAPL_EP_INFO:
+		ep_info.cons_pipe_num = U32_MAX;	/* No consumer */
+		ep_info.prod_pipe_num = endpoint->endpoint_id;
+		ep_info.peripheral_iface_id = 3;	/* ODL_EP_PERIPHERAL */
+		ep_info.ep_type = 2;			/* HSUSB */
+
+		dest = (struct ipa_odl_ep_info __user *)arg;
+		if (copy_to_user(dest, &ep_info, sizeof(*dest)))
+			return -EFAULT;
+
+		dev_info(dev, "ODL endpoint id %u\n", endpoint->endpoint_id);
+		break;
+
+	case IPA_IOC_ODL_QUERY_MODEM_CONFIG:
+		src = (struct ipa_odl_modem_config __user *)arg;
+		if (copy_from_user(&modem_config, src, sizeof(modem_config)))
+			return -EFAULT;
+
+		config_status = modem_config.config_status;
+		dev_info(dev, "ODL modem config %u (%s)\n", config_status,
+			 config_status == 1 ? "SUCCESS" : "???");
+		break;
+
+	default:
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+static int odl_ctl_open(struct inode *inode, struct file *file)
+{
+	struct miscdevice *misc = file->private_data;
+	static DEFINE_MUTEX(odl_ctl_mutex);
+	struct ipa_monitor *monitor;
+
+	monitor = container_of(misc, struct ipa_monitor, odl_ctl_misc);
+
+	mutex_lock(&odl_ctl_mutex);
+
+	if (monitor->odl_ctl_file) {
+		mutex_unlock(&odl_ctl_mutex);
+		return -EBUSY;
+	}
+
+	/* Stash the monitor pointer (instead of the misc device) */
+	file_monitor_stash(file, monitor);
+	monitor->odl_ctl_file = file;
+
+	/* Record the monitor file's current state (open or closed) */
+	monitor->saved_file = monitor->file;
+
+	mutex_unlock(&odl_ctl_mutex);
+
+	return 0;
+}
+
+static int odl_ctl_release(struct inode *inode, struct file *file)
+{
+	struct ipa_monitor *monitor = file_monitor_fetch(file);
+
+	if (!monitor)
+		return -EIO;		/* Device went away */
+
+	monitor->odl_ctl_file = NULL;
+
+	return 0;
+}
+
+static const struct file_operations ipa_odl_ctl_fops = {
+	.owner		= THIS_MODULE,
+	.llseek		= no_llseek,
+	.read		= odl_ctl_read,
+	.poll		= odl_ctl_poll,
+	.unlocked_ioctl	= odl_ctl_ioctl,
+	.compat_ioctl	= odl_ctl_ioctl,
+	.open		= odl_ctl_open,
+	.release	= odl_ctl_release,
 };
 
 /* Preallocate an array of buffer structures.  There will be one for each
@@ -644,10 +897,45 @@ int ipa_monitor_init(struct ipa *ipa)
 		goto err_free_name;
 	}
 
+	/* Now set up the ADPL device file */
+	misc = &monitor->adpl_misc;
+	misc->minor = MISC_DYNAMIC_MINOR;
+	misc->name = IPA_ADPL_NAME;
+	misc->fops = &ipa_adpl_fops;
+	misc->mode = S_IRUSR;
+
+	ret = misc_register(misc);
+	if (ret) {
+		dev_err(ipa->dev, "error %d registering %s\n",
+			ret, IPA_ADPL_NAME);
+		goto err_deregister_monitor;
+	}
+
+	/* Set up the ODL control device file */
+	monitor->odl_ctl_file = NULL;
+	init_waitqueue_head(&monitor->odl_ctl_wait);
+
+	misc = &monitor->odl_ctl_misc;
+	misc->minor = MISC_DYNAMIC_MINOR;
+	misc->name = IPA_ODL_CTL_NAME;
+	misc->fops = &ipa_odl_ctl_fops;
+	misc->mode = S_IRUSR;
+
+	ret = misc_register(misc);
+	if (ret) {
+		dev_err(ipa->dev, "error %d registering %s\n",
+			ret, IPA_ODL_CTL_NAME);
+		goto err_deregister_adpl;
+	}
+
 	ipa->monitor = monitor;
 
 	return 0;
 
+err_deregister_adpl:
+	misc_deregister(&monitor->adpl_misc);
+err_deregister_monitor:
+	misc_deregister(&monitor->misc);
 err_free_name:
 	kfree(name);
 err_buffer_exit:
@@ -669,10 +957,14 @@ void ipa_monitor_exit(struct ipa *ipa)
 	/* Try to prevent bad accesses if the monitor device file was open */
 	if (monitor->file)
 		file_monitor_stash(monitor->file, NULL);
+	if (monitor->odl_ctl_file)
+		file_monitor_stash(monitor->odl_ctl_file, NULL);
 
 	/* Unblock any waiters so they can return an error */
 	wake_up_interruptible(&monitor->wait);
 
+	misc_deregister(&monitor->odl_ctl_misc);
+	misc_deregister(&monitor->adpl_misc);
 	misc_deregister(&monitor->misc);
 
 	ipa_monitor_buffer_exit(monitor);

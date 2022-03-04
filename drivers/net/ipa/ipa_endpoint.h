@@ -170,6 +170,8 @@ struct ipa_endpoint {
 	struct delayed_work replenish_work;		/* global wq */
 };
 
+u32 ipa_endpoint_aggr_bytes(struct ipa_endpoint *endpoint);
+
 void ipa_endpoint_modem_hol_block_clear_all(struct ipa *ipa);
 
 void ipa_endpoint_modem_pause_all(struct ipa *ipa, bool enable);
