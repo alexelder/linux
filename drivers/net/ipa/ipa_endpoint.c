@@ -230,6 +230,19 @@ static u32 ipa_aggr_size_kb(u32 rx_buffer_size, bool aggr_hard_limit)
 	return rx_buffer_size / SZ_1K;
 }
 
+u32 ipa_endpoint_aggr_bytes(struct ipa_endpoint *endpoint)
+{
+	const struct ipa_endpoint_config *config = &endpoint->config;
+	u32 available;
+
+	if (!config->aggregation)
+		return 0;
+
+	available = config->rx.buffer_size - NET_SKB_PAD;
+
+	return SZ_1K * ipa_aggr_size_kb(available, config->rx.aggr_hard_limit);
+}
+
 static bool ipa_endpoint_data_valid_one(struct ipa *ipa, u32 count,
 			    const struct ipa_gsi_endpoint_data *all_data,
 			    const struct ipa_gsi_endpoint_data *data)
