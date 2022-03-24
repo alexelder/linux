@@ -289,81 +289,6 @@ bool ipa_monitor_receive(struct ipa_endpoint *endpoint,
 	return true;
 }
 
-static size_t qcom_dplv2_entry_size(const void *data, u32 len)
-{
-	const struct qcom_dplv2_header *header = data;
-	u16 pkt_len;
-
-	/* Buffer must start with an IPA status header */
-	if (len < sizeof(*header))
-		return 0;
-	len -= sizeof(*header);
-
-	/* Adjust the packet length; packet is padded to 4-byte alignment */
-	pkt_len = round_up(le16_to_cpu(header->pkt_len), 4);
-
-	/* Remainder of the buffer must be big enough to hold the packet data */
-
-	return len < pkt_len ? 0 : sizeof(*header) + pkt_len;
-}
-
-static size_t qcom_dplv3_entry_size(const void *data, u32 len)
-{
-	const struct qcom_dplv3_header *header = data;
-	u16 pkt_len;
-
-	/* Buffer must start with an IPA status header */
-	if (len < sizeof(*header))
-		return 0;
-	len -= sizeof(*header);
-
-	/* Get the packet length and adjust for padding to 8 byte alignment */
-
-	pkt_len = le64_get_bits(header->flags1, IPA_DPLv3_FLAGS1_PKT_LEN_FMASK);
-	pkt_len = round_up(pkt_len, 8);
-
-	/* Remainder of buffer must be big enough to hold the packet data */
-
-	return len < pkt_len ? 0 : sizeof(*header) + pkt_len;
-}
-
-/* Return the size of entry at the data pointer, or 0 if invalid */
-static size_t
-qcom_dpl_entry_size(struct ipa_monitor *monitor, const void *data, u32 len)
-{
-	struct ipa *ipa = monitor->endpoint->ipa;
-
-	if (ipa->version < IPA_VERSION_4_5)
-		return qcom_dplv2_entry_size(data, len);
-
-	return qcom_dplv3_entry_size(data, len);
-}
-
-static size_t ipa_monitor_buffer_max(struct ipa_monitor *monitor,
-				     struct ipa_monitor_buffer *buffer, u32 len)
-{
-	void *data = page_address(buffer->page) + buffer->offset;
-	u32 resid = buffer->resid;
-	size_t max = 0;
-	size_t size;
-
-	/* Get the size of the next entry in the buffer */
-	while ((size = qcom_dpl_entry_size(monitor, data, resid))) {
-		/* If it won't fit, we're done */
-		if (len < size)
-			break;
-
-		/* Otherwise account for it, and keep going */
-		max += size;
-		len -= size;
-
-		data += size;
-		resid -= size;
-	}
-
-	return max;
-}
-
 /* Copy monitor entries to a user buffer.  Return value is either
  * the number of bytes copied or a negative error code.  A zero
  * return value indicates the user buffer size is not sufficient to
@@ -392,19 +317,7 @@ ipa_monitor_read(struct ipa_monitor *monitor, char __user *buf, size_t size)
 		}
 
 		/* See how much we can copy */
-		if (resid < buffer->resid) {
-			/* Limited by the what's left in the user buffer */
-			copy = ipa_monitor_buffer_max(monitor, buffer, resid);
-			if (!copy)
-				break;	/* Not enough room for next entry */
-		} else {
-			/* Limited by what's left in the page */
-			copy = ipa_monitor_buffer_max(monitor, buffer,
-						      buffer->resid);
-			/* Skip the rest if it's too small (not expected) */
-			if (!copy)
-				buffer->resid = 0;
-		}
+		copy = min_t(u32, resid, buffer->resid);
 
 		if (copy) {
 			data = page_address(buffer->page) + buffer->offset;
@@ -416,6 +329,9 @@ ipa_monitor_read(struct ipa_monitor *monitor, char __user *buf, size_t size)
 
 			buffer->offset += copy;
 			buffer->resid -= copy;
+		} else {
+			printk(" === zero-length copy???\n");
+			break;
 		}
 
 		/* Consume the buffer if we're done with it */
