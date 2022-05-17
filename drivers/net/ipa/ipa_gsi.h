@@ -31,19 +31,6 @@ void ipa_gsi_trans_complete(struct gsi_trans *trans);
  */
 void ipa_gsi_trans_release(struct gsi_trans *trans);
 
-/**
- * ipa_gsi_channel_tx_completed() - GSI transaction completion callback
- * @gsi:	GSI pointer
- * @channel_id:	Channel number
- * @count:	Number of transactions completed since last report
- * @byte_count:	Number of bytes transferred represented by transactions
- *
- * This called from the GSI layer to notify the IPA layer that the hardware
- * has reported the completion of some number of transactions.
- */
-void ipa_gsi_channel_tx_completed(struct gsi *gsi, u32 channel_id, u32 count,
-				  u32 byte_count);
-
 /* ipa_gsi_endpoint_data_empty() - Empty endpoint config data test
  * @data:	endpoint configuration data
  *

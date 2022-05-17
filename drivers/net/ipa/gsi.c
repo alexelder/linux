@@ -1124,7 +1124,8 @@ static void gsi_trans_tx_completed(struct gsi_trans *trans)
 	channel->compl_trans_count += trans_count;
 	channel->compl_byte_count += byte_count;
 
-	ipa_gsi_channel_tx_completed(gsi, channel_id, trans_count, byte_count);
+	if (channel->netdev)
+		netdev_completed_queue(channel->netdev, trans_count, byte_count);
 }
 
 /* Channel control interrupt handler */
