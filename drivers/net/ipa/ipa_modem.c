@@ -47,6 +47,7 @@ struct ipa_priv {
 	struct ipa *ipa;
 	struct ipa_endpoint *tx;
 	struct ipa_endpoint *rx;
+
 	struct work_struct work;
 };
 
@@ -302,6 +303,7 @@ void ipa_modem_resume(struct net_device *netdev)
 
 int ipa_modem_start(struct ipa *ipa)
 {
+	struct gsi *gsi = &ipa->gsi;
 	enum ipa_modem_state state;
 	struct net_device *netdev;
 	struct ipa_priv *priv;
@@ -330,14 +332,18 @@ int ipa_modem_start(struct ipa *ipa)
 	INIT_WORK(&priv->work, ipa_modem_wake_queue_work);
 
 	priv->tx->netdev = netdev;
+	gsi->channel[priv->tx->channel_id].netdev = netdev;
 	priv->rx->netdev = netdev;
+	gsi->channel[priv->rx->channel_id].netdev = netdev;
 
 	ipa->modem_netdev = netdev;
 
 	ret = register_netdev(netdev);
 	if (ret) {
 		ipa->modem_netdev = NULL;
+		gsi->channel[priv->rx->channel_id].netdev = NULL;
 		priv->rx->netdev = NULL;
+		gsi->channel[priv->tx->channel_id].netdev = NULL;
 		priv->tx->netdev = NULL;
 
 		free_netdev(netdev);
@@ -373,6 +379,7 @@ int ipa_modem_stop(struct ipa *ipa)
 	/* Clean up the netdev and endpoints if it was started */
 	if (netdev) {
 		struct ipa_priv *priv = netdev_priv(netdev);
+		struct gsi *gsi = &ipa->gsi;
 
 		cancel_work_sync(&priv->work);
 		/* If it was opened, stop it first */
@@ -381,7 +388,9 @@ int ipa_modem_stop(struct ipa *ipa)
 		unregister_netdev(netdev);
 
 		ipa->modem_netdev = NULL;
+		gsi->channel[priv->rx->channel_id].netdev = NULL;
 		priv->rx->netdev = NULL;
+		gsi->channel[priv->tx->channel_id].netdev = NULL;
 		priv->tx->netdev = NULL;
 
 		free_netdev(netdev);

@@ -99,6 +99,7 @@ enum gsi_channel_state {
 /* We only care about channels between IPA and AP */
 struct gsi_channel {
 	struct gsi *gsi;
+	struct net_device *netdev;
 	bool toward_ipa;
 	bool command;			/* AP command TX channel or not */
 
