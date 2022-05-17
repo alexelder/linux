@@ -112,9 +112,7 @@ struct gsi_channel {
 
 	/* The following counts are used only for TX endpoints */
 	u64 byte_count;			/* total # bytes transferred */
-	u64 trans_count;		/* total # transactions */
 	u64 queued_byte_count;		/* last reported queued byte count */
-	u64 queued_trans_count;		/* ...and queued trans count */
 	u64 compl_byte_count;		/* last reported completed byte count */
 	u64 compl_trans_count;		/* ...and completed trans count */
 
