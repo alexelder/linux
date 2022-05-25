@@ -593,7 +593,7 @@ static void __gsi_trans_commit(struct gsi_trans *trans, bool ring_db)
 	/* Ring doorbell if requested, or if all TREs are allocated */
 	if (ring_db || !atomic_read(&channel->trans_info.tre_avail)) {
 		/* Report what we're handing off to hardware for TX channels */
-		if (channel->toward_ipa)
+		if (channel->toward_ipa && channel->netdev)
 			gsi_trans_tx_queued(trans);
 		gsi_trans_move_pending(trans);
 		gsi_channel_doorbell(channel);
