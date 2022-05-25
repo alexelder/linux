@@ -1090,8 +1090,7 @@ void gsi_trans_tx_queued(struct gsi_trans *trans)
 	byte_count = channel->byte_count - channel->queued_byte_count;
 	channel->queued_byte_count = channel->byte_count;
 
-	if (channel->netdev)
-		netdev_sent_queue(channel->netdev, byte_count);
+	netdev_sent_queue(channel->netdev, byte_count);
 }
 
 /**
@@ -1124,8 +1123,7 @@ static void gsi_trans_tx_completed(struct gsi_trans *trans)
 	channel->compl_trans_count += trans_count;
 	channel->compl_byte_count += byte_count;
 
-	if (channel->netdev)
-		netdev_completed_queue(channel->netdev, trans_count, byte_count);
+	netdev_completed_queue(channel->netdev, trans_count, byte_count);
 }
 
 /* Channel control interrupt handler */
@@ -1505,15 +1503,17 @@ static void gsi_evt_ring_update(struct gsi *gsi, u32 evt_ring_id, u32 index)
 	event_avail = ring->count - old_index % ring->count;
 	event_done = gsi_ring_virt(ring, index);
 	do {
+		struct gsi_channel *channel;
 		struct gsi_trans *trans;
 
 		trans = gsi_event_trans(gsi, event);
 		if (!trans)
 			return;
 
+		channel = &gsi->channel[trans->channel_id];
 		if (trans->direction == DMA_FROM_DEVICE)
 			trans->len = __le16_to_cpu(event->len);
-		else
+		else if (channel->netdev)
 			gsi_trans_tx_completed(trans);
 
 		gsi_trans_move_complete(trans);
