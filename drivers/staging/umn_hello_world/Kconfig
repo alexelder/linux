@@ -1,0 +1,6 @@
+# SPDX-License-Identifier: GPL-2.0
+config UMN_HELLO_WORLD
+	tristate "University of Minnesota 'Hello, world!' driver"
+	help
+	  Select this option if you wish to incorporate the
+	  University of Minnesota "Hello, world!" driver built.
