@@ -276,14 +276,22 @@ int ipa_interrupt_config(struct ipa *ipa)
 		goto err_free_bitmap;
 	}
 
+	ret = device_init_wakeup(dev, true);
+	if (ret) {
+		dev_err(dev, "error %d enabling wakeup\n", ret);
+		goto err_free_irq;
+	}
+
 	ret = enable_irq_wake(irq);
 	if (ret) {
 		dev_err(dev, "error %d enabling wakeup for \"ipa\" IRQ\n", ret);
-		goto err_free_irq;
+		goto err_disable_wakeup;
 	}
 
 	return 0;
 
+err_disable_wakeup:
+	(void)device_init_wakeup(dev, false);
 err_free_irq:
 	free_irq(interrupt->irq, interrupt);
 err_free_bitmap:
@@ -306,6 +314,7 @@ void ipa_interrupt_deconfig(struct ipa *ipa)
 	ret = disable_irq_wake(interrupt->irq);
 	if (ret)
 		dev_err(dev, "error %d disabling \"ipa\" IRQ wakeup\n", ret);
+	(void)device_init_wakeup(dev, false);
 	free_irq(interrupt->irq, interrupt);
 	bitmap_free(interrupt->suspend_enabled);
 }
