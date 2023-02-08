@@ -347,8 +347,8 @@ void ipa_table_reset(struct ipa *ipa, bool modem)
 
 int ipa_table_hash_flush(struct ipa *ipa)
 {
-	const struct ipa_reg *reg;
 	struct gsi_trans *trans;
+	const struct reg *reg;
 	u32 offset;
 	u32 val;
 
@@ -497,7 +497,7 @@ static void ipa_filter_tuple_zero(struct ipa_endpoint *endpoint)
 {
 	u32 endpoint_id = endpoint->endpoint_id;
 	struct ipa *ipa = endpoint->ipa;
-	const struct ipa_reg *reg;
+	const struct reg *reg;
 	u32 offset;
 	u32 val;
 
@@ -556,7 +556,7 @@ static bool ipa_route_id_modem(struct ipa *ipa, u32 route_id)
  */
 static void ipa_route_tuple_zero(struct ipa *ipa, u32 route_id)
 {
-	const struct ipa_reg *reg;
+	const struct reg *reg;
 	u32 offset;
 	u32 val;
 

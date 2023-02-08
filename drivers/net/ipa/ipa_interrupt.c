@@ -46,7 +46,7 @@ struct ipa_interrupt {
 static void ipa_interrupt_process(struct ipa_interrupt *interrupt, u32 irq_id)
 {
 	struct ipa *ipa = interrupt->ipa;
-	const struct ipa_reg *reg;
+	const struct reg *reg;
 	u32 mask = BIT(irq_id);
 	u32 offset;
 
@@ -84,7 +84,7 @@ static irqreturn_t ipa_isr_thread(int irq, void *dev_id)
 	struct ipa_interrupt *interrupt = dev_id;
 	struct ipa *ipa = interrupt->ipa;
 	u32 enabled = interrupt->enabled;
-	const struct ipa_reg *reg;
+	const struct reg *reg;
 	struct device *dev;
 	u32 pending;
 	u32 offset;
@@ -141,7 +141,7 @@ void ipa_interrupt_irq_enable(struct ipa *ipa)
 
 static void ipa_interrupt_enabled_update(struct ipa *ipa)
 {
-	const struct ipa_reg *reg = ipa_reg(ipa, IPA_IRQ_EN);
+	const struct reg *reg = ipa_reg(ipa, IPA_IRQ_EN);
 
 	iowrite32(ipa->interrupt->enabled, ipa->reg_virt + ipa_reg_offset(reg));
 }
@@ -169,7 +169,7 @@ static void ipa_interrupt_suspend_control(struct ipa_interrupt *interrupt,
 	struct ipa *ipa = interrupt->ipa;
 	u32 mask = BIT(endpoint_id % 32);
 	u32 unit = endpoint_id / 32;
-	const struct ipa_reg *reg;
+	const struct reg *reg;
 	u32 offset;
 	u32 val;
 
@@ -214,7 +214,7 @@ void ipa_interrupt_suspend_clear_all(struct ipa_interrupt *interrupt)
 
 	unit_count = DIV_ROUND_UP(ipa->endpoint_count, 32);
 	for (unit = 0; unit < unit_count; unit++) {
-		const struct ipa_reg *reg;
+		const struct reg *reg;
 		u32 val;
 
 		reg = ipa_reg(ipa, IRQ_SUSPEND_INFO);
@@ -240,7 +240,7 @@ struct ipa_interrupt *ipa_interrupt_config(struct ipa *ipa)
 {
 	struct device *dev = &ipa->pdev->dev;
 	struct ipa_interrupt *interrupt;
-	const struct ipa_reg *reg;
+	const struct reg *reg;
 	unsigned int irq;
 	int ret;
 
