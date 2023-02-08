@@ -349,7 +349,6 @@ int ipa_table_hash_flush(struct ipa *ipa)
 {
 	struct gsi_trans *trans;
 	const struct reg *reg;
-	u32 offset;
 	u32 val;
 
 	if (!ipa_table_hash_support(ipa))
@@ -363,7 +362,6 @@ int ipa_table_hash_flush(struct ipa *ipa)
 
 	if (ipa->version < IPA_VERSION_5_0) {
 		reg = ipa_reg(ipa, FILT_ROUT_HASH_FLUSH);
-		offset = ipa_reg_offset(reg);
 
 		val = ipa_reg_bit(reg, IPV6_ROUTER_HASH);
 		val |= ipa_reg_bit(reg, IPV6_FILTER_HASH);
@@ -371,14 +369,13 @@ int ipa_table_hash_flush(struct ipa *ipa)
 		val |= ipa_reg_bit(reg, IPV4_FILTER_HASH);
 	} else {
 		reg = ipa_reg(ipa, FILT_ROUT_CACHE_FLUSH);
-		offset = ipa_reg_offset(reg);
 
 		/* IPA v5.0+ uses a unified cache (both IPv4 and IPv6) */
 		val = ipa_reg_bit(reg, ROUTER_CACHE);
 		val |= ipa_reg_bit(reg, FILTER_CACHE);
 	}
 
-	ipa_cmd_register_write_add(trans, offset, val, val, false);
+	ipa_cmd_register_write_add(trans, reg_offset(reg), val, val, false);
 
 	gsi_trans_commit_wait(trans);
 
@@ -504,7 +501,7 @@ static void ipa_filter_tuple_zero(struct ipa_endpoint *endpoint)
 	if (ipa->version < IPA_VERSION_5_0) {
 		reg = ipa_reg(ipa, ENDP_FILTER_ROUTER_HSH_CFG);
 
-		offset = ipa_reg_n_offset(reg, endpoint_id);
+		offset = reg_n_offset(reg, endpoint_id);
 		val = ioread32(endpoint->ipa->reg_virt + offset);
 
 		/* Zero all filter-related fields, preserving the rest */
@@ -512,7 +509,7 @@ static void ipa_filter_tuple_zero(struct ipa_endpoint *endpoint)
 	} else {
 		/* IPA v5.0 separates filter and router cache configuration */
 		reg = ipa_reg(ipa, ENDP_FILTER_CACHE_CFG);
-		offset = ipa_reg_n_offset(reg, endpoint_id);
+		offset = reg_n_offset(reg, endpoint_id);
 
 		/* Zero all filter-related fields */
 		val = 0;
@@ -562,7 +559,7 @@ static void ipa_route_tuple_zero(struct ipa *ipa, u32 route_id)
 
 	if (ipa->version < IPA_VERSION_5_0) {
 		reg = ipa_reg(ipa, ENDP_FILTER_ROUTER_HSH_CFG);
-		offset = ipa_reg_n_offset(reg, route_id);
+		offset = reg_n_offset(reg, route_id);
 
 		val = ioread32(ipa->reg_virt + offset);
 
@@ -571,7 +568,7 @@ static void ipa_route_tuple_zero(struct ipa *ipa, u32 route_id)
 	} else {
 		/* IPA v5.0 separates filter and router cache configuration */
 		reg = ipa_reg(ipa, ENDP_ROUTER_CACHE_CFG);
-		offset = ipa_reg_n_offset(reg, route_id);
+		offset = reg_n_offset(reg, route_id);
 
 		/* Zero all route-related fields */
 		val = 0;
