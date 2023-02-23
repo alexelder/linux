@@ -13,6 +13,7 @@
 #include "ipa.h"
 #include "ipa_uc.h"
 #include "ipa_power.h"
+#include "ipa_interrupt.h"
 
 /**
  * DOC:  The IPA embedded microcontroller

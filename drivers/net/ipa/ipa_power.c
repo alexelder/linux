@@ -16,6 +16,7 @@
 
 #include "ipa.h"
 #include "ipa_power.h"
+#include "ipa_interrupt.h"
 #include "ipa_endpoint.h"
 #include "ipa_modem.h"
 #include "ipa_data.h"
