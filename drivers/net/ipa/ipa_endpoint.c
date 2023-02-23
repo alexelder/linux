@@ -22,6 +22,7 @@
 #include "ipa_table.h"
 #include "ipa_gsi.h"
 #include "ipa_power.h"
+#include "ipa_interrupt.h"
 
 /* Hardware is told about receive buffers once a "batch" has been queued */
 #define IPA_REPLENISH_BATCH	16		/* Must be non-zero */
