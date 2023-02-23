@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 
 /* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
- * Copyright (C) 2018-2022 Linaro Ltd.
+ * Copyright (C) 2018-2023 Linaro Ltd.
  */
 #ifndef _IPA_INTERRUPT_H_
 #define _IPA_INTERRUPT_H_
@@ -11,7 +11,6 @@
 
 struct ipa;
 struct ipa_interrupt;
-enum ipa_irq_id;
 
 /**
  * ipa_interrupt_suspend_enable - Enable TX_SUSPEND for an endpoint

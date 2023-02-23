@@ -23,7 +23,6 @@
 #define GSI_TLV_MAX		64
 
 struct device;
-struct scatterlist;
 struct platform_device;
 
 struct gsi;
