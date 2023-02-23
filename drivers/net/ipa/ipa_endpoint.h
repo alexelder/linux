@@ -18,6 +18,7 @@ struct sk_buff;
 
 struct ipa;
 struct ipa_gsi_endpoint_data;
+struct gsi_trans;
 
 /* Non-zero granularity of counter used to implement aggregation timeout */
 #define IPA_AGGR_GRANULARITY		500	/* microseconds */
@@ -199,9 +200,9 @@ int ipa_endpoint_init(struct ipa *ipa, u32 count,
 		      const struct ipa_gsi_endpoint_data *data);
 void ipa_endpoint_exit(struct ipa *ipa);
 
-void ipa_endpoint_trans_complete(struct ipa_endpoint *ipa,
+void ipa_endpoint_trans_complete(struct ipa_endpoint *endpoint,
 				 struct gsi_trans *trans);
-void ipa_endpoint_trans_release(struct ipa_endpoint *ipa,
+void ipa_endpoint_trans_release(struct ipa_endpoint *endpoint,
 				struct gsi_trans *trans);
 
 #endif /* _IPA_ENDPOINT_H_ */
