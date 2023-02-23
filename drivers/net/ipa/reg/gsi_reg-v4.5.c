@@ -2,11 +2,13 @@
 
 /* Copyright (C) 2023 Linaro Ltd. */
 
+#include <linux/kernel.h>
 #include <linux/types.h>
+#include <linux/bits.h>
 
-#include "../gsi.h"
 #include "../reg.h"
 #include "../gsi_reg.h"
+#include "../ipa_version.h"
 
 REG(INTER_EE_SRC_CH_IRQ_MSK, inter_ee_src_ch_irq_msk,
     0x0000c020 + 0x1000 * GSI_EE_AP);

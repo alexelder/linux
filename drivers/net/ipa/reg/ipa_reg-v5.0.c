@@ -2,10 +2,12 @@
 
 /* Copyright (C) 2023 Linaro Ltd. */
 
+#include <linux/kernel.h>
 #include <linux/types.h>
+#include <linux/bits.h>
 
-#include "../ipa.h"
 #include "../ipa_reg.h"
+#include "../ipa_version.h"
 
 static const u32 reg_flavor_0_fmask[] = {
 	[MAX_PIPES]					= GENMASK(7, 0),
