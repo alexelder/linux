@@ -7,7 +7,6 @@
 #define _IPA_INTERRUPT_H_
 
 #include <linux/types.h>
-#include <linux/bits.h>
 
 #include "ipa_reg.h"
 
