@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0
 
-/* Copyright (C) 2019-2021 Linaro Ltd. */
+/* Copyright (C) 2019-2023 Linaro Ltd. */
 
+#include <linux/kernel.h>
 #include <linux/log2.h>
 
-#include "../gsi.h"
 #include "../ipa_data.h"
 #include "../ipa_endpoint.h"
 #include "../ipa_mem.h"
