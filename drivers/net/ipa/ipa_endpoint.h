@@ -7,10 +7,9 @@
 #define _IPA_ENDPOINT_H_
 
 #include <linux/types.h>
+#include <linux/bitmap.h>
 #include <linux/workqueue.h>
-#include <linux/if_ether.h>
 
-#include "gsi.h"
 #include "ipa_reg.h"
 
 struct net_device;

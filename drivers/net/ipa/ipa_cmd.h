@@ -7,7 +7,6 @@
 #define _IPA_CMD_H_
 
 #include <linux/types.h>
-#include <linux/dma-direction.h>
 
 struct ipa;
 struct ipa_mem;

@@ -6,10 +6,6 @@
 #ifndef _IPA_REG_H_
 #define _IPA_REG_H_
 
-#include <linux/bitfield.h>
-#include <linux/bug.h>
-
-#include "ipa_version.h"
 #include "reg.h"
 
 struct platform_device;

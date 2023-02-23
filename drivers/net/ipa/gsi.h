@@ -7,10 +7,8 @@
 #define _GSI_H_
 
 #include <linux/types.h>
-#include <linux/spinlock.h>
 #include <linux/mutex.h>
 #include <linux/completion.h>
-#include <linux/platform_device.h>
 #include <linux/netdevice.h>
 
 #include "ipa_version.h"
