@@ -1460,9 +1460,11 @@ static int pmu_sbi_device_probe(struct platform_device *pdev)
 	}
 	pdev->dev.groups = pmu_sbi_groups;
 
+#ifndef CONFIG_ARCH_STARFIVE
 	ret = cpuhp_state_add_instance(CPUHP_AP_PERF_RISCV_STARTING, &pmu->node);
 	if (ret)
 		goto out_unregister;
+#endif
 
 	/* Asynchronously check which standard events are available */
 	schedule_work(&check_std_events_work);
