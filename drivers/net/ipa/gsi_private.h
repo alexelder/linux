@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 
 /* Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
- * Copyright (C) 2018-2022 Linaro Ltd.
+ * Copyright (C) 2018-2023 Linaro Ltd.
  */
 #ifndef _GSI_PRIVATE_H_
 #define _GSI_PRIVATE_H_
@@ -10,6 +10,7 @@
 
 #include <linux/types.h>
 
+struct gsi;
 struct gsi_trans;
 struct gsi_ring;
 struct gsi_channel;
