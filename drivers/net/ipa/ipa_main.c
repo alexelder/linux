@@ -18,6 +18,7 @@
 #include <linux/pm_runtime.h>
 #include <linux/firmware/qcom/qcom_scm.h>
 #include <linux/soc/qcom/mdt_loader.h>
+#include <linux/platform_device.h>
 
 #include "ipa.h"
 #include "ipa_power.h"

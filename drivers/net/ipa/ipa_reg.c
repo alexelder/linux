@@ -5,6 +5,7 @@
  */
 
 #include <linux/io.h>
+#include <linux/platform_device.h>
 
 #include "ipa.h"
 #include "ipa_reg.h"

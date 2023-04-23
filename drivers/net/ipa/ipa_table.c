@@ -13,6 +13,7 @@
 #include <linux/build_bug.h>
 #include <linux/device.h>
 #include <linux/dma-mapping.h>
+#include <linux/platform_device.h>
 
 #include "ipa.h"
 #include "ipa_version.h"

@@ -9,6 +9,7 @@
 #include <linux/slab.h>
 #include <linux/bitfield.h>
 #include <linux/dma-direction.h>
+#include <linux/platform_device.h>
 
 #include "gsi.h"
 #include "gsi_trans.h"

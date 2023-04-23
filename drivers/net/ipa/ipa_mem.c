@@ -11,6 +11,7 @@
 #include <linux/iommu.h>
 #include <linux/io.h>
 #include <linux/soc/qcom/smem.h>
+#include <linux/platform_device.h>
 
 #include "ipa.h"
 #include "ipa_reg.h"

@@ -10,7 +10,6 @@
 #include <linux/spinlock.h>
 #include <linux/mutex.h>
 #include <linux/completion.h>
-#include <linux/platform_device.h>
 #include <linux/netdevice.h>
 
 #include "ipa_version.h"
