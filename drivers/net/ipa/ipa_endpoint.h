@@ -10,6 +10,7 @@
 #include <linux/bitmap.h>
 #include <linux/workqueue.h>
 
+#include "ipa_version.h"
 #include "ipa_reg.h"
 
 struct net_device;
