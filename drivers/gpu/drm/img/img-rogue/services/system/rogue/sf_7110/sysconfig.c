@@ -100,7 +100,7 @@ extern void sifive_l2_flush64_range(unsigned long start, unsigned long len);
 
 void do_sifive_l2_flush64_range(unsigned long start, unsigned long len)
 {
-	sifive_l2_flush64_range(ALIGN_DOWN(start, 64), len + start % 64);
+	sifive_ccache_flush_range(ALIGN_DOWN(start, 64), len + start % 64);
 }
 
 void do_invalid_range(unsigned long start, unsigned long len)
