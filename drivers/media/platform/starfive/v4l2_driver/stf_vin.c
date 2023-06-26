@@ -362,7 +362,7 @@ static void vin_buf_l2cache_flush(struct vin_output *output)
 
 	if (!list_empty(&output->pending_bufs)) {
 		list_for_each_entry(buffer, &output->pending_bufs, queue) {
-			sifive_l2_flush64_range(buffer->addr[0], buffer->sizeimage);
+			sifive_ccache_flush_range(buffer->addr[0], buffer->sizeimage);
 		}
 	}
 }
@@ -1158,7 +1158,7 @@ static void vin_buffer_done(struct vin_line *line, struct vin_params *params)
 		 * Flush L2 cache to make sure data is updated.
 		 */
 		if (ready_buf->vb.vb2_buf.memory == VB2_MEMORY_MMAP)
-			sifive_l2_flush64_range(ready_buf->addr[0], ready_buf->sizeimage);
+			sifive_ccache_flush_range(ready_buf->addr[0], ready_buf->sizeimage);
 
 		vb2_buffer_done(&ready_buf->vb.vb2_buf, VB2_BUF_STATE_DONE);
 	}
