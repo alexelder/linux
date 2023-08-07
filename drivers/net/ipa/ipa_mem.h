@@ -6,6 +6,8 @@
 #ifndef _IPA_MEM_H_
 #define _IPA_MEM_H_
 
+#include <linux/types.h>
+
 struct ipa;
 struct ipa_mem_data;
 

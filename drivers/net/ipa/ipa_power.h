@@ -6,6 +6,8 @@
 #ifndef _IPA_POWER_H_
 #define _IPA_POWER_H_
 
+#include <linux/types.h>
+
 #include "ipa_reg.h"
 
 struct device;
