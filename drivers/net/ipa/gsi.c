@@ -1361,6 +1361,8 @@ static void gsi_isr_general(struct gsi *gsi)
  * @irq:	Interrupt number (ignored)
  * @dev_id:	GSI pointer supplied to request_irq()
  *
+ * Return:	Always returns IRQ_HANDLED
+ *
  * This is the main handler function registered for the GSI IRQ. Each type
  * of interrupt has a separate handler function that is called from here.
  */

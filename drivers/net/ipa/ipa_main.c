@@ -103,6 +103,8 @@ enum ipa_firmware_loader {
  * ipa_setup() - Set up IPA hardware
  * @ipa:	IPA pointer
  *
+ * Return:	0 if successful, or a negative error code
+ *
  * Perform initialization that requires issuing immediate commands on
  * the command TX endpoint.  If the modem is doing GSI firmware load
  * and initialization, this function will be called when an SMP2P
@@ -527,6 +529,8 @@ static void ipa_hardware_deconfig(struct ipa *ipa)
  * ipa_config() - Configure IPA hardware
  * @ipa:	IPA pointer
  * @data:	IPA configuration data
+ *
+ * Return:	0 if successful, or a negative error code
  *
  * Perform initialization requiring IPA power to be enabled.
  */

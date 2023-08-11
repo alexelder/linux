@@ -406,6 +406,8 @@ void ipa_mem_deconfig(struct ipa *ipa)
  * ipa_mem_zero_modem() - Zero IPA-local memory regions owned by the modem
  * @ipa:	IPA pointer
  *
+ * Return:	0 if successful, or -EBUSY if no more command transactions
+ *
  * Zero regions of IPA-local memory used by the modem.  These are configured
  * (and initially zeroed) by ipa_mem_setup(), but if the modem crashes and
  * restarts via SSR we need to re-initialize them.  A QMI message tells the
@@ -440,6 +442,8 @@ int ipa_mem_zero_modem(struct ipa *ipa)
  * @ipa:	IPA pointer
  * @addr:	Physical address of the IPA region in IMEM
  * @size:	Size (bytes) of the IPA region in IMEM
+ *
+ * Return:	0 if successful, or a negative error code
  *
  * IMEM is a block of shared memory separate from system DRAM, and
  * a portion of this memory is available for the IPA to use.  The
@@ -514,6 +518,8 @@ static void ipa_imem_exit(struct ipa *ipa)
  * @ipa:	IPA pointer
  * @item:	Item ID of SMEM memory
  * @size:	Size (bytes) of SMEM memory region
+ *
+ * Return:	0 if successful, or a negative error code
  *
  * SMEM is a managed block of shared DRAM, from which numbered "items"
  * can be allocated.  One item is designated for use by the IPA.
