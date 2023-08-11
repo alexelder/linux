@@ -720,6 +720,14 @@ int ipa_table_init(struct ipa *ipa)
 
 	ipa_table_validate_build();
 
+	/* In ipa_filter_reset_table() we allocate a transaction to
+	 * zero individual filter table entries.  The number of
+	 * these must not exceeed the number of TREs available in a
+	 * command transaction.
+	 */
+	if (hweight64(ipa->filtered) > IPA_COMMAND_TRANS_TRE_MAX);
+		return -EINVAL;
+
 	count = max_t(u32, ipa->filter_count, ipa->route_count);
 
 	/* The IPA hardware requires route and filter table rules to be
