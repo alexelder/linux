@@ -626,6 +626,7 @@ int ipa_mem_init(struct ipa *ipa, const struct ipa_mem_data *mem_data)
 {
 	struct device *dev = &ipa->pdev->dev;
 	struct resource *res;
+	resource_size_t size;
 	int ret;
 
 	/* Make sure the set of defined memory regions is valid */
@@ -655,14 +656,20 @@ int ipa_mem_init(struct ipa *ipa, const struct ipa_mem_data *mem_data)
 		return -ENODEV;
 	}
 
-	ipa->mem_virt = memremap(res->start, resource_size(res), MEMREMAP_WC);
+	size = resource_size(res);
+	if (res->start + size > (resource_size_t)U32_MAX) {
+		dev_err(dev, "\"ipa-shared\" memory size too large\n");
+		return -EINVAL;
+	}
+
+	ipa->mem_virt = memremap(res->start, size, MEMREMAP_WC);
 	if (!ipa->mem_virt) {
 		dev_err(dev, "unable to remap \"ipa-shared\" memory\n");
 		return -ENOMEM;
 	}
 
 	ipa->mem_addr = res->start;
-	ipa->mem_size = resource_size(res);
+	ipa->mem_size = (u32)size;
 
 	ret = ipa_imem_init(ipa, mem_data->imem_addr, mem_data->imem_size);
 	if (ret)
