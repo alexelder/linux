@@ -285,10 +285,7 @@ static int ipa_filter_reset(struct ipa *ipa, bool modem)
 	return ipa_filter_reset_table(ipa, true, true, modem);
 }
 
-/* The AP routes and modem routes are each contiguous within the
- * table.  We can update each table with a single command, and we
- * won't exceed the per-transaction command limit.
- * */
+/* Reset (by zeroing) either the AP or modem routing table memory regions */
 static int ipa_route_reset(struct ipa *ipa, bool modem)
 {
 	bool hash_support = ipa_table_hash_support(ipa);
