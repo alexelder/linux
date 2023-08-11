@@ -334,6 +334,12 @@ int ipa_mem_config(struct ipa *ipa)
 	/* The fields in the register are in 8 byte units */
 	ipa->mem_offset = 8 * reg_decode(reg, MEM_BADDR, val);
 
+	if (ipa->mem_offset != ipa->mem_addr) {
+		dev_warn(dev, "IPA memory offset mismatch (0x%08x != 0x%08x)\n",
+			 ipa->mem_offset, ipa->mem_addr);
+		return -EINVAL;
+	}
+
 	/* Make sure the end is within the region's mapped space */
 	mem_size = 8 * reg_decode(reg, MEM_SIZE, val);
 
@@ -656,6 +662,11 @@ int ipa_mem_init(struct ipa *ipa, const struct ipa_mem_data *mem_data)
 		return -ENODEV;
 	}
 
+	if (res->start > (resource_size_t)U32_MAX) {
+		dev_err(dev, "\"ipa-shared\" memory base too large\n");
+		return -EINVAL;
+	}
+
 	size = resource_size(res);
 	if (res->start + size > (resource_size_t)U32_MAX) {
 		dev_err(dev, "\"ipa-shared\" memory size too large\n");
@@ -668,7 +679,7 @@ int ipa_mem_init(struct ipa *ipa, const struct ipa_mem_data *mem_data)
 		return -ENOMEM;
 	}
 
-	ipa->mem_addr = res->start;
+	ipa->mem_addr = (u32)res->start;
 	ipa->mem_size = (u32)size;
 
 	ret = ipa_imem_init(ipa, mem_data->imem_addr, mem_data->imem_size);

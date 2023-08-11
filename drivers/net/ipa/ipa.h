@@ -94,7 +94,7 @@ struct ipa {
 	void __iomem *reg_virt;
 	const struct regs *regs;
 
-	dma_addr_t mem_addr;
+	u32 mem_addr;
 	void *mem_virt;
 	u32 mem_offset;
 	u32 mem_size;
