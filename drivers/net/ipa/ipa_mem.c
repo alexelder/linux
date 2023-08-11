@@ -322,6 +322,7 @@ int ipa_mem_config(struct ipa *ipa)
 	const struct ipa_mem *mem;
 	const struct reg *reg;
 	dma_addr_t addr;
+	u32 mem_offset;
 	u32 mem_size;
 	void *virt;
 	u32 val;
@@ -332,23 +333,24 @@ int ipa_mem_config(struct ipa *ipa)
 	val = ioread32(ipa->reg_virt + reg_offset(reg));
 
 	/* The fields in the register are in 8 byte units */
-	ipa->mem_offset = 8 * reg_decode(reg, MEM_BADDR, val);
+	mem_offset = 8 * reg_decode(reg, MEM_BADDR, val);
 
-	if (ipa->mem_offset != ipa->mem_addr) {
+	/* Make sure this matches what we got from the DTB */
+	if (mem_offset != ipa->mem_offset) {
 		dev_warn(dev, "IPA memory offset mismatch (0x%08x != 0x%08x)\n",
-			 ipa->mem_offset, ipa->mem_addr);
+			 mem_offset, ipa->mem_offset);
 		return -EINVAL;
 	}
 
 	/* Make sure the end is within the region's mapped space */
 	mem_size = 8 * reg_decode(reg, MEM_SIZE, val);
 
-	/* If the sizes don't match, issue a warning */
-	if (ipa->mem_offset + mem_size < ipa->mem_size) {
+	/* Adjust and warn if the size doesn't match what was in the DTB */
+	if (mem_offset + mem_size < ipa->mem_size) {
 		dev_warn(dev, "limiting IPA memory size to 0x%08x\n",
 			 mem_size);
 		ipa->mem_size = mem_size;
-	} else if (ipa->mem_offset + mem_size > ipa->mem_size) {
+	} else if (mem_offset + mem_size > ipa->mem_size) {
 		dev_dbg(dev, "ignoring larger reported memory size: 0x%08x\n",
 			mem_size);
 	}
@@ -679,7 +681,7 @@ int ipa_mem_init(struct ipa *ipa, const struct ipa_mem_data *mem_data)
 		return -ENOMEM;
 	}
 
-	ipa->mem_addr = (u32)res->start;
+	ipa->mem_offset = (u32)res->start;
 	ipa->mem_size = (u32)size;
 
 	ret = ipa_imem_init(ipa, mem_data->imem_addr, mem_data->imem_size);

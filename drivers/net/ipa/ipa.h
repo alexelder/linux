@@ -42,7 +42,6 @@ struct ipa_interrupt;
  * @uc_loaded:		true after microcontroller has reported it's ready
  * @reg_virt:		Virtual address used for IPA register access
  * @regs:		IPA register definitions
- * @mem_addr:		DMA address of IPA-local memory space
  * @mem_virt:		Virtual address of IPA-local memory space
  * @mem_offset:		Offset from @mem_virt used for access to IPA memory
  * @mem_size:		Total size (bytes) of memory at @mem_virt
@@ -94,7 +93,6 @@ struct ipa {
 	void __iomem *reg_virt;
 	const struct regs *regs;
 
-	u32 mem_addr;
 	void *mem_virt;
 	u32 mem_offset;
 	u32 mem_size;
