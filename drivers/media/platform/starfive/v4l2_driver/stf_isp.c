@@ -1217,7 +1217,7 @@ static int isp_get_interface_type(struct media_entity *entity)
 static int isp_set_stream(struct v4l2_subdev *sd, int enable)
 {
 	struct stf_isp_dev *isp_dev = v4l2_get_subdevdata(sd);
-	int ret = 0, interface_type;
+	int interface_type;
 	struct v4l2_mbus_framefmt *fmt;
 	struct v4l2_event src_ch = { 0 };
 
@@ -1225,6 +1225,7 @@ static int isp_set_stream(struct v4l2_subdev *sd, int enable)
 	mutex_lock(&isp_dev->stream_lock);
 	if (enable) {
 		if (isp_dev->stream_count == 0) {
+			v4l2_ctrl_handler_setup(&isp_dev->ctrls.handler);
 			isp_dev->hw_ops->isp_clk_enable(isp_dev);
 			if (!user_config_isp)
 				isp_dev->hw_ops->isp_config_set(isp_dev);
@@ -1256,15 +1257,7 @@ static int isp_set_stream(struct v4l2_subdev *sd, int enable)
 exit:
 	mutex_unlock(&isp_dev->stream_lock);
 
-	mutex_lock(&isp_dev->power_lock);
-	/* restore controls */
-	if (enable && isp_dev->power_count == 1) {
-		mutex_unlock(&isp_dev->power_lock);
-		ret = v4l2_ctrl_handler_setup(&isp_dev->ctrls.handler);
-	} else
-		mutex_unlock(&isp_dev->power_lock);
-
-	return ret;
+	return 0;
 }
 
 /*Try to match sensor format with sink, and then get the index as default.*/
