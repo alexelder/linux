@@ -18,6 +18,7 @@ select:
         enum:
           - starfive,jh7100-dwmac
           - starfive,jh7110-dwmac
+          - starfive,dubhe-dwmac
   required:
     - compatible
 
@@ -33,6 +34,9 @@ properties:
       - items:
           - const: starfive,jh8100-dwmac
           - const: starfive,jh7110-dwmac
+          - const: snps,dwmac-5.20
+      - items:
+          - const: starfive,dubhe-dwmac
           - const: snps,dwmac-5.20
 
   reg:
