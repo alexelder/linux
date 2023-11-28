@@ -285,6 +285,10 @@ config BT_HCIBCM203X
 	  Say Y here to compile support for HCI BCM203x devices into the
 	  kernel or say M to compile it as module (bcm203x).
 
+config BT_AICUSB
+	tristate "AIC8800 btusb driver"
+	help
+	  AIC8800 usb dongle bluetooth support driver
 
 config BT_HCIBCM4377
 	tristate "HCI BCM4377/4378/4387 PCIe driver"
