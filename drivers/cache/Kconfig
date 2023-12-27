@@ -14,6 +14,17 @@ config SIFIVE_CCACHE
 	help
 	  Support for the composable cache controller on SiFive platforms.
 
+config STARFIVE_DUBHE_L2_CACHE
+	bool "StarFive Dubhe L2 Cache controller"
+	depends on ARCH_STARFIVE
+	select RISCV_NONSTANDARD_CACHE_OPS
+	help
+	  Support for the cache controller on StarFive platforms.
+	  StarFive Dubhe Cache Controller implementation predates
+	  RISC-V CMO ISA extension. This allow vendor specific
+	  implementation to handle non-coherent DMA through global
+	  memory pool.
+
 config STARFIVE_STARLINK_CACHE
 	bool "StarFive StarLink Cache controller"
 	depends on RISCV
