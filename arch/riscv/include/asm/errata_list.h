@@ -127,6 +127,8 @@ asm volatile(ALTERNATIVE(						\
 #define THEAD_C9XX_RV_IRQ_PMU			17
 #define THEAD_C9XX_CSR_SCOUNTEROF		0x5c5
 
+DECLARE_STATIC_KEY_FALSE(bypass_envcfg_csr_key);
+
 #endif /* __ASSEMBLY__ */
 
 #endif
