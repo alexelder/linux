@@ -190,6 +190,8 @@ unsigned int wave5_vpu_get_product_id(struct vpu_device *vpu_dev)
 	u32 val = vpu_read_reg(vpu_dev, W5_PRODUCT_NUMBER);
 
 	switch (val) {
+	case WAVE511_CODE:
+		return PRODUCT_ID_511;
 	case WAVE515_CODE:
 		return PRODUCT_ID_515;
 	case WAVE521C_CODE:
@@ -197,7 +199,6 @@ unsigned int wave5_vpu_get_product_id(struct vpu_device *vpu_dev)
 	case WAVE521_CODE:
 	case WAVE521C_DUAL_CODE:
 	case WAVE521E1_CODE:
-	case WAVE511_CODE:
 	case WAVE517_CODE:
 	case WAVE537_CODE:
 		dev_err(vpu_dev->dev, "Unsupported product id (%x)\n", val);
