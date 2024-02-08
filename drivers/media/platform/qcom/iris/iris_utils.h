@@ -1,0 +1,58 @@
+/* SPDX-License-Identifier: GPL-2.0-only */
+/*
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ */
+#ifndef _IRIS_UTILS_H_
+#define _IRIS_UTILS_H_
+
+struct iris_core;
+
+struct iris_hfi_rect_desc {
+	u32 left;
+	u32 top;
+	u32 width;
+	u32 height;
+};
+
+struct iris_hfi_frame_info {
+	u32 picture_type;
+	u32 no_output;
+	u32 data_corrupt;
+	u32 overflow;
+};
+
+#define NUM_MBS_PER_FRAME(height, width) \
+	((ALIGN(height, 16) / 16) * (ALIGN(width, 16) / 16))
+
+static inline enum iris_buffer_type iris_v4l2_type_to_driver(u32 type)
+{
+	switch (type) {
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
+		return BUF_INPUT;
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
+		return BUF_OUTPUT;
+	default:
+		return 0;
+	}
+}
+
+static inline u32 iris_v4l2_type_from_driver(enum iris_buffer_type buffer_type)
+{
+	switch (buffer_type) {
+	case BUF_INPUT:
+		return V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+	case BUF_OUTPUT:
+		return V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+	default:
+		return 0;
+	}
+}
+
+bool iris_res_is_less_than(u32 width, u32 height,
+			   u32 ref_width, u32 ref_height);
+int iris_get_mbpf(struct iris_inst *inst);
+bool iris_split_mode_enabled(struct iris_inst *inst);
+struct iris_inst *iris_get_instance(struct iris_core *core, u32 session_id);
+int iris_wait_for_session_response(struct iris_inst *inst, bool is_flush);
+
+#endif
