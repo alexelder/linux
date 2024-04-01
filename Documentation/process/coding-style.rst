@@ -1235,17 +1235,18 @@ example. Again: WARN*() must not be used for a condition that is expected
 to trigger easily, for example, by user space actions. pr_warn_once() is a
 possible alternative, if you need to notify the user of a problem.
 
-Do not worry about panic_on_warn users
-**************************************
+The panic_on_warn kernel option
+********************************
 
-A few more words about panic_on_warn: Remember that ``panic_on_warn`` is an
-available kernel option, and that many users set this option. This is why
-there is a "Do not WARN lightly" writeup, above. However, the existence of
-panic_on_warn users is not a valid reason to avoid the judicious use
-WARN*(). That is because, whoever enables panic_on_warn has explicitly
-asked the kernel to crash if a WARN*() fires, and such users must be
-prepared to deal with the consequences of a system that is somewhat more
-likely to crash.
+Note that ``panic_on_warn`` is an available kernel option. If it is enabled,
+a WARN*() call whose condition holds leads to a kernel panic.  Many users
+(including Android and many cloud providers) set this option, and this is
+why there is a "Do not WARN lightly" writeup, above.
+
+The existence of this option is not a valid reason to avoid the judicious
+use of warnings. There are other options: ``dev_warn*()`` and ``pr_warn*()``
+issue warnings but do **not** cause the kernel to crash. Use these if you
+want to prevent such panics.
 
 Use BUILD_BUG_ON() for compile-time assertions
 **********************************************
