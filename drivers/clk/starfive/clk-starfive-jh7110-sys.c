@@ -385,6 +385,21 @@ int jh7110_reset_controller_register(struct jh71x0_clk_priv *priv,
 }
 EXPORT_SYMBOL_GPL(jh7110_reset_controller_register);
 
+static int jh7110_syscrg_suspend(struct device *dev)
+{
+	return clk_save_context();
+}
+
+static int jh7110_syscrg_resume(struct device *dev)
+{
+	clk_restore_context();
+	return 0;
+}
+
+static const struct dev_pm_ops jh7110_syscrg_pm_ops = {
+	LATE_SYSTEM_SLEEP_PM_OPS(jh7110_syscrg_suspend, jh7110_syscrg_resume)
+};
+
 /*
  * This clock notifier is called when the rate of PLL0 clock is to be changed.
  * The cpu_root clock should save the curent parent clock and switch its parent
@@ -587,6 +602,7 @@ static struct platform_driver jh7110_syscrg_driver = {
 	.driver = {
 		.name = "clk-starfive-jh7110-sys",
 		.of_match_table = jh7110_syscrg_match,
+		.pm = pm_sleep_ptr(&jh7110_syscrg_pm_ops),
 		.suppress_bind_attrs = true,
 	},
 };
