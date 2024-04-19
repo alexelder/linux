@@ -273,6 +273,16 @@ config DRM_PANEL_JDI_LPM102A188A
 	  The panel has a 2560×1800 resolution. It provides a MIPI DSI interface
 	  to the host.
 
+config DRM_PANEL_STARFIVE_JADARD
+	tristate "STARFIVE JADARD WXGA DSI panel"
+	depends on OF
+	depends on DRM_MIPI_DSI
+	depends on BACKLIGHT_CLASS_DEVICE
+	help
+	  Say Y here if you want to enable support for StarFive Jadard radxa
+	  WXGA MIPI DSI panel. The panel support TFT dot matrix LCD with
+	  800RGBx1280 dots at maximum.
+
 config DRM_PANEL_JDI_LT070ME05000
 	tristate "JDI LT070ME05000 WUXGA DSI panel"
 	depends on OF
