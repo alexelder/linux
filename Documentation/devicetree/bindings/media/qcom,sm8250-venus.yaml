@@ -18,7 +18,10 @@ allOf:
 
 properties:
   compatible:
-    const: qcom,sm8250-venus
+    oneOf:
+      - enum:
+          - qcom,sm8250-venus
+          - qcom,sm8250-iris
 
   power-domains:
     minItems: 2
@@ -50,6 +53,8 @@ properties:
     items:
       - const: cpu-cfg
       - const: video-mem
+
+  dma-coherent: true
 
   operating-points-v2: true
   opp-table:
