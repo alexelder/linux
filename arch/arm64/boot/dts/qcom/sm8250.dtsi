@@ -4269,7 +4269,7 @@
 		};
 
 		venus: video-codec@aa00000 {
-			compatible = "qcom,sm8250-venus";
+			compatible = "qcom,sm8250-iris";
 			reg = <0 0x0aa00000 0 0x100000>;
 			interrupts = <GIC_SPI 174 IRQ_TYPE_LEVEL_HIGH>;
 			power-domains = <&videocc MVS0C_GDSC>,
@@ -4288,6 +4288,8 @@
 			interconnect-names = "cpu-cfg", "video-mem";
 
 			iommus = <&apps_smmu 0x2100 0x0400>;
+			dma-coherent;
+
 			memory-region = <&video_mem>;
 
 			resets = <&gcc GCC_VIDEO_AXI0_CLK_ARES>,
@@ -4295,14 +4297,6 @@
 			reset-names = "bus", "core";
 
 			status = "disabled";
-
-			video-decoder {
-				compatible = "venus-decoder";
-			};
-
-			video-encoder {
-				compatible = "venus-encoder";
-			};
 
 			venus_opp_table: opp-table {
 				compatible = "operating-points-v2";
