@@ -143,7 +143,7 @@ static int icc_graph_show(struct seq_file *s, void *data)
 }
 DEFINE_SHOW_ATTRIBUTE(icc_graph);
 
-static struct icc_node *node_find(const int id)
+static struct icc_node *node_find(int id)
 {
 	return idr_find(&icc_idr, id);
 }
@@ -897,7 +897,7 @@ EXPORT_SYMBOL_GPL(icc_node_destroy);
  *
  * Return: 0 on success, or an error code otherwise
  */
-int icc_link_create(struct icc_node *node, const int dst_id)
+int icc_link_create(struct icc_node *node, int dst_id)
 {
 	struct icc_node *dst;
 	struct icc_node **new;
