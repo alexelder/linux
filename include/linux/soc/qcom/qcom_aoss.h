@@ -13,7 +13,7 @@ struct qmp;
 
 #if IS_ENABLED(CONFIG_QCOM_AOSS_QMP)
 
-int qmp_send(struct qmp *qmp, const char *fmt, ...);
+int qmp_send(struct qmp *qmp, const char *fmt, ...) __printf(2, 3);
 struct qmp *qmp_get(struct device *dev);
 void qmp_put(struct qmp *qmp);
 
