@@ -10,6 +10,7 @@
 #include "k1-x-lcd.dtsi"
 #include "k1-x-hdmi.dtsi"
 #include "k1-x_opp_table.dtsi"
+#include "k1-x_thermal_cooling.dtsi"
 
 / {
 	model = "M1-MUSE-BOOK";
@@ -383,11 +384,6 @@
 				regulator-max-microvolt = <3300000>;
 				regulator-ramp-delay = <5000>;
 				regulator-always-on;
-
-				regulator-state-mem {
-					regulator-off-in-suspend;
-					regulator-suspend-microvolt = <3300000>;
-				};
 			};
 
 			dcdc_5: DCDC_REG5 {
@@ -686,7 +682,6 @@
 };
 
 &ehci {
-	spacemit,reset-on-resume;
 	status = "okay";
 };
 
@@ -695,7 +690,6 @@
 };
 
 &ehci1 {
-	spacemit,reset-on-resume;
 	status = "okay";
 };
 
@@ -709,12 +703,12 @@
 
 &usb3hub {
 	hub-gpios = <&gpio 123 0>;	/* usb3 hub en */
+	suspend_power_on;
 	status = "okay";
 };
 
 &usbdrd3 {
 	status = "okay";
-	reset-on-resume;
 	dwc3@c0a00000 {
 		dr_mode = "host";
 		phy_type = "utmi";
@@ -792,14 +786,6 @@
 	mbox-names = "vq0", "vq1";
 	memory-region = <&rcpu_mem_0>, <&vdev0vring0>, <&vdev0vring1>, <&vdev0buffer>, <&rsc_table>, <&rcpu_mem_snapshots>;
 	status = "okay";
-};
-
-&cls0_trip2 {
-	temperature = <115000>;
-};
-
-&cls1_trip2 {
-	temperature = <115000>;
 };
 
 &i2s0 {
