@@ -136,6 +136,82 @@ static int ipa_runtime_suspend(struct device *dev)
 	return 0;
 }
 
+struct qreg {
+	const char	*name;
+	u32		offset;
+	u32		value;
+};
+
+struct qregs {
+	void __iomem	*mem_189000;
+	struct qreg	IPA_GDSCR;
+	struct qreg	IPA_CFG_GDSCR;
+	struct qreg	IPA_2X_CBCR;
+	struct qreg	IPA_CBCR;
+	struct qreg	IPA_AHB_CBCR;
+	struct qreg	IPA_2X_CMD_RCGR;
+	struct qreg	IPA_2X_CFG_RCGR;
+
+	struct qreg	GCC_RPMH_IPA_CMD_DFSR;
+	struct qreg	GCC_IPA_CDIVR;
+	struct qreg	GCC_IPA_2X_DCD_CDIV_DCDR;
+
+	void __iomem	*mem_105000;
+	struct qreg	GCC_CFG_NOC_AHB_CBCR;
+} IPA_qregs = {
+#define QREG(_n, _o)	._n = { .name = #_n, .offset = _o, }
+	QREG(IPA_GDSCR,			0x0004),
+	QREG(IPA_CFG_GDSCR,		0x0008),
+	QREG(IPA_2X_CBCR,		0x000c),
+	QREG(IPA_CBCR,			0x0010),
+	QREG(IPA_AHB_CBCR,		0x0014),
+	QREG(IPA_2X_CMD_RCGR,		0x0020),
+	QREG(IPA_2X_CFG_RCGR,		0x0024),
+
+	QREG(GCC_RPMH_IPA_CMD_DFSR,	0x0034),
+	QREG(GCC_IPA_CDIVR,		0x014c),
+	QREG(GCC_IPA_2X_DCD_CDIV_DCDR,	0x0150),
+
+	QREG(GCC_CFG_NOC_AHB_CBCR,	0x0010),
+#undef QREG
+};
+
+static void save_stuff_for_qualcomm(struct ipa *ipa)
+{
+	void __iomem *mem;
+
+#define QREG_SAVE(_n)	IPA_qregs._n.value = ioread32(mem + IPA_qregs._n.offset)
+
+	if (!IPA_qregs.mem_189000) {
+		IPA_qregs.mem_189000 = ioremap(0x189000, 0x1000);
+		if (!IPA_qregs.mem_189000)
+			return;
+	}
+
+	mem = IPA_qregs.mem_189000;
+	QREG_SAVE(IPA_GDSCR);
+	QREG_SAVE(IPA_CFG_GDSCR);
+	QREG_SAVE(IPA_2X_CBCR);
+	QREG_SAVE(IPA_CBCR);
+	QREG_SAVE(IPA_AHB_CBCR);
+	QREG_SAVE(IPA_2X_CMD_RCGR);
+	QREG_SAVE(IPA_2X_CFG_RCGR);
+
+	QREG_SAVE(GCC_RPMH_IPA_CMD_DFSR);
+	QREG_SAVE(GCC_IPA_CDIVR);
+	QREG_SAVE(GCC_IPA_2X_DCD_CDIV_DCDR);
+
+	if (!IPA_qregs.mem_105000) {
+		IPA_qregs.mem_105000 = ioremap(0x105000, 0x1000);
+		if (!IPA_qregs.mem_105000)
+			return;
+	}
+
+	mem = IPA_qregs.mem_105000;
+	QREG_SAVE(GCC_CFG_NOC_AHB_CBCR);
+#undef QREG_SAVE
+}
+
 static int ipa_runtime_resume(struct device *dev)
 {
 	struct ipa *ipa = dev_get_drvdata(dev);
@@ -148,6 +224,7 @@ static int ipa_runtime_resume(struct device *dev)
 	/* Endpoints aren't usable until setup is complete */
 	if (ipa->setup_complete) {
 		gsi_resume(&ipa->gsi);
+		save_stuff_for_qualcomm(ipa);
 		ipa_endpoint_resume(ipa);
 	}
 
