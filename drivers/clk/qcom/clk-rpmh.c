@@ -248,6 +248,42 @@ static const struct clk_ops clk_rpmh_ops = {
 	.recalc_rate	= clk_rpmh_recalc_rate,
 };
 
+/* Save the information from the last time the following function is
+ * called.  This is updated with the rpmh_clk_lock held.
+ */
+enum ipa_rpmh_caller {
+	caller_none = 0,	/* Initial state */
+	caller_prepare,		/* enable == true */
+	caller_unprepare,	/* enable == false */
+	caller_set_rate,	/* enable == true */
+	caller_other,		/* shouldn't happen */
+	caller_count,
+};
+
+struct ipa_rpmh {
+	u64 timedelta;
+	u32 grand_caller;
+	u32 caller;
+	/* c_div = 1, c_unit = 40000 */
+	u32 c_state;
+	u32 c_aggr_state;
+	u32 c_last_sent_aggr_state;
+	u32 cmd_state;	/* enable: 1 or prev c->aggr_state; disable: 0 */
+};
+
+struct {
+	struct ipa_rpmh rpmh[1 << 7];
+	enum ipa_rpmh_caller last_caller;
+	u32 next_index;
+	u64 timestamp;
+	u32 callers[caller_count * caller_count];
+} IPA_rpmh;
+const size_t IPA_rpmh_count = ARRAY_SIZE(IPA_rpmh.rpmh);
+
+static int clk_rpmh_bcm_prepare(struct clk_hw *hw);
+static void clk_rpmh_bcm_unprepare(struct clk_hw *hw);
+static int clk_rpmh_bcm_set_rate(struct clk_hw *hw, unsigned long rate,
+				 unsigned long parent_rate);
 static int clk_rpmh_bcm_send_cmd(struct clk_rpmh *c, bool enable)
 {
 	struct tcs_cmd cmd = { 0 };
@@ -261,6 +297,40 @@ static int clk_rpmh_bcm_send_cmd(struct clk_rpmh *c, bool enable)
 			cmd_state = c->aggr_state;
 	} else {
 		cmd_state = 0;
+	}
+
+	if (!strcmp(c->res_name, "IP0")) {
+		size_t index = IPA_rpmh.next_index++ % IPA_rpmh_count;
+		struct ipa_rpmh *ipa_rpmh = &IPA_rpmh.rpmh[index];
+		enum ipa_rpmh_caller caller;
+		u64 timestamp = ktime_get_mono_fast_ns();
+
+		ipa_rpmh->timedelta = timestamp - IPA_rpmh.timestamp;
+		IPA_rpmh.timestamp = timestamp;
+		if (_RET_IP_ == (unsigned long)clk_rpmh_bcm_prepare + 0x20)
+			caller = caller_prepare;
+		else if (_RET_IP_ == (unsigned long)clk_rpmh_bcm_unprepare + 0x20)
+			caller = caller_unprepare;
+		else if (_RET_IP_ == (unsigned long)clk_rpmh_bcm_set_rate + 0x20) {
+			caller = caller_set_rate;
+			printk(" === SET_RATE RET_IP = 0x%lx\n", _RET_IP_);
+		} else {
+			caller = caller_other;
+			printk(" === RET_IP = 0x%lx\n", _RET_IP_);
+		}
+
+		ipa_rpmh->grand_caller = IPA_rpmh.last_caller;
+		ipa_rpmh->caller = caller;
+
+		/* Reuse index */
+		index = caller_count * ipa_rpmh->grand_caller + caller;
+		IPA_rpmh.callers[index]++;
+		IPA_rpmh.last_caller = caller;
+
+		ipa_rpmh->c_state = c->state;
+		ipa_rpmh->c_aggr_state = c->aggr_state;
+		ipa_rpmh->c_last_sent_aggr_state = c->last_sent_aggr_state;
+		ipa_rpmh->cmd_state = cmd_state;
 	}
 
 	cmd_state = min(cmd_state, BCM_TCS_CMD_VOTE_MASK);
