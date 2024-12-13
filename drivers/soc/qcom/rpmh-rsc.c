@@ -492,6 +492,19 @@ skip:
  *
  * This is used for all types of transfers (active, sleep, and wake).
  */
+struct ipa_tcs {
+	u32 msgid; /* MSGID_LEN=8, RESP_REQ=BIT(8), MSGID_WRITE=BIT(16) */
+	u32 addr;
+	u32 cmd_addr;
+	u32 cmd_data;
+};
+
+struct {
+	struct ipa_tcs tcs[1 << 7];
+	u32 next_index;
+} IPA_tcs;
+const size_t IPA_tcs_count = ARRAY_SIZE(IPA_tcs.tcs);
+
 static void __tcs_buffer_write(struct rsc_drv *drv, int tcs_id, int cmd_id,
 			       const struct tcs_request *msg)
 {
@@ -514,6 +527,14 @@ static void __tcs_buffer_write(struct rsc_drv *drv, int tcs_id, int cmd_id,
 		 */
 		msgid |= cmd->wait ? CMD_MSGID_RESP_REQ : 0;
 
+		if (cmd->addr == 0x000500a4) {
+			size_t index = IPA_tcs.next_index++ % IPA_tcs_count;
+			struct ipa_tcs *tcs = &IPA_tcs.tcs[index];
+
+			tcs->msgid = msgid;
+			tcs->cmd_addr = cmd->addr;
+			tcs->cmd_data = cmd->data;
+		}
 		write_tcs_cmd(drv, drv->regs[RSC_DRV_CMD_MSGID], tcs_id, j, msgid);
 		write_tcs_cmd(drv, drv->regs[RSC_DRV_CMD_ADDR], tcs_id, j, cmd->addr);
 		write_tcs_cmd(drv, drv->regs[RSC_DRV_CMD_DATA], tcs_id, j, cmd->data);
