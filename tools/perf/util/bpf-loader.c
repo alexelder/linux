@@ -571,7 +571,7 @@ config_bpf_program(struct bpf_program *prog)
 	probe_conf.no_inlines = false;
 	probe_conf.force_add = false;
 
-	priv = calloc(sizeof(*priv), 1);
+	priv = calloc(1, sizeof(*priv));
 	if (!priv) {
 		pr_debug("bpf: failed to alloc priv\n");
 		return -ENOMEM;

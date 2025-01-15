@@ -355,7 +355,7 @@ static void perf_top__print_sym_table(struct perf_top *top)
 
 static void prompt_integer(int *target, const char *msg)
 {
-	char *buf = malloc(0), *p;
+	char *buf = malloc(sizeof(char *)), *p;
 	size_t dummy = 0;
 	int tmp;
 
@@ -390,7 +390,7 @@ static void prompt_percent(int *target, const char *msg)
 
 static void perf_top__prompt_symbol(struct perf_top *top, const char *msg)
 {
-	char *buf = malloc(0), *p;
+	char *buf = malloc(sizeof(char *)), *p;
 	struct hist_entry *syme = top->sym_filter_entry, *n, *found = NULL;
 	struct hists *hists = evsel__hists(top->sym_evsel);
 	struct rb_node *next;

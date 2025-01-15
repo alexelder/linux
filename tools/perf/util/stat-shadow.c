@@ -387,8 +387,8 @@ void perf_stat__collect_metric_expr(struct evlist *evsel_list)
 					   ctx) < 0)
 				continue;
 
-			metric_events = calloc(sizeof(struct evsel *),
-					       hashmap__size(ctx->ids) + 1);
+			metric_events = calloc((size_t)(hashmap__size(ctx->ids) + 1),
+					       sizeof(struct evsel *));
 			if (!metric_events) {
 				expr__ctx_free(ctx);
 				return;
