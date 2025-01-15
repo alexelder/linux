@@ -250,7 +250,7 @@ build-arch:
 	\$(MAKE) KERNELRELEASE=${version} ARCH=${ARCH} \
 	KBUILD_BUILD_VERSION=${revision} -f \$(srctree)/Makefile
 	# perf
-	cd \$(srctree)/tools/perf && \$(MAKE) prefix=/usr HAVE_NO_LIBBFD=1 HAVE_CPLUS_DEMANGLE_SUPPORT=1 CROSS_COMPILE=\$(CROSS_COMPILE) NO_LIBPYTHON=1 NO_LIBPERL=1 WERROR=0
+	cd \$(srctree)/tools/perf && \$(MAKE) prefix=/usr HAVE_NO_LIBBFD=1 HAVE_CPLUS_DEMANGLE_SUPPORT=1 CROSS_COMPILE="\$(CROSS_COMPILE)" NO_LIBPYTHON=1 NO_LIBPERL=1 WERROR=0
 	cd \$(srctree)/tools/perf && make man
 
 build: build-arch
