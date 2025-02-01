@@ -401,12 +401,17 @@ void ipa_power_retention(struct ipa *ipa, bool enable)
 {
 	static const char fmt[] = "{class: bcm, res: ipa_pc, val: %c}";
 	struct ipa_power *power = ipa->power;
+	char str[sizeof(fmt)];
 	int ret;
 
 	if (!power->qmp)
 		return;		/* Not needed on this platform */
 
-	ret = qmp_send(power->qmp, fmt, enable ? '1' : '0');
+	ret = snprintf(str, sizeof(str), fmt, enable ? '1' : '0');
+	WARN(ret != sizeof(str) - 2, "%s: want %zu got %d formatting string\n",
+	     __func__, sizeof(str) - 2, ret);
+	ret = qmp_send(power->qmp, str);
+	dev_info(power->dev, "%s: ret %d sending \"%s\"\n", __func__, ret, str);
 	if (ret)
 		dev_err(power->dev, "error %d sending QMP %sable request\n",
 			ret, enable ? "en" : "dis");
