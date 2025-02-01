@@ -399,7 +399,7 @@ static void ipa_power_retention_exit(struct ipa_power *power)
 /* Control register retention on power collapse */
 void ipa_power_retention(struct ipa *ipa, bool enable)
 {
-	static const char fmt[] = "{ class: bcm, res: ipa_pc, val: %c }";
+	static const char fmt[] = "{class: bcm, res: ipa_pc, val: %c}";
 	struct ipa_power *power = ipa->power;
 	int ret;
 
