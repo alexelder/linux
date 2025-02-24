@@ -195,8 +195,10 @@ void ipa_uc_deconfig(struct ipa *ipa)
 
 	ipa_interrupt_disable(ipa, IPA_IRQ_UC_1);
 	ipa_interrupt_disable(ipa, IPA_IRQ_UC_0);
+#ifdef DISABLE_POWER_RETENTION
 	if (ipa->uc_loaded)
 		ipa_power_retention(ipa, false);
+#endif
 
 	if (!ipa->uc_powered)
 		return;
