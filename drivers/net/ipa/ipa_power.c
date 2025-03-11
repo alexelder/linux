@@ -134,11 +134,13 @@ static int ipa_power_enable(struct ipa *ipa)
 /* Inverse of ipa_power_enable() */
 static void ipa_power_disable(struct ipa *ipa)
 {
+#if 0
 	struct ipa_power *power = ipa->power;
 
 	clk_disable_unprepare(power->core);
 
 	icc_bulk_disable(power->interconnect_count, power->interconnect);
+#endif
 }
 
 static int ipa_runtime_suspend(struct device *dev)
@@ -236,11 +238,15 @@ static void save_stuff_for_qualcomm(struct ipa *ipa)
 static int ipa_runtime_resume(struct device *dev)
 {
 	struct ipa *ipa = dev_get_drvdata(dev);
+	static bool first = true;
 	int ret;
 
-	ret = ipa_power_enable(ipa);
-	if (WARN_ON(ret < 0))
-		return ret;
+	if (first) {
+		ret = ipa_power_enable(ipa);
+		if (WARN_ON(ret < 0))
+			return ret;
+		first = false;
+	}
 
 	/* Endpoints aren't usable until setup is complete */
 	if (ipa->setup_complete) {
@@ -268,6 +274,7 @@ static int ipa_suspend(struct device *dev)
 	 * will still cause the system to wake up, see irq_set_irq_wake().
 	 */
 	ipa_interrupt_irq_disable(ipa);
+	printk("=== system suspending\n");
 
 	return pm_runtime_force_suspend(dev);
 }
@@ -278,6 +285,8 @@ static int ipa_resume(struct device *dev)
 	int ret;
 
 	ret = pm_runtime_force_resume(dev);
+
+	printk("=== system resuming\n");
 
 	__clear_bit(IPA_POWER_FLAG_SYSTEM, ipa->power->flags);
 
