@@ -1,6 +1,3 @@
-ifeq ($(RELEASE_PACKAGE),1)
-EXTRA_CFLAGS+=-DRELEASE_PACKAGE
-endif
 LBITS := $(shell getconf LONG_BIT)
 ifeq ($(LBITS),64)
 CCFLAGS += -m64
@@ -11,32 +8,7 @@ endif
 
 EXTRA_CFLAGS+=-DTC956X
 
-ifeq ($(TC956X_PCIE_GEN3_SETTING),1)
-EXTRA_CFLAGS+=-DTC956X_PCIE_GEN3_SETTING
-endif
-
-ifeq ($(TC956X_LOAD_FW_HEADER),1)
-EXTRA_CFLAGS+=-DTC956X_LOAD_FW_HEADER
-endif
-
-ifeq ($(TC956X_IOCTL_REG_RD_WR_ENABLE),1)
-EXTRA_CFLAGS+=-DTC956X_IOCTL_REG_RD_WR_ENABLE
-endif
-
-ifeq ($(TC956X_MAGIC_PACKET_WOL_GPIO),1)
-EXTRA_CFLAGS+=-DTC956X_MAGIC_PACKET_WOL_GPIO
-endif
-
-ifeq ($(TC956X_MAGIC_PACKET_WOL_CONF),1)
-EXTRA_CFLAGS+=-DTC956X_MAGIC_PACKET_WOL_CONF
-endif
-
-ifeq ($(TC956X_DMA_OFFLOAD_ENABLE),1)
-EXTRA_CFLAGS+=-DTC956X_DMA_OFFLOAD_ENABLE
-DMA_OFFLOAD = 1
-endif
-
-ifeq ($(vf), 1)
+ifdef CONFIG_TC965X_SPIOV_VF
 EXTRA_CFLAGS+=-DTC956X_SRIOV_VF
 
 obj-$(CONFIG_TC956X_NET) := tc956x_vf_pcie_eth.o
@@ -74,15 +46,9 @@ ifeq ($(DMA_OFFLOAD), 1)
 	tc956x_pcie_eth-y += tc956x_ipa_intf.o
 endif
 
-ifeq ($(TC956XMAC_SELFTESTS), 1)
+ifdef CONFIG_TC956X_MAC_SELFTESTS
 	tc956x_pcie_eth-y += tc956xmac_selftests.o
 endif
 
 endif
 ccflags-y := -Wmissing-prototypes
-
-#all:
-#	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
-#
-#clean:
-#	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
