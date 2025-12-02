@@ -17,6 +17,7 @@ config TC956X_PCIE_GEN3_SETTING
 	bool "PCIe gen3 setting"
 
 config TC956X_LOAD_FW_HEADER
+	depends on BROKEN  # No fw.h supplied
 	bool "Load firmware header (fw.h)"
 
 config TC956X_IOCTL_REG_RD_WR_ENABLE
@@ -32,6 +33,7 @@ config TC956X_DMA_OFFLOAD_ENABLE
 	bool "Enable DMA offload"
 
 config TC965X_SPIOV_VF
+	depends on BROKEN  # Tries to build code that has not beeen ported to v6.6
 	bool "Enable SPIOV VF"
 
 # Skip PF/CPE/port-bridge/automotive for now
