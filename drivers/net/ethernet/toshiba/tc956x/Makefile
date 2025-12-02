@@ -39,7 +39,7 @@ endif
 ifeq ($(vf), 1)
 EXTRA_CFLAGS+=-DTC956X_SRIOV_VF
 
-obj-m := tc956x_vf_pcie_eth.o
+obj-$(CONFIG_TC956X_NET) := tc956x_vf_pcie_eth.o
 tc956x_vf_pcie_eth-y := tc956xmac_main.o tc956xmac_ethtool.o \
 	      mmc_core.o tc956xmac_hwtstamp.o tc956xmac_ptp.o \
 	      hwif.o  tc956xmac_tc.o dwxgmac2_core.o \
@@ -52,7 +52,7 @@ else
 
 EXTRA_CFLAGS+=-DTC956X_SRIOV_PF
 
-obj-m := tc956x_pcie_eth.o
+obj-$(CONFIG_TC956X_NET) := tc956x_pcie_eth.o
 tc956x_pcie_eth-y := tc956xmac_main.o tc956xmac_ethtool.o tc956xmac_mdio.o \
 	      mmc_core.o tc956xmac_hwtstamp.o tc956xmac_ptp.o tc956x_xpcs.o tc956x_pma.o \
 	      hwif.o  tc956xmac_tc.o dwxgmac2_core.o \

@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# Toshiba TC956x configuration
+#
+
+config TC956X_NET
+	tristate "TC956x/QPS615 Ethernet driver"
+	depends on PCI
+	help
+	  This driver supports the TC965x/QPS615 ethernet audio-video bridging
+	  (AVB)/time-sensitive networking (TSN) bridge.
