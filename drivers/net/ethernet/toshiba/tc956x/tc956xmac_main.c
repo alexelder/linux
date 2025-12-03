@@ -2996,6 +2996,56 @@ static void tc956xmac_mac_flow_ctrl(struct tc956xmac_priv *priv, u32 duplex)
 			priv->pause, tx_cnt);
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 7, 0)
+static unsigned long tc956xmac_get_caps(struct phylink_config *config,
+	                    phy_interface_t interface)
+{
+	struct tc956xmac_priv *priv = netdev_priv(to_net_dev(config->dev));
+	unsigned long caps = config->mac_capabilities;
+
+	int tx_cnt = priv->plat->tx_queues_to_use;
+	int max_speed = priv->plat->max_speed;
+
+	/*USXGMII interface does not support speed of 1000/100/10*/
+	if (interface == PHY_INTERFACE_MODE_USXGMII)
+		caps &= ~(MAC_10 | MAC_100 | MAC_1000);
+
+	/*USXGMII 5G interface does not support speed of 10G*/
+	/* TODO: cannot determine this from interface */
+
+	/*USXGMII 2.5G interface does not support speed of 10G/5G*/
+	/* TODO: cannot determine this from interface */
+
+	/* Cut down 1G if asked to */
+	if (max_speed) {
+		if (max_speed < 10000)
+			caps &= ~MAC_10000FD;
+		if (max_speed < 5000)
+			caps &= ~MAC_5000FD;
+		if (max_speed < 2500)
+			caps &= ~MAC_2500FD;
+		if (max_speed < 1000)
+			caps &= ~MAC_1000;
+	}
+
+	/* Half-Duplex can only work with single queue */
+	if (tx_cnt > 1) {
+#ifdef TC956X
+		KPRINT_INFO("Half duplex not supported in Port0");
+#else
+		caps &= ~(MAC_10HD | MAC_100HD);
+#endif
+
+#ifdef TC956X
+		caps &= ~MAC_1000HD;
+#endif
+	}
+
+	return caps;
+}
+#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(6, 7, 0) */
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 7, 0)
 static void tc956xmac_validate(struct phylink_config *config,
 			    unsigned long *supported,
 			    struct phylink_link_state *state)
@@ -3098,6 +3148,7 @@ static void tc956xmac_validate(struct phylink_config *config,
 	bitmap_andnot(state->advertising, state->advertising, mask,
 			__ETHTOOL_LINK_MODE_MASK_NBITS);
 }
+#endif  /* LINUX_VERSION_CODE < KERNEL_VERSION(6, 7, 0) */
 #endif  /* TC956X_SRIOV_VF */
 
 #ifndef TC956X_SRIOV_VF
@@ -4455,7 +4506,12 @@ static void tc956xmac_mac_link_up(struct phylink_config *config,
 }
 
 static const struct phylink_mac_ops tc956xmac_phylink_mac_ops = {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 7, 0)
+	.mac_get_caps = tc956xmac_get_caps,
+#else
 	.validate = tc956xmac_validate,
+#endif
+
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 5, 0)
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 6, 0)
 	.mac_pcs_get_state = tc956xmac_mac_pcs_get_state,
@@ -4728,8 +4784,19 @@ static int tc956xmac_phy_setup(struct tc956xmac_priv *priv)
 	__set_bit(mode, priv->phylink_config.supported_interfaces);
 #endif
 
-	phylink = phylink_create(&priv->phylink_config, fwnode,
-				 mode, &tc956xmac_phylink_mac_ops);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 7, 0)
+	/*
+	 * These capabilities are copied (and translated) from
+	 * tc956xmac_validate().
+	 */
+	priv->phylink_config.mac_capabilities =
+		MAC_SYM_PAUSE | MAC_ASYM_PAUSE |
+		MAC_10 | MAC_100 | MAC_1000 |
+		MAC_2500FD | MAC_5000FD | MAC_10000FD;
+#endif
+
+	phylink = phylink_create(&priv->phylink_config, fwnode, mode,
+				 &tc956xmac_phylink_mac_ops);
 	if (IS_ERR(phylink))
 		return PTR_ERR(phylink);
 
