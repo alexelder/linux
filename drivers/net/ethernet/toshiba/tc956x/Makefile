@@ -1,11 +1,3 @@
-LBITS := $(shell getconf LONG_BIT)
-ifeq ($(LBITS),64)
-CCFLAGS += -m64
-EXTRA_CFLAGS+=-DSYSTEM_IS_64
-else
-CCFLAGS += -m32
-endif
-
 EXTRA_CFLAGS+=-DTC956X
 
 ifdef CONFIG_TC965X_SPIOV_VF
