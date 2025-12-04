@@ -225,6 +225,9 @@
 #include <linux/of_mdio.h>
 #include <linux/version.h>
 #include <linux/ctype.h>
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,10,0)
+#include <linux/vmalloc.h>
+#endif
 #include "dwxgmac2.h"
 #include "hwif.h"
 #include "common.h"
