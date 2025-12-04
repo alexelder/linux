@@ -2485,8 +2485,13 @@ static int tc956xmac_set_rxfh(struct net_device *dev, const u32 *indir,
 }
 #endif
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 11, 0)
+static int tc956xmac_get_ts_info(struct net_device *dev,
+			      struct kernel_ethtool_ts_info *info)
+#else
 static int tc956xmac_get_ts_info(struct net_device *dev,
 			      struct ethtool_ts_info *info)
+#endif
 {
 	struct tc956xmac_priv *priv = netdev_priv(dev);
 
