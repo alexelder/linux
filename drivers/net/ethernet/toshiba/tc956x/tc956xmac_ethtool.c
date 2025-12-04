@@ -2037,7 +2037,12 @@ int phy_ethtool_set_eee_2p5(struct phy_device *phydev, struct ethtool_eee *data)
 		      tc956x_ethtool_adv_to_mmd_eee_adv2_t(data->advertised) & cap2p5;
 #endif
 		/* Mask prohibited EEE modes */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,13,0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,15,0)
+		if (linkmode_test_bit(TC956X_ADVERTISED_2500baseT_Full, phydev->eee_disabled_modes))
+			adv_2p5 &= ~MDIO_EEE_2_5GT;
+		if (linkmode_test_bit(TC956X_ADVERTISED_5000baseT_Full, phydev->eee_disabled_modes))
+			adv_2p5 &= ~MDIO_EEE_5GT;
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(6,13,0)
 		if (linkmode_test_bit(TC956X_ADVERTISED_2500baseT_Full, phydev->eee_broken_modes))
 			adv_2p5 &= ~MDIO_EEE_2_5GT;
 		if (linkmode_test_bit(TC956X_ADVERTISED_5000baseT_Full, phydev->eee_broken_modes))

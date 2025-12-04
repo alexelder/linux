@@ -3970,10 +3970,16 @@ static void tc956xmac_mac_link_down(struct phylink_config *config,
 }
 
 #ifdef TC956X_5_G_2_5_G_EEE_SUPPORT
+
 static inline bool tc956x_phy_check_valid(int speed, int duplex,
 				   unsigned long *features)
 {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 15, 0)
+	WARN_ONCE(1, "Assuming all tc956x_phy_check_valid() checks are OK\n");
+	return true;
+#else
 	return !!phy_lookup_setting(speed, duplex, features, true);
+#endif
 }
 
 static void tc956x_mmd_eee_adv_to_linkmode_5G_2_5G(unsigned long *advertising, u16 eee_adv)
@@ -6712,7 +6718,10 @@ static void tc956xmac_init_coalesce(struct tc956xmac_priv *priv)
 		if (priv->plat->tx_dma_ch_owner[chan_no] != USE_IN_TC956X_SW)
 			continue;
 #endif
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 11, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 15, 0)
+		hrtimer_setup(&tx_q->txtimer, tc956xmac_tx_timer,
+			      CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5, 11, 0)
 		hrtimer_init(&tx_q->txtimer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 		tx_q->txtimer.function = tc956xmac_tx_timer;
 #else
@@ -11232,10 +11241,17 @@ static int tc956xmac_ioctl_set_phy_loopback(struct tc956xmac_priv *priv, void __
 	priv->phy_loopback_mode = ioctl_data.flags;
 
 #ifdef TC956X
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,15,0)
+	if (priv->phy_loopback_mode)
+		ret = phy_loopback(priv->dev->phydev, true, 0);
+	else
+		ret = phy_loopback(priv->dev->phydev, false, 0);
+#else
 	if (priv->phy_loopback_mode)
 		ret = phy_loopback(priv->dev->phydev, true);
 	else
 		ret = phy_loopback(priv->dev->phydev, false);
+#endif
 
 	if (ret)
 		return ret;
