@@ -1609,7 +1609,7 @@ int tc956xmac_create_debugfs(struct net_device *net_device)
 
 	struct stmmac_priv *priv;
 	static struct dentry *stats = NULL;
-	char dev_name[23];
+	char dev_name[32];
 
 	if (!net_device) {
 		pr_err("%s: ERROR: Invalid netdevice pointer\n", __func__);
