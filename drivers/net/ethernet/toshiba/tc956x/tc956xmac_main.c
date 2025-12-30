@@ -2735,16 +2735,7 @@ static int tc956xmac_hwtstamp_set(struct net_device *dev, struct ifreq *ifr)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 	struct hwtstamp_config config;
-	u32 ptp_v2 = 0;
-	u32 tstamp_all = 0;
-	u32 ptp_over_ipv4_udp = 0;
-	u32 ptp_over_ipv6_udp = 0;
-	u32 ptp_over_ethernet = 0;
-	u32 snap_type_sel = 0;
-	u32 ts_master_en = 0;
-	u32 ts_event_en = 0;
 	u32 value = 0;
-	u32 tcr_config;
 
 	if (!(priv->dma_cap.time_stamp || priv->adv_ts)) {
 		netdev_alert(priv->dev, "No support for HW time stamping\n");
@@ -2785,107 +2776,66 @@ static int tc956xmac_hwtstamp_set(struct net_device *dev, struct ifreq *ifr)
 			 * Enable all events *and* general purpose message
 			 * timestamping
 			 */
-			snap_type_sel = PTP_TCR_SNAPTYPSEL_1;
-			ptp_over_ipv4_udp = PTP_TCR_TSIPV4ENA;
-			ptp_over_ipv6_udp = PTP_TCR_TSIPV6ENA;
 			break;
 
 		case HWTSTAMP_FILTER_PTP_V1_L4_SYNC:
 			/* PTP v1, UDP, Sync packet */
 			config.rx_filter = HWTSTAMP_FILTER_PTP_V1_L4_SYNC;
 			/* take time stamp for SYNC messages only */
-			ts_event_en = PTP_TCR_TSEVNTENA;
 
-			ptp_over_ipv4_udp = PTP_TCR_TSIPV4ENA;
-			ptp_over_ipv6_udp = PTP_TCR_TSIPV6ENA;
 			break;
 
 		case HWTSTAMP_FILTER_PTP_V1_L4_DELAY_REQ:
 			/* PTP v1, UDP, Delay_req packet */
 			config.rx_filter = HWTSTAMP_FILTER_PTP_V1_L4_DELAY_REQ;
 			/* take time stamp for Delay_Req messages only */
-			ts_master_en = PTP_TCR_TSMSTRENA;
-			ts_event_en = PTP_TCR_TSEVNTENA;
 
-			ptp_over_ipv4_udp = PTP_TCR_TSIPV4ENA;
-			ptp_over_ipv6_udp = PTP_TCR_TSIPV6ENA;
 			break;
 
 		case HWTSTAMP_FILTER_PTP_V2_L4_EVENT:
 			/* PTP v2, UDP, any kind of event packet */
 			config.rx_filter = HWTSTAMP_FILTER_PTP_V2_L4_EVENT;
-			ptp_v2 = PTP_TCR_TSVER2ENA;
 			/* take time stamp for all event messages */
-			snap_type_sel = PTP_TCR_SNAPTYPSEL_1;
 
-			ptp_over_ipv4_udp = PTP_TCR_TSIPV4ENA;
-			ptp_over_ipv6_udp = PTP_TCR_TSIPV6ENA;
 			break;
 
 		case HWTSTAMP_FILTER_PTP_V2_L4_SYNC:
 			/* PTP v2, UDP, Sync packet */
 			config.rx_filter = HWTSTAMP_FILTER_PTP_V2_L4_SYNC;
-			ptp_v2 = PTP_TCR_TSVER2ENA;
 			/* take time stamp for SYNC messages only */
-			ts_event_en = PTP_TCR_TSEVNTENA;
 
-			ptp_over_ipv4_udp = PTP_TCR_TSIPV4ENA;
-			ptp_over_ipv6_udp = PTP_TCR_TSIPV6ENA;
 			break;
 
 		case HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ:
 			/* PTP v2, UDP, Delay_req packet */
 			config.rx_filter = HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ;
-			ptp_v2 = PTP_TCR_TSVER2ENA;
 			/* take time stamp for Delay_Req messages only */
-			ts_master_en = PTP_TCR_TSMSTRENA;
-			ts_event_en = PTP_TCR_TSEVNTENA;
 
-			ptp_over_ipv4_udp = PTP_TCR_TSIPV4ENA;
-			ptp_over_ipv6_udp = PTP_TCR_TSIPV6ENA;
 			break;
 
 		case HWTSTAMP_FILTER_PTP_V2_EVENT:
 			/* PTP v2/802.AS1 any layer, any kind of event packet */
 			config.rx_filter = HWTSTAMP_FILTER_PTP_V2_EVENT;
-			ptp_v2 = PTP_TCR_TSVER2ENA;
-			snap_type_sel = PTP_TCR_SNAPTYPSEL_1;
-			ts_event_en = PTP_TCR_TSEVNTENA;
-			ptp_over_ipv4_udp = PTP_TCR_TSIPV4ENA;
-			ptp_over_ipv6_udp = PTP_TCR_TSIPV6ENA;
-			ptp_over_ethernet = PTP_TCR_TSIPENA;
 			break;
 
 		case HWTSTAMP_FILTER_PTP_V2_SYNC:
 			/* PTP v2/802.AS1, any layer, Sync packet */
 			config.rx_filter = HWTSTAMP_FILTER_PTP_V2_SYNC;
-			ptp_v2 = PTP_TCR_TSVER2ENA;
 			/* take time stamp for SYNC messages only */
-			ts_event_en = PTP_TCR_TSEVNTENA;
 
-			ptp_over_ipv4_udp = PTP_TCR_TSIPV4ENA;
-			ptp_over_ipv6_udp = PTP_TCR_TSIPV6ENA;
-			ptp_over_ethernet = PTP_TCR_TSIPENA;
 			break;
 
 		case HWTSTAMP_FILTER_PTP_V2_DELAY_REQ:
 			/* PTP v2/802.AS1, any layer, Delay_req packet */
 			config.rx_filter = HWTSTAMP_FILTER_PTP_V2_DELAY_REQ;
-			ptp_v2 = PTP_TCR_TSVER2ENA;
 			/* take time stamp for Delay_Req messages only */
-			ts_master_en = PTP_TCR_TSMSTRENA;
-			ts_event_en = PTP_TCR_TSEVNTENA;
 
-			ptp_over_ipv4_udp = PTP_TCR_TSIPV4ENA;
-			ptp_over_ipv6_udp = PTP_TCR_TSIPV6ENA;
-			ptp_over_ethernet = PTP_TCR_TSIPENA;
 			break;
 
 		case HWTSTAMP_FILTER_NTP_ALL:
 		case HWTSTAMP_FILTER_ALL:
 			/* time stamp any incoming packet */
 			config.rx_filter = HWTSTAMP_FILTER_ALL;
-			tstamp_all = PTP_TCR_TSENALL;
 			break;
 
 		default:
@@ -2908,11 +2858,6 @@ static int tc956xmac_hwtstamp_set(struct net_device *dev, struct ifreq *ifr)
 	if (!priv->hwts_tx_en && !priv->hwts_rx_en)
 		tc956xmac_config_hw_tstamping(priv, priv->ptpaddr, 0);
 	else {
-		tcr_config = (PTP_TCR_TSENA | PTP_TCR_TSCFUPDT | PTP_TCR_TSCTRLSSR |
-			tstamp_all | ptp_v2 | ptp_over_ethernet |
-			ptp_over_ipv6_udp | ptp_over_ipv4_udp | ts_event_en |
-			ts_master_en | snap_type_sel | PTP_TCR_ASMEN);
-
 		value = readl(priv->ptpaddr + PTP_TCR);
 		/* Note : Values will never be set. "tc956x_ptp_configuration" function
 		 * call should be same as during probe.
@@ -9123,7 +9068,7 @@ static unsigned int tc956xmac_rx_buf1_len(struct stmmac_priv *priv,
 				       struct dma_desc *p,
 				       int status, unsigned int len)
 {
-	int ret, coe = priv->hw->rx_csum;
+	int coe = priv->hw->rx_csum;
 	unsigned int plen = 0, hlen = 0;
 
 	/* Not first descriptor, buffer is always zero */
@@ -9131,7 +9076,7 @@ static unsigned int tc956xmac_rx_buf1_len(struct stmmac_priv *priv,
 		return 0;
 
 	/* First descriptor, get split header length */
-	ret = tc956xmac_get_rx_header_len(priv, p, &hlen);
+	(void)tc956xmac_get_rx_header_len(priv, p, &hlen);
 	if (priv->sph && hlen) {
 		priv->xstats.rx_split_hdr_pkt_n++;
 		return hlen;
@@ -9972,8 +9917,6 @@ static irqreturn_t tc956xmac_interrupt_v0(int irq, void *dev_id)
 			KPRINT_INFO("%s : (Do not queue PHY Work during suspend. Set WOL Interrupt flag)\n", __func__);
 			priv->tc956xmac_pm_wol_interrupt = true;
 		} else {
-			struct phy_device *phydev;
-			phydev = mdiobus_get_phy(priv->mii, priv->plat->phy_addr);
 			KPRINT_INFO("%s : (Queue PHY Work.)\n", __func__);
 			queue_work(system_wq, &priv->emac_phy_work);
 		}
@@ -15301,7 +15244,6 @@ static void extract_macid(char *string, uint8_t vf_id)
 static bool lookfor_macid(char *file_buf, uint8_t port_id, uint8_t dev_id)
 {
 	char *string = NULL, *token_n = NULL, *token_s = NULL, *token_m = NULL;
-	char *dev_no = NULL, *port_no = NULL;
 	bool status = false;
 	int tc956x_device_no = 0;
 	int total_valid_addr = 0;
@@ -15318,12 +15260,15 @@ static bool lookfor_macid(char *file_buf, uint8_t port_id, uint8_t dev_id)
 			if (token_s != NULL) {
 				if (strncmp(token_s, config_param_list[0].mdio_key, 9) == 0) {
 					token_s = strsep(&token_n, " ");
-					dev_no = &token_n[6];
-					port_no = &token_n[7];
 					token_m = strsep(&token_s, ":");
 					sscanf(token_m, "%d", &tc956x_device_no);
 #if (!defined(TC956X_AUTOMOTIVE_CONFIG) && !defined(TC956X_ENABLE_MAC2MAC_BRIDGE) && !defined(TC956X_CPE_CONFIG))
 #ifdef TC956X_SRIOV_VF
+
+					{
+					char *dev_no = &token_n[6];
+					char *port_no = &token_n[7];
+
 					if (((tc956x_device_no != mdio_bus_id) &&
 						(*port_no != (char)(port_id + 49))) ||
 						(*dev_no != (char)(dev_id + 49)))
@@ -15332,6 +15277,7 @@ static bool lookfor_macid(char *file_buf, uint8_t port_id, uint8_t dev_id)
 						(*port_no != (char)(port_id + 49))) ||
 						(*dev_no != (char)(dev_id + 48)))
 #endif
+					}
 #else
 					if (tc956x_device_no != mdio_bus_id)
 #endif
