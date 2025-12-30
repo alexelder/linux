@@ -483,7 +483,7 @@ static int tc956x_vf_mbx_read(struct stmmac_priv *priv, u8 *msg_buff,
 
 	switch (msg_buff[MBX_MSG_OFST]) {
 	case OPCODE_MBX_PHY_LINK:
-		ret_val = tc956x_phy_link(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0]);
+		ret_val = stm_phy_link(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0]);
 		break;
 	case OPCODE_MBX_RX_CSUM:
 		ret_val =  tc956x_rx_csum(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0]);

@@ -48,16 +48,16 @@ extern int tc956xmac_ethtool_op_get_eee(struct net_device *dev,
 										struct ethtool_eee *edata);
 
 
-extern int tc956x_pf_set_mac_filter(struct net_device *dev, int vf,
+extern int stm_pf_set_mac_filter(struct net_device *dev, int vf,
 										const u8 *mac);
 
-extern void tc956x_pf_del_mac_filter(struct net_device *dev, int vf, const u8 *mac);
+extern void stm_pf_del_mac_filter(struct net_device *dev, int vf, const u8 *mac);
 
-extern void tc956x_pf_set_vlan_filter(struct net_device *dev, u16 vf, u16 vid);
+extern void stm_pf_set_vlan_filter(struct net_device *dev, u16 vf, u16 vid);
 
-extern void tc956x_pf_del_vlan_filter(struct net_device *dev, u16 vf, u16 vid);
+extern void stm_pf_del_vlan_filter(struct net_device *dev, u16 vf, u16 vid);
 
-extern void tc956x_pf_del_umac_addr(struct stmmac_priv *priv, int index, int vf);
+extern void stm_pf_del_umac_addr(struct stmmac_priv *priv, int index, int vf);
 
 extern void tc956xmac_service_mbx_event_schedule(struct stmmac_priv *priv);
 
@@ -1076,7 +1076,7 @@ static int tc956xmac_pf_set_mac_filter(struct stmmac_priv *priv, struct net_devi
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 	spin_lock_irqsave(&priv->spn_lock.mac_filter, flags);
 #endif
-	ret = tc956x_pf_set_mac_filter(dev, vf, &mac[0]);
+	ret = stm_pf_set_mac_filter(dev, vf, &mac[0]);
 
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 	spin_unlock_irqrestore(&priv->spn_lock.mac_filter, flags);
@@ -1134,7 +1134,7 @@ static int tc956xmac_pf_del_mac_filter(struct stmmac_priv *priv, struct net_devi
 	spin_lock_irqsave(&priv->spn_lock.mac_filter, flags);
 #endif
 	/* Call core API to set the register */
-	tc956x_pf_del_mac_filter(dev, vf, &mac[0]);
+	stm_pf_del_mac_filter(dev, vf, &mac[0]);
 
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 	spin_unlock_irqrestore(&priv->spn_lock.mac_filter, flags);
@@ -1188,7 +1188,7 @@ static int tc956xmac_pf_set_vlan_filter(struct stmmac_priv *priv, struct net_dev
 #endif
 
 	/* Call core API to set the register */
-	tc956x_pf_set_vlan_filter(dev, vf, vid);
+	stm_pf_set_vlan_filter(dev, vf, vid);
 
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 	spin_unlock_irqrestore(&priv->spn_lock.vlan_filter, flags);
@@ -1243,7 +1243,7 @@ static int tc956xmac_pf_del_vlan_filter(struct stmmac_priv *priv, struct net_dev
 	spin_lock_irqsave(&priv->spn_lock.vlan_filter, flags);
 #endif
 	/* Call core API to set the register */
-	tc956x_pf_del_vlan_filter(dev, vf, vid);
+	stm_pf_del_vlan_filter(dev, vf, vid);
 
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 	spin_unlock_irqrestore(&priv->spn_lock.vlan_filter, flags);
@@ -1589,12 +1589,12 @@ static int tc956xmac_mbx_vf_reset(struct stmmac_priv *priv, u8 *mbx_buff,
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 		spin_lock_irqsave(&priv->spn_lock.mac_filter, flags);
 #endif
-		tc956x_pf_del_umac_addr(priv, HOST_MAC_ADDR_OFFSET + vf, vf);   //VF device address
+		stm_pf_del_umac_addr(priv, HOST_MAC_ADDR_OFFSET + vf, vf);   //VF device address
 		for (i = XGMAC_ADDR_ADD_SKIP_OFST; i < (TC956X_MAX_PERFECT_ADDRESSES);
 			i++, mac_table++) {
 			for (vf_number = 0; vf_number < 4; vf_number++) {
 				if (mac_table->vf[vf_number] == vf)
-					tc956x_pf_del_mac_filter(priv->dev, vf, (u8 *)&mac_table->mac_address);
+					stm_pf_del_mac_filter(priv->dev, vf, (u8 *)&mac_table->mac_address);
 			}
 		}
 
@@ -1608,7 +1608,7 @@ static int tc956xmac_mbx_vf_reset(struct stmmac_priv *priv, u8 *mbx_buff,
 		for (i = 0; i < TC956X_MAX_PERFECT_VLAN; i++, vlan_table++) {
 			for (vf_number = 0; vf_number < 4; vf_number++) {
 				if (vlan_table->vf[vf_number].vf_number == vf)
-					tc956x_pf_del_vlan_filter(priv->dev, vf, vlan_table->vid);
+					stm_pf_del_vlan_filter(priv->dev, vf, vlan_table->vid);
 			}
 		}
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)

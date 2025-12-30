@@ -32,7 +32,7 @@
 #include "tc956x_pf_rsc_mng.h"
 
 /**
- * tc956x_pf_rsc_mng_get_fn_id
+ * stm_pf_rsc_mng_get_fn_id
  *
  * @priv: pointer to the stmmac private structure
  * @reg_pci_bridge_config_addr:
@@ -49,7 +49,7 @@
  * \return success or error
  */
 
-static int tc956x_pf_rsc_mng_get_fn_id(struct stmmac_priv *priv, void __iomem *reg_pci_bridge_config_addr,
+static int stm_pf_rsc_mng_get_fn_id(struct stmmac_priv *priv, void __iomem *reg_pci_bridge_config_addr,
 						struct fn_id *fn_id_info)
 {
 	void __iomem *ioaddr = reg_pci_bridge_config_addr;
@@ -74,7 +74,7 @@ static int tc956x_pf_rsc_mng_get_fn_id(struct stmmac_priv *priv, void __iomem *r
 }
 
 /**
- * tc956x_pf_rsc_mng_set_rscs
+ * stm_pf_rsc_mng_set_rscs
  *
  * @priv: pointer to the stmmac private structure
  * @dev: pointer to the net device structure
@@ -96,7 +96,7 @@ static int tc956x_pf_rsc_mng_get_fn_id(struct stmmac_priv *priv, void __iomem *r
  *	}
  * \return None
  */
-static void tc956x_pf_rsc_mng_set_rscs(struct stmmac_priv *priv, struct net_device *dev, u8 *rscs)
+static void stm_pf_rsc_mng_set_rscs(struct stmmac_priv *priv, struct net_device *dev, u8 *rscs)
 {
 	void __iomem *ioaddr = priv->stm_BRIDGE_CFG_pci_base_addr;
 	u32 rsc_mng_rsc_ctl = 0;
@@ -140,7 +140,7 @@ static void tc956x_pf_rsc_mng_set_rscs(struct stmmac_priv *priv, struct net_devi
 }
 
 /**
- * tc956x_pf_rsc_mng_get_rscs
+ * stm_pf_rsc_mng_get_rscs
  *
  * @priv: pointer to the stmmac private structure
  * @dev: pointer to the net device structure
@@ -157,14 +157,14 @@ static void tc956x_pf_rsc_mng_set_rscs(struct stmmac_priv *priv, struct net_devi
  * \return None
  */
 
-static void tc956x_pf_rsc_mng_get_rscs(struct stmmac_priv *priv, struct net_device *dev, u8 *rscs)
+static void stm_pf_rsc_mng_get_rscs(struct stmmac_priv *priv, struct net_device *dev, u8 *rscs)
 {
 	void __iomem *ioaddr = priv->stm_BRIDGE_CFG_pci_base_addr;
 	*rscs = ((readl(ioaddr + RSCMNG_RSC_ST_REG)) & RSC_MNG_RSC_STATUS_MASK);
 }
 
 const struct mac_rsc_mng_ops tc956xmac_rsc_mng_ops = {
-	.get_fn_id = tc956x_pf_rsc_mng_get_fn_id,
-	.set_rscs = tc956x_pf_rsc_mng_set_rscs,
-	.get_rscs = tc956x_pf_rsc_mng_get_rscs,
+	.get_fn_id = stm_pf_rsc_mng_get_fn_id,
+	.set_rscs = stm_pf_rsc_mng_set_rscs,
+	.get_rscs = stm_pf_rsc_mng_get_rscs,
 };

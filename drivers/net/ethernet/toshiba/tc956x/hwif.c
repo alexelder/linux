@@ -266,7 +266,7 @@ static const struct stmmac_hwif_entry {
 		.mmc = &dwxgmac_mmc_ops,
 #ifndef TC956X_SRIOV_VF
 #ifdef TC956X
-		.pma = &tc956x_pma_ops,
+		.pma = &stm_pma_ops,
 #endif
 #endif
 #if defined(TC956X_SRIOV_PF) | defined(TC956X_SRIOV_VF)

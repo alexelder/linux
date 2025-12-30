@@ -88,11 +88,11 @@
 void stm_filter_debug(struct stmmac_priv *priv);
 #endif
 #ifdef TC956X_SRIOV_PF
-int tc956x_pf_set_mac_filter(struct net_device *dev, int vf, const u8 *mac);
-void tc956x_pf_del_mac_filter(struct net_device *dev, int vf, const u8 *mac);
-void tc956x_pf_del_umac_addr(struct stmmac_priv *priv, int index, int vf);
-void tc956x_pf_set_vlan_filter(struct net_device *dev, u16 vf, u16 vid);
-void tc956x_pf_del_vlan_filter(struct net_device *dev, u16 vf, u16 vid);
+int stm_pf_set_mac_filter(struct net_device *dev, int vf, const u8 *mac);
+void stm_pf_del_mac_filter(struct net_device *dev, int vf, const u8 *mac);
+void stm_pf_del_umac_addr(struct stmmac_priv *priv, int index, int vf);
+void stm_pf_set_vlan_filter(struct net_device *dev, u16 vf, u16 vid);
+void stm_pf_del_vlan_filter(struct net_device *dev, u16 vf, u16 vid);
 #endif
 
 static void tc956x_set_mac_addr(struct stmmac_priv *priv, struct mac_device_info *hw,
@@ -1297,7 +1297,7 @@ static int stm_add_sw_mac_table(struct net_device *dev, const u8 *mac, int vf)
 }
 
 #ifdef TC956X_SRIOV_PF
-int tc956x_pf_set_mac_filter(struct net_device *dev,
+int stm_pf_set_mac_filter(struct net_device *dev,
 				int vf, const u8 *mac)
 {
 
@@ -1307,13 +1307,13 @@ int tc956x_pf_set_mac_filter(struct net_device *dev,
 		return -EPERM;
 }
 
-void tc956x_pf_del_mac_filter(struct net_device *dev,
+void stm_pf_del_mac_filter(struct net_device *dev,
 	int vf, const u8 *mac)
 {
 	stm_del_sw_mac_table(dev, mac, vf);
 }
 
-void tc956x_pf_del_umac_addr(struct stmmac_priv *priv,
+void stm_pf_del_umac_addr(struct stmmac_priv *priv,
 				int index, int vf)
 {
 	struct mac_device_info *hw = priv->hw;
@@ -1820,14 +1820,14 @@ static void dwxgmac2_update_vlan_hash(struct stmmac_priv *priv,
 
 #ifdef TC956X_SRIOV_PF
 
-void tc956x_pf_set_vlan_filter(struct net_device *dev, u16 vf, u16 vid)
+void stm_pf_set_vlan_filter(struct net_device *dev, u16 vf, u16 vid)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 
 	dwxgmac2_update_vlan_hash(priv, dev, 0, vid, vf);
 }
 
-void tc956x_pf_del_vlan_filter(struct net_device *dev, u16 vf, u16 vid)
+void stm_pf_del_vlan_filter(struct net_device *dev, u16 vf, u16 vid)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 

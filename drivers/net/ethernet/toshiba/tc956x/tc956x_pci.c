@@ -1,7 +1,7 @@
 /*
  * TC956X ethernet driver.
  *
- * tc956x_pci.c
+ * stm_pci.c
  *
  * Copyright (C) 2011-2012  Vayavya Labs Pvt Ltd
  * Copyright (C) 2025 Toshiba Electronic Devices & Storage Corporation
@@ -247,7 +247,7 @@
 #include "tc956x_pcie_logstat.h"
 #endif /* #ifdef TC956X_PCIE_LOGSTAT */
 
-static DEFINE_MUTEX(tc956x_pm_suspend_lock);
+static DEFINE_MUTEX(stm_pm_suspend_lock);
 
 struct tx956x_shrd_mem tx956x_pci_shrd_mem[TC956X_TOT_CASCADE_DEV];
 
@@ -1350,7 +1350,7 @@ static void xgmac_default_data(struct plat_tc956xmacenet_data *plat)
 
 #ifdef TC956X_SRIOV_VF
 #ifdef TC956X_SRIOV_DEBUG
-static void tc956x_print_vf_mac_config(struct pci_dev *pdev,
+static void stm_print_vf_mac_config(struct pci_dev *pdev,
 				struct plat_tc956xmacenet_data *plat)
 {
 	u8 ch, k;
@@ -1871,7 +1871,7 @@ static int tc956xmac_xgmac3_default_data(struct pci_dev *pdev,
 
 #ifdef TC956X_SRIOV_VF
 #ifdef TC956X_SRIOV_DEBUG
-	tc956x_print_vf_mac_config(pdev, plat);
+	stm_print_vf_mac_config(pdev, plat);
 #endif
 #endif
 
@@ -2503,7 +2503,7 @@ static int get_vf_id(struct plat_tc956xmacenet_data *plat_dat,
  * param[in] dev  - pointer to device structure.
  * param[in] id   - pointer to base address of registers.
  */
-static void tc956x_pcie_disable_dsp1_port(struct device *dev,
+static void stm_pcie_disable_dsp1_port(struct device *dev,
 				void __iomem *reg_sfr_base_addr)
 {
 	u32 reg_data;
@@ -2582,7 +2582,7 @@ static void tc956x_pcie_disable_dsp1_port(struct device *dev,
  * param[in] dev  - pointer to device structure.
  * param[in] id   - pointer to base address of registers.
  */
-static void tc956x_pcie_disable_dsp2_port(struct device *dev,
+static void stm_pcie_disable_dsp2_port(struct device *dev,
 				void __iomem *reg_sfr_base_addr)
 {
 	u32 reg_data;
@@ -2836,7 +2836,7 @@ static int tc956xmac_pci_probe(struct pci_dev *pdev,
 	uint16_t sh_mem_offset;
 
 	NMSGPR_INFO(&pdev->dev, "%s  >", __func__);
-	mutex_lock(&tc956x_pm_suspend_lock);
+	mutex_lock(&stm_pm_suspend_lock);
 	DBGPR_FUNC(&(pdev->dev), "-->%s\n", __func__);
 #ifndef TC956X_SRIOV_VF
 	scnprintf(version_str, sizeof(version_str), "Host Driver Version %d%d-%d%d-%d%d",
@@ -3203,11 +3203,11 @@ static int tc956xmac_pci_probe(struct pci_dev *pdev,
 
 #ifndef TC956X_SRIOV_VF
 #ifdef TC956X_PCIE_DISABLE_DSP1
-	tc956x_pcie_disable_dsp1_port(&pdev->dev, res.stm_SFR_pci_base_addr);
+	stm_pcie_disable_dsp1_port(&pdev->dev, res.stm_SFR_pci_base_addr);
 #endif
 
 #ifdef TC956X_PCIE_DISABLE_DSP2
-	tc956x_pcie_disable_dsp2_port(&pdev->dev, res.stm_SFR_pci_base_addr);
+	stm_pcie_disable_dsp2_port(&pdev->dev, res.stm_SFR_pci_base_addr);
 #endif
 
 
@@ -3362,7 +3362,7 @@ static int tc956xmac_pci_probe(struct pci_dev *pdev,
 
 	plat->mac_no_mdio_no_phy = macX_no_mdio_no_phy[res.device_num];
 
-	overlay = tc956x_platform_port_interface_overlay(&pdev->dev, &res);
+	overlay = stm_platform_port_interface_overlay(&pdev->dev, &res);
 	if (overlay) {
 		plat->mdc_clk = res.mdc_clk;
 		plat->c45_needed = res.c45_state;
@@ -3723,7 +3723,7 @@ static int tc956xmac_pci_probe(struct pci_dev *pdev,
 	tc956xmac_pm_usage_counter++;
 	DBGPR_FUNC(&(pdev->dev), "%s : Device Usage Count = [%d] probe sequence number : %d\n", __func__, tx956x_pci_shrd_mem[res.pci_bd].pci_dev_active_cnt, res.probe_seq_no);
 	DBGPR_FUNC(&(pdev->dev), "<--%s\n", __func__);
-	mutex_unlock(&tc956x_pm_suspend_lock);
+	mutex_unlock(&stm_pm_suspend_lock);
 
 	return ret;
 
@@ -3775,7 +3775,7 @@ err_out_req_reg_failed:
 	pci_disable_device(pdev);
 err_out_enb_failed:
 	DBGPR_FUNC(&(pdev->dev), "<--%s Error return: %d\n", __func__, ret);
-	mutex_unlock(&tc956x_pm_suspend_lock);
+	mutex_unlock(&stm_pm_suspend_lock);
 
 	return ret;
 
@@ -3806,7 +3806,7 @@ static void tc956xmac_pci_remove(struct pci_dev *pdev)
 	void *nrst_reg, *nclk_reg;
 	u32 nrst_val, nclk_val;
 #endif
-	mutex_lock(&tc956x_pm_suspend_lock);
+	mutex_lock(&stm_pm_suspend_lock);
 
 	DBGPR_FUNC(&(pdev->dev), "-->%s\n", __func__);
 
@@ -3899,7 +3899,7 @@ static void tc956xmac_pci_remove(struct pci_dev *pdev)
 	tx956x_pci_shrd_mem[priv->pci_bd].pci_dev_active_cnt--;
 	DBGPR_FUNC(&(pdev->dev), "%s : Device Usage Count = [%d] probe sequence number : %d\n", __func__, tx956x_pci_shrd_mem[priv->pci_bd].pci_dev_active_cnt, priv->probe_seq_no);
 	DBGPR_FUNC(&(pdev->dev), "<--%s\n", __func__);
-	mutex_unlock(&tc956x_pm_suspend_lock);
+	mutex_unlock(&stm_pm_suspend_lock);
 }
 
 /*!
@@ -3912,7 +3912,7 @@ static void tc956xmac_pci_remove(struct pci_dev *pdev)
  *
  * \return int
  */
-static int tc956x_pcie_pm_disable_pci(struct pci_dev *pdev)
+static int stm_pcie_pm_disable_pci(struct pci_dev *pdev)
 {
 	struct net_device *ndev = dev_get_drvdata(&pdev->dev);
 	struct stmmac_priv *priv = netdev_priv(ndev);
@@ -3936,7 +3936,7 @@ static int tc956x_pcie_pm_disable_pci(struct pci_dev *pdev)
  *
  * \return int
  */
-static int tc956x_pcie_pm_enable_pci(struct pci_dev *pdev)
+static int stm_pcie_pm_enable_pci(struct pci_dev *pdev)
 {
 	struct net_device *ndev = dev_get_drvdata(&pdev->dev);
 	struct stmmac_priv *priv = netdev_priv(ndev);
@@ -3968,9 +3968,9 @@ static int tc956x_pcie_pm_enable_pci(struct pci_dev *pdev)
  *
  * \return int
  */
-static int tc956x_pcie_pm_pci(struct pci_dev *pdev, enum TC956X_PORT_PM_STATE state)
+static int stm_pcie_pm_pci(struct pci_dev *pdev, enum TC956X_PORT_PM_STATE state)
 {
-	static struct pci_dev *tc956x_pd = NULL, *stm_dsp_ep = NULL, *tc956x_port_pdev[2] = {NULL};
+	static struct pci_dev *stm_pd = NULL, *stm_dsp_ep = NULL, *stm_port_pdev[2] = {NULL};
 	struct pci_bus *bus = NULL;
 	int ret = 0, i = 0, p = 0;
 	struct net_device *ndev = dev_get_drvdata(&pdev->dev);
@@ -3981,17 +3981,17 @@ static int tc956x_pcie_pm_pci(struct pci_dev *pdev, enum TC956X_PORT_PM_STATE st
 		bus = stm_dsp_ep->subordinate;
 
 		if (bus)
-			list_for_each_entry(tc956x_pd, &bus->devices, bus_list)
-		tc956x_port_pdev[i++] = tc956x_pd;
+			list_for_each_entry(stm_pd, &bus->devices, bus_list)
+		stm_port_pdev[i++] = stm_pd;
 
-		for (p = 0; ((p < i) && (tc956x_port_pdev[p] != NULL)); p++) {
+		for (p = 0; ((p < i) && (stm_port_pdev[p] != NULL)); p++) {
 			/* Enter only if at least 1 Port Suspended */
 			if (state == SUSPEND) {
-				ret = tc956x_pcie_pm_disable_pci(tc956x_port_pdev[p]);
+				ret = stm_pcie_pm_disable_pci(stm_port_pdev[p]);
 				if (ret < 0)
 					goto err;
 			} else if (state == RESUME) {
-				ret = tc956x_pcie_pm_enable_pci(tc956x_port_pdev[p]);
+				ret = stm_pcie_pm_enable_pci(stm_port_pdev[p]);
 				if (ret < 0)
 					goto err;
 			}
@@ -4015,7 +4015,7 @@ err:
  *
  * \retval 0
  */
-static int tc956x_pcie_suspend(struct device *dev)
+static int stm_pcie_suspend(struct device *dev)
 {
 	struct pci_dev *pdev = to_pci_dev(dev);
 	struct net_device *ndev = dev_get_drvdata(&pdev->dev);
@@ -4027,14 +4027,14 @@ static int tc956x_pcie_suspend(struct device *dev)
 #endif
 
 	DBGPR_FUNC(&(pdev->dev), "-->%s\n", __func__);
-	if (priv->tc956x_port_pm_suspend == true) {
+	if (priv->stm_port_pm_suspend == true) {
 		DBGPR_FUNC(&(pdev->dev), "<--%s : Port %d interface %s already Suspended\n", __func__, priv->port_num, priv->dev->name);
 		return -1;
 	}
 	/* Set flag to avoid queuing any more work */
-	priv->tc956x_port_pm_suspend = true;
+	priv->stm_port_pm_suspend = true;
 
-	mutex_lock(&tc956x_pm_suspend_lock);
+	mutex_lock(&stm_pm_suspend_lock);
 
 	/* Decrement device usage counter */
 	tx956x_pci_shrd_mem[priv->pci_bd].pci_dev_active_cnt--;
@@ -4074,9 +4074,9 @@ static int tc956x_pcie_suspend(struct device *dev)
 #endif
 	DBGPR_FUNC(&(pdev->dev), "%s : Port %d %s- Platform Suspend", __func__, priv->port_num, priv->dev->name);
 #ifdef TC956X_SRIOV_PF
-	ret = tc956x_platform_suspend(priv);
+	ret = stm_platform_suspend(priv);
 	if (ret) {
-		NMSGPR_ERR(&(pdev->dev), "%s: error in calling tc956x_platform_suspend", pci_name(pdev));
+		NMSGPR_ERR(&(pdev->dev), "%s: error in calling stm_platform_suspend", pci_name(pdev));
 		goto err;
 	}
 #endif
@@ -4090,7 +4090,7 @@ static int tc956x_pcie_suspend(struct device *dev)
 	}
 #endif
 #endif
-	ret = tc956x_pcie_pm_pci(pdev, SUSPEND);
+	ret = stm_pcie_pm_pci(pdev, SUSPEND);
 	if (ret < 0)
 		goto err;
 #ifdef TC956X_SRIOV_PF
@@ -4103,7 +4103,7 @@ static int tc956x_pcie_suspend(struct device *dev)
 #endif /* #ifdef CONFIG_TC956X_MAGIC_PACKET_WOL_CONF */
 #endif
 err:
-	mutex_unlock(&tc956x_pm_suspend_lock);
+	mutex_unlock(&stm_pm_suspend_lock);
 	DBGPR_FUNC(&(pdev->dev), "<--%s\n", __func__);
 	return ret;
 }
@@ -4124,7 +4124,7 @@ err:
  * \retval 0
  */
 #ifdef TC956X
-static int tc956x_pcie_resume_config(struct pci_dev *pdev)
+static int stm_pcie_resume_config(struct pci_dev *pdev)
 {
 	struct net_device *ndev = dev_get_drvdata(&pdev->dev);
 	struct stmmac_priv *priv = netdev_priv(ndev);
@@ -4261,7 +4261,7 @@ static int tc956x_pcie_resume_config(struct pci_dev *pdev)
 			writel(ret, priv->ioaddr + NRSTCTRL1_OFFSET);
 		}
 
-		ret = tc956x_pma_setup(priv, priv->pmaaddr);
+		ret = stm_pma_setup(priv, priv->pmaaddr);
 		if (ret < 0)
 			KPRINT_INFO("PMA switching to internal clock Failed\n");
 
@@ -4322,7 +4322,7 @@ err_phy_addr:
  * \retval 0
  */
 
-static int tc956x_pcie_resume(struct device *dev)
+static int stm_pcie_resume(struct device *dev)
 {
 	struct pci_dev *pdev = to_pci_dev(dev);
 #ifndef TC956X_SRIOV_VF
@@ -4339,15 +4339,15 @@ static int tc956x_pcie_resume(struct device *dev)
 
 #ifndef TC956X_SRIOV_VF
 	DBGPR_FUNC(&(pdev->dev), "-->%s\n", __func__);
-	if (priv->tc956x_port_pm_suspend == false) {
+	if (priv->stm_port_pm_suspend == false) {
 		DBGPR_FUNC(&(pdev->dev), "%s : Port %d %s already Resumed\n", __func__, priv->port_num, priv->dev->name);
 		return -1;
 	}
 #endif
-	mutex_lock(&tc956x_pm_suspend_lock);
+	mutex_lock(&stm_pm_suspend_lock);
 
 #ifndef TC956X_SRIOV_VF
-	ret = tc956x_pcie_pm_enable_pci(pdev);
+	ret = stm_pcie_pm_enable_pci(pdev);
 	if (ret < 0)
 		goto err;
 
@@ -4359,9 +4359,9 @@ static int tc956x_pcie_resume(struct device *dev)
 		KPRINT_INFO("GPIO configuration restoration failed\n");
 
 	DBGPR_FUNC(&(pdev->dev), "%s : Port %d %s - Platform Resume", __func__, priv->port_num, priv->dev->name);
-	ret = tc956x_platform_resume(priv);
+	ret = stm_platform_resume(priv);
 	if (ret) {
-		NMSGPR_ERR(&(pdev->dev), "%s: error in calling tc956x_platform_resume", pci_name(pdev));
+		NMSGPR_ERR(&(pdev->dev), "%s: error in calling stm_platform_resume", pci_name(pdev));
 		pci_disable_device(pdev);
 		goto err;
 	}
@@ -4406,7 +4406,7 @@ static int tc956x_pcie_resume(struct device *dev)
 
 #ifdef TC956X
 	/* Configure EMAC Port */
-	tc956x_pcie_resume_config(pdev);
+	stm_pcie_resume_config(pdev);
 #endif
 #endif
 
@@ -4426,7 +4426,7 @@ static int tc956x_pcie_resume(struct device *dev)
 	tx956x_pci_shrd_mem[priv->pci_bd].pci_dev_active_cnt++;
 	DBGPR_FUNC(&(pdev->dev), "%s : (Number of Ports Resumed = [%d])\n", __func__, tx956x_pci_shrd_mem[priv->pci_bd].pci_dev_active_cnt);
 
-	priv->tc956x_port_pm_suspend = false;
+	priv->stm_port_pm_suspend = false;
 
 	/* Queue Work after resume complete to prevent MSI Disable */
 	if (priv->tc956xmac_pm_wol_interrupt) {
@@ -4479,7 +4479,7 @@ err_resume_logstat:
 #ifndef TC956X_SRIOV_VF
 err:
 #endif
-	mutex_unlock(&tc956x_pm_suspend_lock);
+	mutex_unlock(&stm_pm_suspend_lock);
 	DBGPR_FUNC(&(pdev->dev), "<--%s\n", __func__);
 
 	return ret;
@@ -4538,7 +4538,7 @@ static void tc956x_wol_gpio_trigger(void __iomem *reg_base_addr, bool mode)
  *
  * \param[in] pdev - pointer to pci_dev structure.
  */
-static void tc956x_pcie_shutdown(struct pci_dev *pdev)
+static void stm_pcie_shutdown(struct pci_dev *pdev)
 {
 #ifdef TC956X_SRIOV_VF
 	tc956xmac_vf_dvr_remove(&pdev->dev);
@@ -4550,7 +4550,7 @@ static void tc956x_pcie_shutdown(struct pci_dev *pdev)
 }
 
 /**
- * tc956x_pcie_error_detected()
+ * stm_pcie_error_detected()
  *
  * @pdev: pointer to pci_dev structure.
  * @state: PCI error state.
@@ -4565,7 +4565,7 @@ static void tc956x_pcie_shutdown(struct pci_dev *pdev)
  *
  * \return Error recovery state
  */
-static pci_ers_result_t tc956x_pcie_error_detected(struct pci_dev *pdev,
+static pci_ers_result_t stm_pcie_error_detected(struct pci_dev *pdev,
 						pci_channel_state_t state)
 {
 	NMSGPR_ERR(&(pdev->dev), "PCI AER Error detected : %d\n", state);
@@ -4575,7 +4575,7 @@ static pci_ers_result_t tc956x_pcie_error_detected(struct pci_dev *pdev,
 }
 
 /**
- * tc956x_pcie_slot_reset()
+ * stm_pcie_slot_reset()
  *
  * @pdev: pointer to pci_dev structure.
  *
@@ -4587,7 +4587,7 @@ static pci_ers_result_t tc956x_pcie_error_detected(struct pci_dev *pdev,
  *
  * \return Error recovery state
  */
-static pci_ers_result_t tc956x_pcie_slot_reset(struct pci_dev *pdev)
+static pci_ers_result_t stm_pcie_slot_reset(struct pci_dev *pdev)
 {
 	NMSGPR_ERR(&(pdev->dev), "PCI AER Slot reset Invoked\n");
 
@@ -4597,7 +4597,7 @@ static pci_ers_result_t tc956x_pcie_slot_reset(struct pci_dev *pdev)
 
 #if defined(TC956X_SRIOV_PF) && !defined(TC956X_AUTOMOTIVE_CONFIG) && !defined(TC956X_ENABLE_MAC2MAC_BRIDGE) && !defined(TC956X_CPE_CONFIG)
 /**
- * tc956x_pcie_reset_prepare()
+ * stm_pcie_reset_prepare()
  *
  * @pdev: pointer to pci_dev structure.
  *
@@ -4609,7 +4609,7 @@ static pci_ers_result_t tc956x_pcie_slot_reset(struct pci_dev *pdev)
  *
  * \return None
  */
-static void tc956x_pcie_reset_prepare(struct pci_dev *pdev)
+static void stm_pcie_reset_prepare(struct pci_dev *pdev)
 {
 	struct net_device *ndev = dev_get_drvdata(&pdev->dev);
 #ifdef TC956X_SRIOV_PF
@@ -4629,7 +4629,7 @@ static void tc956x_pcie_reset_prepare(struct pci_dev *pdev)
 }
 
 /**
- * tc956x_pcie_reset_done()
+ * stm_pcie_reset_done()
  *
  * @pdev: pointer to pci_dev structure.
  *
@@ -4641,13 +4641,13 @@ static void tc956x_pcie_reset_prepare(struct pci_dev *pdev)
  *
  * \return None
  */
-static void tc956x_pcie_reset_done(struct pci_dev *pdev)
+static void stm_pcie_reset_done(struct pci_dev *pdev)
 {
 	struct net_device *ndev = dev_get_drvdata(&pdev->dev);
 
 #ifdef TC956X_SRIOV_PF
 	/* Configure EMAC Port */
-	tc956x_pcie_resume_config(pdev);
+	stm_pcie_resume_config(pdev);
 #endif
 
 	/* Invoke device driver open */
@@ -4661,7 +4661,7 @@ static void tc956x_pcie_reset_done(struct pci_dev *pdev)
 #endif
 
 /**
- * tc956x_pcie_io_resume()
+ * stm_pcie_io_resume()
  *
  * @pdev: pointer to pci_dev structure.
  *
@@ -4674,19 +4674,19 @@ static void tc956x_pcie_reset_done(struct pci_dev *pdev)
  *
  * \return void
  */
-static void tc956x_pcie_io_resume(struct pci_dev *pdev)
+static void stm_pcie_io_resume(struct pci_dev *pdev)
 {
 	NMSGPR_ERR(&(pdev->dev), "PCI AER Resume Invoked\n");
 }
 
 /* PCI AER Error handlers */
 static struct pci_error_handlers stm_err_handler = {
-	.error_detected = tc956x_pcie_error_detected,
-	.slot_reset = tc956x_pcie_slot_reset,
-	.resume = tc956x_pcie_io_resume,
+	.error_detected = stm_pcie_error_detected,
+	.slot_reset = stm_pcie_slot_reset,
+	.resume = stm_pcie_io_resume,
 #if defined(TC956X_SRIOV_PF) && !defined(TC956X_AUTOMOTIVE_CONFIG) && !defined(TC956X_ENABLE_MAC2MAC_BRIDGE) && !defined(TC956X_CPE_CONFIG)
-	.reset_prepare = tc956x_pcie_reset_prepare,
-	.reset_done = tc956x_pcie_reset_done,
+	.reset_prepare = stm_pcie_reset_prepare,
+	.reset_done = stm_pcie_reset_done,
 #endif
 };
 
@@ -4728,14 +4728,14 @@ static const struct pci_device_id tc956xmac_id_table[] = {
 	{}
 };
 
-static SIMPLE_DEV_PM_OPS(tc956xmac_pm_ops, tc956x_pcie_suspend, tc956x_pcie_resume);
+static SIMPLE_DEV_PM_OPS(tc956xmac_pm_ops, stm_pcie_suspend, stm_pcie_resume);
 
 static struct pci_driver tc956xmac_pci_driver = {
 	.name = TC956X_RESOURCE_NAME,
 	.id_table = tc956xmac_id_table,
 	.probe = tc956xmac_pci_probe,
 	.remove = tc956xmac_pci_remove,
-	.shutdown	= tc956x_pcie_shutdown,
+	.shutdown	= stm_pcie_shutdown,
 	.driver		= {
 		.name		= TC956X_RESOURCE_NAME,
 		.owner		= THIS_MODULE,

@@ -528,7 +528,7 @@ enum state_log_enable {
 };
 
 /**
- * struct tc956x_pcie_link_params - PCIe Link Parameters
+ * struct stm_pcie_link_params - PCIe Link Parameters
  *
  * PCIe Link Parameters
  * ltssm : Link Training and Status State Machine(LTSSM) Value(0 to 0x1F).
@@ -536,7 +536,7 @@ enum state_log_enable {
  * speed : Link Speed (Gen1 : 2.5GT/s, Gen2 : 5 GT/s, Gen3 : 8GT/s).
  * width : Number of Active Lanes(0, 1, 2, 3, 4).
  */
-struct tc956x_pcie_link_params {
+struct stm_pcie_link_params {
 	__u8 ltssm; /* Current Link Training and Status State Machine(LTSSM) Value */
 	__u8 dll; /* Current Data Link Layer State */
 	__u8 speed; /* Current Link Speed */
@@ -659,7 +659,7 @@ struct stm_ioctl_state_log_enable {
  */
 struct stm_ioctl_pcie_link_params {
 	__u32 cmd;
-	struct tc956x_pcie_link_params *link_param;
+	struct stm_pcie_link_params *link_param;
 	enum ports port;
 };
 

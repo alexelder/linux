@@ -1,7 +1,7 @@
 /*
  * TC956X ethernet driver.
  *
- * tc956x_pf_mbx.c
+ * stm_pf_mbx.c
  *
  * Copyright (C) 2021 Toshiba Electronic Devices & Storage Corporation
  *
@@ -132,7 +132,7 @@ static u8 *pf_get_mbx_mem_idx(enum mbx_msg_fns msg_src,
 }
 
 /**
- * tc956x_pf_get_fn_idx_from_int_sts
+ * stm_pf_get_fn_idx_from_int_sts
  *
  * \brief Helper function to get function that raised the mailbox interrupt
  *
@@ -144,7 +144,7 @@ static u8 *pf_get_mbx_mem_idx(enum mbx_msg_fns msg_src,
  *
  * \return function type or error
  */
-int tc956x_pf_get_fn_idx_from_int_sts(struct stmmac_priv *priv,
+int stm_pf_get_fn_idx_from_int_sts(struct stmmac_priv *priv,
 					     struct fn_id *fn_id_info)
 {
 	void __iomem *ioaddr = priv->stm_BRIDGE_CFG_pci_base_addr;
@@ -212,7 +212,7 @@ static int unlock_semaphore(void __iomem *ioaddr, u8 idx)
 }
 
 /**
- * tc956x_pf_parse_mbx
+ * stm_pf_parse_mbx
  *
  * \brief API to read and process the PF mailbox
  *
@@ -225,7 +225,7 @@ static int unlock_semaphore(void __iomem *ioaddr, u8 idx)
  *
  * \return None
  */
-void tc956x_pf_parse_mbx(struct stmmac_priv *priv,
+void stm_pf_parse_mbx(struct stmmac_priv *priv,
 				enum mbx_msg_fns msg_src)
 {
 	u8 msg_buff[MBX_TOT_SIZE];
@@ -243,7 +243,7 @@ void tc956x_pf_parse_mbx(struct stmmac_priv *priv,
 
 
 /**
- * tc956x_pf_check_for_ack
+ * stm_pf_check_for_ack
  *
  * \brief Helper function to check for ACK
  *
@@ -256,7 +256,7 @@ void tc956x_pf_parse_mbx(struct stmmac_priv *priv,
  *
  * \return ACK/NACK or error
  */
-static int tc956x_pf_check_for_ack(struct stmmac_priv *priv,
+static int stm_pf_check_for_ack(struct stmmac_priv *priv,
 				   enum mbx_msg_fns msg_dst,
 				   struct fn_id *fn_id_info)
 {
@@ -283,7 +283,7 @@ static int tc956x_pf_check_for_ack(struct stmmac_priv *priv,
 }
 
 /**
- * tc956x_pf_mbx_init
+ * stm_pf_mbx_init
  *
  * \brief API to initialise mailbox memory and parameters
  *
@@ -294,14 +294,14 @@ static int tc956x_pf_check_for_ack(struct stmmac_priv *priv,
  *
  * \return None
  */
-static void tc956x_pf_mbx_init(struct stmmac_priv *priv, void *data)
+static void stm_pf_mbx_init(struct stmmac_priv *priv, void *data)
 {
 	priv->stm_SRAM_mailbox_base_addr = priv->stm_SRAM_pci_base_addr + PF_MBX_SRAM_ADDR;
 	memset_io(priv->stm_SRAM_mailbox_base_addr, 0, 1920);
 }
 
 /**
- * tc956x_pf_mbx_poll_for_ack
+ * stm_pf_mbx_poll_for_ack
  *
  * \brief API to poll for acknowledgement
  *
@@ -314,7 +314,7 @@ static void tc956x_pf_mbx_init(struct stmmac_priv *priv, void *data)
  *
  * \return None
  */
-static int tc956x_pf_mbx_poll_for_ack(struct stmmac_priv *priv,
+static int stm_pf_mbx_poll_for_ack(struct stmmac_priv *priv,
 				      enum mbx_msg_fns msg_dst)
 {
 
@@ -322,12 +322,12 @@ static int tc956x_pf_mbx_poll_for_ack(struct stmmac_priv *priv,
 	int ack_status;
 
 	ack_status =
-		tc956x_pf_check_for_ack(priv, msg_dst, &priv->fn_id_info);
+		stm_pf_check_for_ack(priv, msg_dst, &priv->fn_id_info);
 
 	while (countdown && (ack_status < 0)) {
 		countdown--;
 		udelay(1000);
-		ack_status = tc956x_pf_check_for_ack(priv, msg_dst,
+		ack_status = stm_pf_check_for_ack(priv, msg_dst,
 						     &priv->fn_id_info);
 	}
 
@@ -335,7 +335,7 @@ static int tc956x_pf_mbx_poll_for_ack(struct stmmac_priv *priv,
 }
 
 /**
- * tc956x_pf_mbx_send_ack
+ * stm_pf_mbx_send_ack
  *
  * \brief API to send acknowledgement
  *
@@ -350,7 +350,7 @@ static int tc956x_pf_mbx_poll_for_ack(struct stmmac_priv *priv,
  *
  * \return None
  */
-static void tc956x_pf_mbx_send_ack(struct stmmac_priv *priv, u8 *msg_buff,
+static void stm_pf_mbx_send_ack(struct stmmac_priv *priv, u8 *msg_buff,
 				  enum mbx_msg_fns msg_dst,
 				  struct fn_id *fn_id_info)
 {
@@ -373,7 +373,7 @@ static void tc956x_pf_mbx_send_ack(struct stmmac_priv *priv, u8 *msg_buff,
 }
 
 /**
- * tc956x_pf_trigger_interrupt
+ * stm_pf_trigger_interrupt
  *
  * \brief Helper function to set mailbox interrupt bit
  *
@@ -384,7 +384,7 @@ static void tc956x_pf_mbx_send_ack(struct stmmac_priv *priv, u8 *msg_buff,
  *
  * \return None
  */
-static void tc956x_pf_trigger_interrupt(struct stmmac_priv *priv,
+static void stm_pf_trigger_interrupt(struct stmmac_priv *priv,
 					enum mbx_msg_fns msg_dst)
 {
 	void __iomem *ioaddr = priv->stm_BRIDGE_CFG_pci_base_addr;
@@ -405,7 +405,7 @@ static void tc956x_pf_trigger_interrupt(struct stmmac_priv *priv,
 }
 
 /**
- * tc956x_pf_mbx_write
+ * stm_pf_mbx_write
  *
  * \brief API to write a message to particular mailbox (sram)
  *
@@ -419,7 +419,7 @@ static void tc956x_pf_trigger_interrupt(struct stmmac_priv *priv,
  *
  * \return success or error code
  */
-static int tc956x_pf_mbx_write(struct stmmac_priv *priv, u8 *msg_buff,
+static int stm_pf_mbx_write(struct stmmac_priv *priv, u8 *msg_buff,
 			       enum mbx_msg_fns msg_dst,
 			       struct fn_id *fn_id_info)
 {
@@ -453,7 +453,7 @@ static int tc956x_pf_mbx_write(struct stmmac_priv *priv, u8 *msg_buff,
 		priv->xstats.mbx_pf_sent_vf[msg_dst - 3]++;
 
 	/*Set the interrupt bit in resource manager interrupt register*/
-	tc956x_pf_trigger_interrupt(priv, msg_dst);
+	stm_pf_trigger_interrupt(priv, msg_dst);
 
 	/*poll for ack/nack from the VF/MCU/Other PF*/
 	ret = tc956xmac_mbx_poll_for_ack(priv, msg_dst);
@@ -470,7 +470,7 @@ static int tc956x_pf_mbx_write(struct stmmac_priv *priv, u8 *msg_buff,
 }
 
 /**
- * tc956x_pf_mbx_read
+ * stm_pf_mbx_read
  *
  * \brief API to read a message from particular mailbox (sram)
  *
@@ -486,7 +486,7 @@ static int tc956x_pf_mbx_write(struct stmmac_priv *priv, u8 *msg_buff,
  *
  * \return success or error code
  */
-static int tc956x_pf_mbx_read(struct stmmac_priv *priv, u8 *msg_buff,
+static int stm_pf_mbx_read(struct stmmac_priv *priv, u8 *msg_buff,
 			      enum mbx_msg_fns msg_src,
 			      struct fn_id *fn_id_info)
 {
@@ -603,10 +603,10 @@ static int tc956x_pf_mbx_read(struct stmmac_priv *priv, u8 *msg_buff,
 }
 
 const struct mac_mbx_ops tc956xmac_mbx_ops = {
-	.init = tc956x_pf_mbx_init,
-	.read = tc956x_pf_mbx_read,
-	.write = tc956x_pf_mbx_write,
-	.send_ack = tc956x_pf_mbx_send_ack,
-	.poll_for_ack = tc956x_pf_mbx_poll_for_ack,
+	.init = stm_pf_mbx_init,
+	.read = stm_pf_mbx_read,
+	.write = stm_pf_mbx_write,
+	.send_ack = stm_pf_mbx_send_ack,
+	.poll_for_ack = stm_pf_mbx_poll_for_ack,
 };
 #endif /* #ifdef TC956X_SRIOV_PF */

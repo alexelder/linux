@@ -1,7 +1,7 @@
 /*
  * TC956X PCIe Logging and Statistics driver.
  *
- * tc956x_pcie_logstat.c
+ * stm_pcie_logstat.c
  *
  * Copyright (C) 2024 Toshiba Electronic Devices & Storage Corporation
  *
@@ -142,7 +142,7 @@ static uint8_t DlActive = LOGSTAT_DUMMY_VALUE, LinkSpeed = LOGSTAT_DUMMY_VALUE, 
  */
 
 /**
- * tc956x_pcie_ioctl_state_log_summary()
+ * stm_pcie_ioctl_state_log_summary()
  *
  * @priv: pointer to pcie private data.
  * @data: data passed from user space.
@@ -168,7 +168,7 @@ static uint8_t DlActive = LOGSTAT_DUMMY_VALUE, LinkSpeed = LOGSTAT_DUMMY_VALUE, 
  *
  * \return -EFAULT in case of copy failure, otherwise 0
  */
-int tc956x_pcie_ioctl_state_log_summary(const struct stmmac_priv *priv, void __user *data)
+int stm_pcie_ioctl_state_log_summary(const struct stmmac_priv *priv, void __user *data)
 {
 	int ret = 0;
 	struct stm_ioctl_state_log_summary ioctl_data;
@@ -520,7 +520,7 @@ int stm_logstat_state_log_analyze(uint32_t cur_state)
 }
 
 /**
- * tc956x_pcie_ioctl_get_pcie_link_params()
+ * stm_pcie_ioctl_get_pcie_link_params()
  *
  * @priv: pointer to pcie private data.
  * @data: data passed from user space.
@@ -536,11 +536,11 @@ int stm_logstat_state_log_analyze(uint32_t cur_state)
  *
  * \return -EFAULT in case of copy failure, otherwise 0
  */
-int tc956x_pcie_ioctl_get_pcie_link_params(const struct stmmac_priv *priv, void __user *data)
+int stm_pcie_ioctl_get_pcie_link_params(const struct stmmac_priv *priv, void __user *data)
 {
 	int ret = 0;
 	struct stm_ioctl_pcie_link_params ioctl_data;
-	struct tc956x_pcie_link_params link_param;
+	struct stm_pcie_link_params link_param;
 
 	DBGPR_FUNC(priv->device, "--> %s\n", __func__);
 
@@ -723,7 +723,7 @@ int stm_logstat_get_pcie_cur_width(void __iomem *pbase_addr, enum ports nport, u
 
 
 /**
- * tc956x_pcie_ioctl_state_log_enable()
+ * stm_pcie_ioctl_state_log_enable()
  *
  * @priv: pointer to pcie private data.
  * @data: data passed from user space.
@@ -738,7 +738,7 @@ int stm_logstat_get_pcie_cur_width(void __iomem *pbase_addr, enum ports nport, u
  *
  * \return -EFAULT in case of bad address, otherwise 0.
  */
-int tc956x_pcie_ioctl_state_log_enable(const struct stmmac_priv *priv, void __user *data)
+int stm_pcie_ioctl_state_log_enable(const struct stmmac_priv *priv, void __user *data)
 {
 	int ret = 0;
 	struct stm_ioctl_state_log_enable ioctl_data;

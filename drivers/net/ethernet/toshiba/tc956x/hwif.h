@@ -531,7 +531,7 @@ struct stmmac_ops {
 #endif
 
 #ifdef TC956X_SRIOV_VF
-#define tc956x_phy_link(__priv, __args...) \
+#define stm_phy_link(__priv, __args...) \
 	tc956xmac_do_callback(__priv, mbx_wrapper, phy_link, __args)
 #define tc956x_setup_mbx_etf(__priv, __args...) \
 	tc956xmac_do_callback(__priv, mbx_wrapper, setup_mbx_etf, __args)
@@ -1037,7 +1037,7 @@ struct tc956xmac_pma_ops {
 	int (*init)(struct stmmac_priv *priv, void __iomem *pmaaddr);
 };
 
-#define tc956x_pma_setup(__priv, __args...) \
+#define stm_pma_setup(__priv, __args...) \
 	tc956xmac_do_callback(__priv, pma, init, __args)
 
 #endif
@@ -1082,7 +1082,7 @@ extern const struct stmmac_desc_ops dwxgmac210_desc_ops;
 extern const struct stmmac_mmc_ops dwmac_mmc_ops;
 extern const struct stmmac_mmc_ops dwxgmac_mmc_ops;
 #ifdef TC956X
-extern const struct tc956xmac_pma_ops tc956x_pma_ops;
+extern const struct tc956xmac_pma_ops stm_pma_ops;
 #endif
 #if defined(TC956X_SRIOV_PF) | defined(TC956X_SRIOV_VF)
 extern const struct stm_msi_ops stm_msigen_ops;

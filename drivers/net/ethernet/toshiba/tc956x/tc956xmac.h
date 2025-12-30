@@ -280,7 +280,7 @@ struct tc956xmac_cm3_tamap;
 #ifdef TC956X
 #ifndef TC956X_SRIOV_VF
 
-#define TC956X_RESOURCE_NAME	"tc956x_pci-eth"
+#define TC956X_RESOURCE_NAME	"stm_pci-eth"
 #define IRQ_DEV_NAME(x)		(((x) == RM_PF0_ID) ? ("eth0") : ("eth1"))
 #define WOL_IRQ_DEV_NAME(x)	(((x) == RM_PF0_ID) ? ("eth0_wol") : ("eth1_wol"))
 
@@ -902,7 +902,7 @@ struct stmmac_priv {
 	u32 phy_loopback_mode;
 	bool is_sgmii_2p5g; /* For 2.5G SGMI, XPCS doesn't support AN. This flag is to identify 2.5G Speed for SGMII interface. */
 	u32 port_interface; /* Kernel module parameter variable for interface */
-	bool tc956x_port_pm_suspend; /* Port Suspend Status; True : port suspended, False : port resume */
+	bool stm_port_pm_suspend; /* Port Suspend Status; True : port suspended, False : port resume */
 	bool tc956xmac_pm_wol_interrupt; /* Port-wise flag for clearing interrupt after resume. */
 #endif
 
@@ -1284,24 +1284,24 @@ s32 stm_load_firmware(struct device *dev, struct tc956xmac_resources *res);
 extern int tc956xmac_pm_usage_counter;
 extern int stm_dsp_count;
 #if defined(TC956X_SRIOV_PF) && !defined(TC956X_AUTOMOTIVE_CONFIG) && !defined(TC956X_ENABLE_MAC2MAC_BRIDGE) && !defined(TC956X_CPE_CONFIG)
-int tc956x_pf_get_fn_idx_from_int_sts(struct stmmac_priv *priv,
+int stm_pf_get_fn_idx_from_int_sts(struct stmmac_priv *priv,
 					     struct fn_id *fn_id_info);
-void tc956x_pf_parse_mbx(struct stmmac_priv *priv,
+void stm_pf_parse_mbx(struct stmmac_priv *priv,
 				enum mbx_msg_fns msg_src);
 #endif
 
 #ifdef CONFIG_TC956X_PLATFORM_SUPPORT
-int tc956x_platform_probe(struct stmmac_priv *priv, struct tc956xmac_resources *res);
-int tc956x_platform_remove(struct stmmac_priv *priv);
-int tc956x_platform_suspend(struct stmmac_priv *priv);
-int tc956x_platform_resume(struct stmmac_priv *priv);
-int tc956x_platform_port_interface_overlay(struct device *dev, struct tc956xmac_resources *res);
+int stm_platform_probe(struct stmmac_priv *priv, struct tc956xmac_resources *res);
+int stm_platform_remove(struct stmmac_priv *priv);
+int stm_platform_suspend(struct stmmac_priv *priv);
+int stm_platform_resume(struct stmmac_priv *priv);
+int stm_platform_port_interface_overlay(struct device *dev, struct tc956xmac_resources *res);
 #else
-int tc956x_platform_probe(struct stmmac_priv *priv, struct tc956xmac_resources *res);
-static inline int tc956x_platform_remove(struct stmmac_priv *priv) { return 0; }
-static inline int tc956x_platform_suspend(struct stmmac_priv *priv) { return 0; }
-int tc956x_platform_resume(struct stmmac_priv *priv);
-static inline int tc956x_platform_port_interface_overlay(struct device *dev, struct tc956xmac_resources *res) { return 0; }
+int stm_platform_probe(struct stmmac_priv *priv, struct tc956xmac_resources *res);
+static inline int stm_platform_remove(struct stmmac_priv *priv) { return 0; }
+static inline int stm_platform_suspend(struct stmmac_priv *priv) { return 0; }
+int stm_platform_resume(struct stmmac_priv *priv);
+static inline int stm_platform_port_interface_overlay(struct device *dev, struct tc956xmac_resources *res) { return 0; }
 #endif
 
 int stm_GPIO_OutputConfigPin(struct stmmac_priv *priv, u32 gpio_pin, u8 out_value);

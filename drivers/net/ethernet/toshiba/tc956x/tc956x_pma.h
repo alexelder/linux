@@ -1,7 +1,7 @@
 /*
  * TC956x PMA Header
  *
- * tc956x_pma.h
+ * stm_pma.h
  *
  * Copyright (C) 2021 Toshiba Electronic Devices & Storage Corporation
  *

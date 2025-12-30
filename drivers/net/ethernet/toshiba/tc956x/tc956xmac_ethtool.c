@@ -920,12 +920,12 @@ static const struct stmmac_stats tc956x_sw[] = {
 };
 #define TC956X_SW_STATS_LEN ARRAY_SIZE(tc956x_sw)
 #endif
-static const char tc956x_priv_flags_strings[][ETH_GSTRING_LEN] = {
+static const char stm_priv_flags_strings[][ETH_GSTRING_LEN] = {
 #define TC956XMAC_TX_FCS	BIT(0)
 "tx-fcs",
 };
 
-#define TC956X_PRIV_FLAGS_STR_LEN ARRAY_SIZE(tc956x_priv_flags_strings)
+#define TC956X_PRIV_FLAGS_STR_LEN ARRAY_SIZE(stm_priv_flags_strings)
 
 static void tc956xmac_ethtool_getdrvinfo(struct net_device *dev,
 				      struct ethtool_drvinfo *info)
@@ -1573,7 +1573,7 @@ static void tc956xmac_get_strings(struct net_device *dev, u32 stringset, u8 *dat
 		tc956xmac_selftest_get_strings(priv, p);
 		break;
 	case ETH_SS_PRIV_FLAGS:
-		memcpy(data, tc956x_priv_flags_strings,
+		memcpy(data, stm_priv_flags_strings,
 				TC956X_PRIV_FLAGS_STR_LEN * ETH_GSTRING_LEN);
 		break;
 	default:

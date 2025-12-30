@@ -1,7 +1,7 @@
 /*
  * TC956x PMA layer
  *
- * tc956x_pma.c
+ * stm_pma.c
  *
  * Copyright (C) 2021 Toshiba Electronic Devices & Storage Corporation
  *
@@ -33,7 +33,7 @@
 #include "tc956xmac.h"
 #include "tc956x_pma.h"
 #ifdef TC956X
-static int tc956x_pma_init(struct stmmac_priv *priv, void __iomem *pmaaddr)
+static int stm_pma_init(struct stmmac_priv *priv, void __iomem *pmaaddr)
 {
 
 	u32 reg_value;
@@ -70,8 +70,8 @@ static int tc956x_pma_init(struct stmmac_priv *priv, void __iomem *pmaaddr)
 
 }
 
-const struct tc956xmac_pma_ops tc956x_pma_ops = {
-	.init = tc956x_pma_init,
+const struct tc956xmac_pma_ops stm_pma_ops = {
+	.init = stm_pma_init,
 };
 #endif
 
