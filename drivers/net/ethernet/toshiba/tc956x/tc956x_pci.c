@@ -650,11 +650,11 @@ static void tc956xmac_pm_set_power(struct stmmac_priv *priv, enum TC956X_PORT_PM
 	KPRINT_INFO("-->%s : Port %d interface %s", __func__, priv->port_num, priv->dev->name);
 	/* Select register address by port */
 	if (priv->port_num == 0) {
-		nrst_reg = priv->tc956x_SFR_pci_base_addr + NRSTCTRL0_OFFSET;
-		nclk_reg = priv->tc956x_SFR_pci_base_addr + NCLKCTRL0_OFFSET;
+		nrst_reg = priv->stm_SFR_pci_base_addr + NRSTCTRL0_OFFSET;
+		nclk_reg = priv->stm_SFR_pci_base_addr + NCLKCTRL0_OFFSET;
 	} else {
-		nrst_reg = priv->tc956x_SFR_pci_base_addr + NRSTCTRL1_OFFSET;
-		nclk_reg = priv->tc956x_SFR_pci_base_addr + NCLKCTRL1_OFFSET;
+		nrst_reg = priv->stm_SFR_pci_base_addr + NRSTCTRL1_OFFSET;
+		nclk_reg = priv->stm_SFR_pci_base_addr + NCLKCTRL1_OFFSET;
 	}
 
 	if (state == SUSPEND) {
@@ -672,7 +672,7 @@ static void tc956xmac_pm_set_power(struct stmmac_priv *priv, enum TC956X_PORT_PM
 		writel(nrst_val, nrst_reg);
 		writel(nclk_val, nclk_reg);
 		if (tx956x_pci_shrd_mem[priv->pci_bd].pci_dev_active_cnt == TC956X_ALL_MAC_PORT_SUSPENDED) {
-			commonclk_reg = priv->tc956x_SFR_pci_base_addr + NCLKCTRL0_OFFSET;
+			commonclk_reg = priv->stm_SFR_pci_base_addr + NCLKCTRL0_OFFSET;
 			commonclk_val = readl(commonclk_reg);
 			KPRINT_INFO("%s : Port %d interface %s Common CLK Rd Reg:%x", __func__, priv->port_num, priv->dev->name,
 				commonclk_val);
@@ -685,7 +685,7 @@ static void tc956xmac_pm_set_power(struct stmmac_priv *priv, enum TC956X_PORT_PM
 	} else if (state == RESUME) {
 		KPRINT_INFO("%s : Port %d interface %s Set Power for Resume", __func__, priv->port_num, priv->dev->name);
 		if (tx956x_pci_shrd_mem[priv->pci_bd].pci_dev_active_cnt == TC956X_ALL_MAC_PORT_SUSPENDED) {
-			commonclk_reg = priv->tc956x_SFR_pci_base_addr + NCLKCTRL0_OFFSET;
+			commonclk_reg = priv->stm_SFR_pci_base_addr + NCLKCTRL0_OFFSET;
 			commonclk_val = readl(commonclk_reg);
 			KPRINT_INFO("%s : Port %d interface %s Common CLK Rd Reg:%x", __func__, priv->port_num, priv->dev->name,
 				commonclk_val);
@@ -2167,9 +2167,9 @@ static void tc956x_reset_SRAM(struct device *dev, struct tc956xmac_resources *re
 {
 	NMSGPR_INFO(dev,  "Resetting SRAM Region start\n");
 	/* Resetting SRAM IMEM Region */
-	memset_io(res->tc956x_SRAM_pci_base_addr, 0x0, 0x10000);
+	memset_io(res->stm_SRAM_pci_base_addr, 0x0, 0x10000);
 	/* Resetting SRAM DMEM Region */
-	memset_io((res->tc956x_SRAM_pci_base_addr + 0x40000), 0x0, 0x10000);
+	memset_io((res->stm_SRAM_pci_base_addr + 0x40000), 0x0, 0x10000);
 	NMSGPR_INFO(dev,  "Resetting SRAM Region end\n");
 }
 
@@ -2217,15 +2217,15 @@ s32 tc956x_load_firmware(struct device *dev, struct tc956xmac_resources *res)
 	iowrite32(val, (void __iomem *)(res->addr + adrs));
 
 #ifdef TC956X
-	iowrite32(0, (void __iomem *)(res->tc956x_SRAM_pci_base_addr +
+	iowrite32(0, (void __iomem *)(res->stm_SRAM_pci_base_addr +
 			TC956X_M3_INIT_DONE));
-	iowrite32(0, (void __iomem *)(res->tc956x_SRAM_pci_base_addr +
+	iowrite32(0, (void __iomem *)(res->stm_SRAM_pci_base_addr +
 			TC956X_M3_FW_EXIT));
 	tc956x_reset_SRAM(dev, res);
 	mdelay(10);
-	iowrite8(EEPROM_OFFSET, (void __iomem *)(res->tc956x_SRAM_pci_base_addr +
+	iowrite8(EEPROM_OFFSET, (void __iomem *)(res->stm_SRAM_pci_base_addr +
 			TC956X_M3_SRAM_EEPROM_OFFSET_ADDR));
-	iowrite8(EEPROM_MAC_COUNT, (void __iomem *)(res->tc956x_SRAM_pci_base_addr +
+	iowrite8(EEPROM_MAC_COUNT, (void __iomem *)(res->stm_SRAM_pci_base_addr +
 			TC956X_M3_SRAM_EEPROM_MAC_COUNT));
 #endif
 	/* Copy TC956X FW to SRAM */
@@ -2237,7 +2237,7 @@ s32 tc956x_load_firmware(struct device *dev, struct tc956xmac_resources *res)
 		val |= fw_data[adrs + TC956X_THREE] << TC956X_TWENTY_FOUR;
 
 #ifdef TC956X
-		iowrite32(val, (void __iomem *)(res->tc956x_SRAM_pci_base_addr +
+		iowrite32(val, (void __iomem *)(res->stm_SRAM_pci_base_addr +
 			adrs));
 #endif
 
@@ -2283,7 +2283,7 @@ s32 tc956x_load_firmware(struct device *dev, struct tc956xmac_resources *res)
 	iowrite32(val, (void __iomem *)(res->addr + adrs));
 
 #ifdef TC956X
-	iowrite32(0, (void __iomem *)(res->tc956x_SRAM_pci_base_addr +
+	iowrite32(0, (void __iomem *)(res->stm_SRAM_pci_base_addr +
 			TC956X_M3_INIT_DONE));
 #endif
 
@@ -2291,13 +2291,13 @@ s32 tc956x_load_firmware(struct device *dev, struct tc956xmac_resources *res)
 	tc956x_reset_SRAM(dev, res);
 
 	mdelay(10);
-	iowrite8(EEPROM_OFFSET, (void __iomem *)(res->tc956x_SRAM_pci_base_addr +
+	iowrite8(EEPROM_OFFSET, (void __iomem *)(res->stm_SRAM_pci_base_addr +
 			TC956X_M3_SRAM_EEPROM_OFFSET_ADDR));
-	iowrite8(EEPROM_MAC_COUNT, (void __iomem *)(res->tc956x_SRAM_pci_base_addr +
+	iowrite8(EEPROM_MAC_COUNT, (void __iomem *)(res->stm_SRAM_pci_base_addr +
 			TC956X_M3_SRAM_EEPROM_MAC_COUNT));
 
 	/* Copy TC956X FW to SRAM */
-	memcpy_toio(res->tc956x_SRAM_pci_base_addr, pfw->data, pfw->size);
+	memcpy_toio(res->stm_SRAM_pci_base_addr, pfw->data, pfw->size);
 #endif
 	/* Release kernel firmware interface */
 	release_firmware(pfw);
@@ -2316,7 +2316,7 @@ s32 tc956x_load_firmware(struct device *dev, struct tc956xmac_resources *res)
 	iowrite32(val, (void __iomem *)(res->addr + adrs));
 
 #ifdef TC956X
-	readl_poll_timeout_atomic(res->tc956x_SRAM_pci_base_addr + TC956X_M3_INIT_DONE,
+	readl_poll_timeout_atomic(res->stm_SRAM_pci_base_addr + TC956X_M3_INIT_DONE,
 				fw_init_sync, fw_init_sync, 100, 100000);
 #endif
 	if (!fw_init_sync)
@@ -2484,7 +2484,7 @@ static int get_vf_id(struct plat_tc956xmacenet_data *plat_dat,
 {
 	struct fn_id fn_id_info;
 
-	tc956x_vf_get_fn_id(res->tc956x_BRIDGE_CFG_pci_base_addr, &fn_id_info);
+	tc956x_vf_get_fn_id(res->stm_BRIDGE_CFG_pci_base_addr, &fn_id_info);
 
 	plat_dat->vf_id = fn_id_info.vf_no - 1;
 	return 0;
@@ -2974,56 +2974,56 @@ static int tc956xmac_pci_probe(struct pci_dev *pdev,
 
 #ifdef TC956X
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
-	res.tc956x_BRIDGE_CFG_pci_base_addr = ioremap
+	res.stm_BRIDGE_CFG_pci_base_addr = ioremap
 		(pci_resource_start(pdev, TC956X_BAR0), pci_resource_len(pdev, TC956X_BAR0));
 #else
-	res.tc956x_BRIDGE_CFG_pci_base_addr = ioremap_nocache
+	res.stm_BRIDGE_CFG_pci_base_addr = ioremap_nocache
 		(pci_resource_start(pdev, TC956X_BAR0), pci_resource_len(pdev, TC956X_BAR0));
 #endif
-	if (((void __iomem *)res.tc956x_BRIDGE_CFG_pci_base_addr == NULL)) {
+	if (((void __iomem *)res.stm_BRIDGE_CFG_pci_base_addr == NULL)) {
 		NMSGPR_ERR(&(pdev->dev), "%s: cannot map TC956X BAR0, aborting", pci_name(pdev));
 		ret = -EIO;
 		DBGPR_FUNC(&(pdev->dev), "<--%s : ret: %d\n", __func__, ret);
 		goto err_out_map_failed;
 	}
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
-	res.tc956x_SRAM_pci_base_addr = ioremap
+	res.stm_SRAM_pci_base_addr = ioremap
 		(pci_resource_start(pdev, TC956X_BAR2), pci_resource_len(pdev, TC956X_BAR2));
 #else
-	res.tc956x_SRAM_pci_base_addr = ioremap_nocache
+	res.stm_SRAM_pci_base_addr = ioremap_nocache
 		(pci_resource_start(pdev, TC956X_BAR2), pci_resource_len(pdev, TC956X_BAR2));
 #endif
-	if (((void __iomem *)res.tc956x_SRAM_pci_base_addr == NULL)) {
-		pci_iounmap(pdev, (void __iomem *)res.tc956x_BRIDGE_CFG_pci_base_addr);
+	if (((void __iomem *)res.stm_SRAM_pci_base_addr == NULL)) {
+		pci_iounmap(pdev, (void __iomem *)res.stm_BRIDGE_CFG_pci_base_addr);
 		NMSGPR_ERR(&(pdev->dev), "%s: cannot map TC956X BAR2, aborting", pci_name(pdev));
 		ret = -EIO;
 		DBGPR_FUNC(&(pdev->dev), "<--%s : ret: %d\n", __func__, ret);
 		goto err_out_map_failed;
 	}
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
-	res.tc956x_SFR_pci_base_addr = ioremap
+	res.stm_SFR_pci_base_addr = ioremap
 		(pci_resource_start(pdev, TC956X_BAR4), pci_resource_len(pdev, TC956X_BAR4));
 #else
-	res.tc956x_SFR_pci_base_addr = ioremap_nocache
+	res.stm_SFR_pci_base_addr = ioremap_nocache
 		(pci_resource_start(pdev, TC956X_BAR4), pci_resource_len(pdev, TC956X_BAR4));
 #endif
-	if (((void __iomem *)res.tc956x_SFR_pci_base_addr == NULL)) {
-		pci_iounmap(pdev, (void __iomem *)res.tc956x_BRIDGE_CFG_pci_base_addr);
-		pci_iounmap(pdev, (void __iomem *)res.tc956x_SRAM_pci_base_addr);
+	if (((void __iomem *)res.stm_SFR_pci_base_addr == NULL)) {
+		pci_iounmap(pdev, (void __iomem *)res.stm_BRIDGE_CFG_pci_base_addr);
+		pci_iounmap(pdev, (void __iomem *)res.stm_SRAM_pci_base_addr);
 		NMSGPR_ERR(&(pdev->dev), "%s: cannot map TC956X BAR4, aborting", pci_name(pdev));
 		ret = -EIO;
 		DBGPR_FUNC(&(pdev->dev), "<--%s : ret: %d\n", __func__, ret);
 		goto err_out_map_failed;
 	}
 
-	NDBGPR_L1(&(pdev->dev), "BAR0 virtual address = %p\n", res.tc956x_BRIDGE_CFG_pci_base_addr);
-	NDBGPR_L1(&(pdev->dev), "BAR2 virtual address = %p\n", res.tc956x_SRAM_pci_base_addr);
-	NDBGPR_L1(&(pdev->dev), "BAR4 virtual address = %p\n", res.tc956x_SFR_pci_base_addr);
+	NDBGPR_L1(&(pdev->dev), "BAR0 virtual address = %p\n", res.stm_BRIDGE_CFG_pci_base_addr);
+	NDBGPR_L1(&(pdev->dev), "BAR2 virtual address = %p\n", res.stm_SRAM_pci_base_addr);
+	NDBGPR_L1(&(pdev->dev), "BAR4 virtual address = %p\n", res.stm_SFR_pci_base_addr);
 
-	res.addr = res.tc956x_SFR_pci_base_addr;
+	res.addr = res.stm_SFR_pci_base_addr;
 
 #ifdef TC956X
-	res.port_num = readl(res.tc956x_BRIDGE_CFG_pci_base_addr + RSCMNG_ID_REG); /* Resource Manager ID */
+	res.port_num = readl(res.stm_BRIDGE_CFG_pci_base_addr + RSCMNG_ID_REG); /* Resource Manager ID */
 	res.port_num &= RSCMNG_PFN;
 #endif
 
@@ -3203,18 +3203,18 @@ static int tc956xmac_pci_probe(struct pci_dev *pdev,
 
 #ifndef TC956X_SRIOV_VF
 #ifdef TC956X_PCIE_DISABLE_DSP1
-	tc956x_pcie_disable_dsp1_port(&pdev->dev, res.tc956x_SFR_pci_base_addr);
+	tc956x_pcie_disable_dsp1_port(&pdev->dev, res.stm_SFR_pci_base_addr);
 #endif
 
 #ifdef TC956X_PCIE_DISABLE_DSP2
-	tc956x_pcie_disable_dsp2_port(&pdev->dev, res.tc956x_SFR_pci_base_addr);
+	tc956x_pcie_disable_dsp2_port(&pdev->dev, res.stm_SFR_pci_base_addr);
 #endif
 
 
 #endif
 
 #ifdef TC956X
-	res.port_num = readl(res.tc956x_BRIDGE_CFG_pci_base_addr + RSCMNG_ID_REG); /* Resource Manager ID */
+	res.port_num = readl(res.stm_BRIDGE_CFG_pci_base_addr + RSCMNG_ID_REG); /* Resource Manager ID */
 	res.port_num &= RSCMNG_PFN;
 #endif
 #ifdef TC956X_SRIOV_PF
@@ -3459,7 +3459,7 @@ static int tc956xmac_pci_probe(struct pci_dev *pdev,
 		/* Configure Address Transslation block
 		 * Bridge Base address to be passed for TC956X
 		 */
-		tc956x_config_tamap(&pdev->dev, res.tc956x_BRIDGE_CFG_pci_base_addr);
+		tc956x_config_tamap(&pdev->dev, res.stm_BRIDGE_CFG_pci_base_addr);
 	}
 #endif /*#ifdef TC956X_SRIOV_VF*/
 #endif
@@ -3508,9 +3508,9 @@ static int tc956xmac_pci_probe(struct pci_dev *pdev,
 #ifdef EEPROM_MAC_ADDR
 
 #ifdef TC956X
-	iowrite8(EEPROM_OFFSET, (void __iomem *)(res.tc956x_SRAM_pci_base_addr +
+	iowrite8(EEPROM_OFFSET, (void __iomem *)(res.stm_SRAM_pci_base_addr +
 			TC956X_M3_SRAM_EEPROM_OFFSET_ADDR));
-	iowrite8(EEPROM_MAC_COUNT, (void __iomem *)(res.tc956x_SRAM_pci_base_addr +
+	iowrite8(EEPROM_MAC_COUNT, (void __iomem *)(res.stm_SRAM_pci_base_addr +
 			TC956X_M3_SRAM_EEPROM_MAC_COUNT));
 #endif
 
@@ -3739,12 +3739,12 @@ err_out_msi_failed:
 disable_emac_port:
 #endif
 #ifdef TC956X
-	if (((void __iomem *)res.tc956x_SFR_pci_base_addr != NULL))
-		pci_iounmap(pdev, (void __iomem *)res.tc956x_SFR_pci_base_addr);
-	if (((void __iomem *)res.tc956x_SRAM_pci_base_addr != NULL))
-		pci_iounmap(pdev, (void __iomem *)res.tc956x_SRAM_pci_base_addr);
-	if (((void __iomem *)res.tc956x_BRIDGE_CFG_pci_base_addr != NULL))
-		pci_iounmap(pdev, (void __iomem *)res.tc956x_BRIDGE_CFG_pci_base_addr);
+	if (((void __iomem *)res.stm_SFR_pci_base_addr != NULL))
+		pci_iounmap(pdev, (void __iomem *)res.stm_SFR_pci_base_addr);
+	if (((void __iomem *)res.stm_SRAM_pci_base_addr != NULL))
+		pci_iounmap(pdev, (void __iomem *)res.stm_SRAM_pci_base_addr);
+	if (((void __iomem *)res.stm_BRIDGE_CFG_pci_base_addr != NULL))
+		pci_iounmap(pdev, (void __iomem *)res.stm_BRIDGE_CFG_pci_base_addr);
 #endif
 #ifndef TC956X_SRIOV_VF
 #ifdef TC956X_PCIE_LOGSTAT
@@ -3832,15 +3832,15 @@ static void tc956xmac_pci_remove(struct pci_dev *pdev)
 
 	/* Set reset value for CLK control and RESET Control registers */
 	if (priv->port_num == 0) {
-		nrst_reg = priv->tc956x_SFR_pci_base_addr + NRSTCTRL0_OFFSET;
-		nclk_reg = priv->tc956x_SFR_pci_base_addr + NCLKCTRL0_OFFSET;
+		nrst_reg = priv->stm_SFR_pci_base_addr + NRSTCTRL0_OFFSET;
+		nclk_reg = priv->stm_SFR_pci_base_addr + NCLKCTRL0_OFFSET;
 		nrst_val = readl(nrst_reg);
 		nclk_val = readl(nclk_reg);
 		nrst_val |= NRSTCTRL0_DEFAULT;
 		nclk_val &= ~NCLKCTRL_PORT0_EMAC_MASK;
 	} else {
-		nrst_reg = priv->tc956x_SFR_pci_base_addr + NRSTCTRL1_OFFSET;
-		nclk_reg = priv->tc956x_SFR_pci_base_addr + NCLKCTRL1_OFFSET;
+		nrst_reg = priv->stm_SFR_pci_base_addr + NRSTCTRL1_OFFSET;
+		nclk_reg = priv->stm_SFR_pci_base_addr + NCLKCTRL1_OFFSET;
 		nrst_val = NRSTCTRL_EMAC_MASK;
 		nclk_val = 0;
 	}
@@ -3848,8 +3848,8 @@ static void tc956xmac_pci_remove(struct pci_dev *pdev)
 	writel(nclk_val, nclk_reg);
 	if (tx956x_pci_shrd_mem[priv->pci_bd].pci_dev_active_cnt == TC956X_SINGLE_MAC_DEVICE_IN_USE) {
 		/* Set reset value for Common CLK control and Common RESET Control registers */
-		nrst_reg = priv->tc956x_SFR_pci_base_addr + NRSTCTRL0_OFFSET;
-		nclk_reg = priv->tc956x_SFR_pci_base_addr + NCLKCTRL0_OFFSET;
+		nrst_reg = priv->stm_SFR_pci_base_addr + NRSTCTRL0_OFFSET;
+		nclk_reg = priv->stm_SFR_pci_base_addr + NCLKCTRL0_OFFSET;
 		nrst_val = readl(nrst_reg);
 		nclk_val = readl(nclk_reg);
 		nrst_val |= NRSTCTRL_COMMON;
@@ -3880,15 +3880,15 @@ static void tc956xmac_pci_remove(struct pci_dev *pdev)
 
 #ifdef TC956X
 	/* Un-map previously mapped BAR0/2/4 address memory */
-	if ((void __iomem *)priv->tc956x_SFR_pci_base_addr != NULL)
+	if ((void __iomem *)priv->stm_SFR_pci_base_addr != NULL)
 		pci_iounmap(pdev, (void __iomem *)
-			priv->tc956x_SFR_pci_base_addr);
-	if ((void __iomem *)priv->tc956x_SRAM_pci_base_addr != NULL)
+			priv->stm_SFR_pci_base_addr);
+	if ((void __iomem *)priv->stm_SRAM_pci_base_addr != NULL)
 		pci_iounmap(pdev, (void __iomem *)
-			priv->tc956x_SRAM_pci_base_addr);
-	if ((void __iomem *)priv->tc956x_BRIDGE_CFG_pci_base_addr != NULL)
+			priv->stm_SRAM_pci_base_addr);
+	if ((void __iomem *)priv->stm_BRIDGE_CFG_pci_base_addr != NULL)
 		pci_iounmap(pdev, (void __iomem *)
-			priv->tc956x_BRIDGE_CFG_pci_base_addr);
+			priv->stm_BRIDGE_CFG_pci_base_addr);
 #endif
 	pci_release_regions(pdev);
 
@@ -4052,17 +4052,17 @@ static int tc956x_pcie_suspend(struct device *dev)
 		for (i = 1; i <= MAX_CM3_TAMAP_ENTRIES; i++) {
 			priv->cm3_tamap[i-1].valid = false;
 
-			val = readl(priv->tc956x_BRIDGE_CFG_pci_base_addr + TC956X_AXI4_SLV_SRC_ADDR_LO(0, i));
+			val = readl(priv->stm_BRIDGE_CFG_pci_base_addr + TC956X_AXI4_SLV_SRC_ADDR_LO(0, i));
 			if (((val & TC956X_ATR_SIZE_MASK) >> TC956x_ATR_SIZE_SHIFT) != 0x3F) {
-				priv->cm3_tamap[i-1].trsl_addr_hi = readl(priv->tc956x_BRIDGE_CFG_pci_base_addr +
+				priv->cm3_tamap[i-1].trsl_addr_hi = readl(priv->stm_BRIDGE_CFG_pci_base_addr +
 									TC956X_AXI4_SLV_TRSL_ADDR_HI(0, i));
-				priv->cm3_tamap[i-1].trsl_addr_low = readl(priv->tc956x_BRIDGE_CFG_pci_base_addr +
+				priv->cm3_tamap[i-1].trsl_addr_low = readl(priv->stm_BRIDGE_CFG_pci_base_addr +
 									TC956X_AXI4_SLV_TRSL_ADDR_LO(0, i));
-				priv->cm3_tamap[i-1].src_addr_hi = readl(priv->tc956x_BRIDGE_CFG_pci_base_addr +
+				priv->cm3_tamap[i-1].src_addr_hi = readl(priv->stm_BRIDGE_CFG_pci_base_addr +
 									TC956X_AXI4_SLV_SRC_ADDR_HI(0, i));
-				priv->cm3_tamap[i-1].src_addr_low = readl(priv->tc956x_BRIDGE_CFG_pci_base_addr +
+				priv->cm3_tamap[i-1].src_addr_low = readl(priv->stm_BRIDGE_CFG_pci_base_addr +
 									TC956X_AXI4_SLV_SRC_ADDR_LO(0, i)) & TC956X_SRC_LO_MASK;
-				priv->cm3_tamap[i-1].atr_size = (readl(priv->tc956x_BRIDGE_CFG_pci_base_addr +
+				priv->cm3_tamap[i-1].atr_size = (readl(priv->stm_BRIDGE_CFG_pci_base_addr +
 									TC956X_AXI4_SLV_SRC_ADDR_LO(0, i)) & TC956X_ATR_SIZE_MASK) >> TC956x_ATR_SIZE_SHIFT;
 				priv->cm3_tamap[i-1].valid = true;
 			}
@@ -4144,16 +4144,16 @@ static int tc956x_pcie_resume_config(struct pci_dev *pdev)
 	}
 
 	if (priv->port_num == RM_PF0_ID) {
-		ret = readl(priv->tc956x_SFR_pci_base_addr + NRSTCTRL0_OFFSET);
+		ret = readl(priv->stm_SFR_pci_base_addr + NRSTCTRL0_OFFSET);
 
 		/* Assertion of EMAC Port0 software Reset */
 		ret |= NRSTCTRL0_MAC0RST;
 
-		writel(ret, priv->tc956x_SFR_pci_base_addr + NRSTCTRL0_OFFSET);
+		writel(ret, priv->stm_SFR_pci_base_addr + NRSTCTRL0_OFFSET);
 
 		NMSGPR_ALERT(&pdev->dev, "Enabling all eMAC clocks for Port 0 %s\n", priv->dev->name);
 		/* Enable all clocks to eMAC Port0 */
-		ret = readl(priv->tc956x_SFR_pci_base_addr + NCLKCTRL0_OFFSET);
+		ret = readl(priv->stm_SFR_pci_base_addr + NCLKCTRL0_OFFSET);
 
 		ret |= ((NCLKCTRL0_MAC0TXCEN | NCLKCTRL0_MAC0ALLCLKEN | NCLKCTRL0_MAC0RXCEN));
 		if ((priv->port_interface == ENABLE_SGMII_INTERFACE) ||
@@ -4165,10 +4165,10 @@ static int tc956x_pcie_resume_config(struct pci_dev *pdev)
 			ret &= ~NCLKCTRL0_MAC0125CLKEN;
 			ret &= ~NCLKCTRL0_MAC0312CLKEN;
 		}
-		writel(ret, priv->tc956x_SFR_pci_base_addr + NCLKCTRL0_OFFSET);
+		writel(ret, priv->stm_SFR_pci_base_addr + NCLKCTRL0_OFFSET);
 
 		/* Interface configuration for port0*/
-		ret = readl(priv->tc956x_SFR_pci_base_addr + NEMAC0CTL_OFFSET);
+		ret = readl(priv->stm_SFR_pci_base_addr + NEMAC0CTL_OFFSET);
 		ret &= ~(NEMACCTL_SP_SEL_MASK | NEMACCTL_PHY_INF_SEL_MASK);
 		if ((priv->port_interface == ENABLE_SGMII_INTERFACE) ||
 			(priv->port_interface == ENABLE_2500BASE_X_INTERFACE))
@@ -4186,24 +4186,24 @@ static int tc956x_pcie_resume_config(struct pci_dev *pdev)
 			ret |= 0x00000040; /* Set Active low */
 
 		ret |= NEMACCTL_PHY_INF_SEL | NEMACCTL_LPIHWCLKEN;
-		writel(ret, priv->tc956x_SFR_pci_base_addr + NEMAC0CTL_OFFSET);
+		writel(ret, priv->stm_SFR_pci_base_addr + NEMAC0CTL_OFFSET);
 
 		/* De-assertion of EMAC Port0  software Reset*/
-		ret = readl(priv->tc956x_SFR_pci_base_addr + NRSTCTRL0_OFFSET);
+		ret = readl(priv->stm_SFR_pci_base_addr + NRSTCTRL0_OFFSET);
 		ret &= ~(NRSTCTRL0_MAC0RST);
-		writel(ret, priv->tc956x_SFR_pci_base_addr + NRSTCTRL0_OFFSET);
+		writel(ret, priv->stm_SFR_pci_base_addr + NRSTCTRL0_OFFSET);
 	}
 
 	if (priv->port_num == RM_PF1_ID) {
-		ret = readl(priv->tc956x_SFR_pci_base_addr + NRSTCTRL1_OFFSET);
+		ret = readl(priv->stm_SFR_pci_base_addr + NRSTCTRL1_OFFSET);
 
 		/* Assertion of EMAC Port1 software Reset*/
 		ret |= NRSTCTRL1_MAC1RST1;
-		writel(ret, priv->tc956x_SFR_pci_base_addr + NRSTCTRL1_OFFSET);
+		writel(ret, priv->stm_SFR_pci_base_addr + NRSTCTRL1_OFFSET);
 
 		NMSGPR_ALERT(&pdev->dev, "Enabling all eMAC clocks for Port 1 %s\n", priv->dev->name);
 		/* Enable all clocks to eMAC Port1 */
-		ret = readl(priv->tc956x_SFR_pci_base_addr + NCLKCTRL1_OFFSET);
+		ret = readl(priv->stm_SFR_pci_base_addr + NCLKCTRL1_OFFSET);
 
 		ret |= ((NCLKCTRL1_MAC1TXCEN | NCLKCTRL1_MAC1RXCEN |
 		NCLKCTRL1_MAC1ALLCLKEN1 | 1 << 15));
@@ -4212,10 +4212,10 @@ static int tc956x_pcie_resume_config(struct pci_dev *pdev)
 			ret &= ~NCLKCTRL1_MAC1125CLKEN1;
 			ret &= ~NCLKCTRL1_MAC1312CLKEN1;
 		}
-		writel(ret, priv->tc956x_SFR_pci_base_addr + NCLKCTRL1_OFFSET);
+		writel(ret, priv->stm_SFR_pci_base_addr + NCLKCTRL1_OFFSET);
 
 		/* Interface configuration for port1*/
-		ret = readl(priv->tc956x_SFR_pci_base_addr + NEMAC1CTL_OFFSET);
+		ret = readl(priv->stm_SFR_pci_base_addr + NEMAC1CTL_OFFSET);
 		ret &= ~(NEMACCTL_SP_SEL_MASK | NEMACCTL_PHY_INF_SEL_MASK);
 		if ((priv->port_interface == ENABLE_RGMII_INTERFACE) ||
 			(priv->port_interface == ENABLE_RGMII_ID_INTERFACE))
@@ -4236,12 +4236,12 @@ static int tc956x_pcie_resume_config(struct pci_dev *pdev)
 			ret |= 0x00000040; /* Set Active low */
 
 		ret |= NEMACCTL_PHY_INF_SEL | NEMACCTL_LPIHWCLKEN;
-		writel(ret, priv->tc956x_SFR_pci_base_addr + NEMAC1CTL_OFFSET);
+		writel(ret, priv->stm_SFR_pci_base_addr + NEMAC1CTL_OFFSET);
 
 		/* De-assertion of EMAC Port1  software Reset */
-		ret = readl(priv->tc956x_SFR_pci_base_addr + NRSTCTRL1_OFFSET);
+		ret = readl(priv->stm_SFR_pci_base_addr + NRSTCTRL1_OFFSET);
 		ret &= ~NRSTCTRL1_MAC1RST1;
-		writel(ret, priv->tc956x_SFR_pci_base_addr + NRSTCTRL1_OFFSET);
+		writel(ret, priv->stm_SFR_pci_base_addr + NRSTCTRL1_OFFSET);
 	}
 
 /*PMA module init*/
@@ -4393,11 +4393,11 @@ static int tc956x_pcie_resume(struct device *dev)
 
 	if (tx956x_pci_shrd_mem[priv->pci_bd].pci_dev_active_cnt == TC956X_ALL_MAC_PORT_SUSPENDED) {
 		DBGPR_FUNC(&(pdev->dev), "%s : Tamap Re-configuration", __func__);
-		tc956x_config_tamap(&pdev->dev, priv->tc956x_BRIDGE_CFG_pci_base_addr);
+		tc956x_config_tamap(&pdev->dev, priv->stm_BRIDGE_CFG_pci_base_addr);
 #ifdef CONFIG_TC956X_DMA_OFFLOAD_ENABLE
 		for (i = 1; i <= MAX_CM3_TAMAP_ENTRIES; i++) {
 			if (priv->cm3_tamap[i-1].valid)
-				tc956x_config_CM3_tamap(&pdev->dev, priv->tc956x_BRIDGE_CFG_pci_base_addr,
+				tc956x_config_CM3_tamap(&pdev->dev, priv->stm_BRIDGE_CFG_pci_base_addr,
 							&priv->cm3_tamap[i-1], i);
 		}
 

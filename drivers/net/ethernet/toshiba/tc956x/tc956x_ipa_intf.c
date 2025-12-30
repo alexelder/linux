@@ -985,22 +985,22 @@ int request_event(struct net_device *ndev, struct channel_info *channel, dma_add
 
 	spin_lock_irqsave(&cm3_tamap_lock, flags);
 	while (table_entry <= MAX_CM3_TAMAP_ENTRIES) {
-		val = readl(priv->tc956x_BRIDGE_CFG_pci_base_addr + TC956X_AXI4_SLV_SRC_ADDR_LO(0, table_entry));
+		val = readl(priv->stm_BRIDGE_CFG_pci_base_addr + TC956X_AXI4_SLV_SRC_ADDR_LO(0, table_entry));
 
 		KPRINT_INFO("SL0%d TRSL_ADDR HI = 0x%08x\n", table_entry,
-			readl(priv->tc956x_BRIDGE_CFG_pci_base_addr + TC956X_AXI4_SLV_TRSL_ADDR_HI(0, table_entry)));
+			readl(priv->stm_BRIDGE_CFG_pci_base_addr + TC956X_AXI4_SLV_TRSL_ADDR_HI(0, table_entry)));
 		KPRINT_INFO("SL0%d TRSL_ADDR LO = 0x%08x\n", table_entry,
-			readl(priv->tc956x_BRIDGE_CFG_pci_base_addr + TC956X_AXI4_SLV_TRSL_ADDR_LO(0, table_entry)));
+			readl(priv->stm_BRIDGE_CFG_pci_base_addr + TC956X_AXI4_SLV_TRSL_ADDR_LO(0, table_entry)));
 		KPRINT_INFO("SL0%d SRC_ADDR HI = 0x%08x\n", table_entry,
-			readl(priv->tc956x_BRIDGE_CFG_pci_base_addr + TC956X_AXI4_SLV_SRC_ADDR_HI(0, table_entry)));
+			readl(priv->stm_BRIDGE_CFG_pci_base_addr + TC956X_AXI4_SLV_SRC_ADDR_HI(0, table_entry)));
 		KPRINT_INFO("SL0%d SRC_ADDR LO = 0x%08x\n", table_entry,
-			readl(priv->tc956x_BRIDGE_CFG_pci_base_addr + TC956X_AXI4_SLV_SRC_ADDR_LO(0, table_entry)));
+			readl(priv->stm_BRIDGE_CFG_pci_base_addr + TC956X_AXI4_SLV_SRC_ADDR_LO(0, table_entry)));
 
 		if (((val & TC956X_ATR_SIZE_MASK) >> TC956x_ATR_SIZE_SHIFT) != 0x3F) {
 			/* If a entry already exists, then check the range */
-			trsl_addr = readl(priv->tc956x_BRIDGE_CFG_pci_base_addr + TC956X_AXI4_SLV_TRSL_ADDR_LO(0, table_entry));
+			trsl_addr = readl(priv->stm_BRIDGE_CFG_pci_base_addr + TC956X_AXI4_SLV_TRSL_ADDR_LO(0, table_entry));
 #ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
-			trsl_addr |= (dma_addr_t)readl(priv->tc956x_BRIDGE_CFG_pci_base_addr + TC956X_AXI4_SLV_TRSL_ADDR_HI(0, table_entry)) << 32U;
+			trsl_addr |= (dma_addr_t)readl(priv->stm_BRIDGE_CFG_pci_base_addr + TC956X_AXI4_SLV_TRSL_ADDR_HI(0, table_entry)) << 32U;
 #endif
 			if ((trsl_addr <= addr) && (addr <= (trsl_addr + CM3_TAMAP_SIZE - 1))) {
 #ifndef CONFIG_ARCH_DMA_ADDR_T_64BIT
@@ -1020,7 +1020,7 @@ int request_event(struct net_device *ndev, struct channel_info *channel, dma_add
 			tamap.trsl_addr_low = lower_32_bits(trsl_addr);
 			tamap.atr_size = CM3_TAMAP_ATR_SIZE;
 
-			tc956x_config_CM3_tamap(priv->device, priv->tc956x_BRIDGE_CFG_pci_base_addr,
+			tc956x_config_CM3_tamap(priv->device, priv->stm_BRIDGE_CFG_pci_base_addr,
 							&tamap, table_entry);
 			break;
 		}
@@ -1040,7 +1040,7 @@ int request_event(struct net_device *ndev, struct channel_info *channel, dma_add
 	}
 
 	/* Derive CM3 target address */
-	cm3_target_addr = readl(priv->tc956x_BRIDGE_CFG_pci_base_addr + TC956X_AXI4_SLV_SRC_ADDR_LO(0, table_entry)) & TC956X_SRC_LO_MASK;
+	cm3_target_addr = readl(priv->stm_BRIDGE_CFG_pci_base_addr + TC956X_AXI4_SLV_SRC_ADDR_LO(0, table_entry)) & TC956X_SRC_LO_MASK;
 	cm3_target_addr |= (addr & CM3_TAMAP_MASK);
 
 	if (cm3_target_addr < CM3_PCIE_REGION_LOW_BOUND || cm3_target_addr >= CM3_PCIE_REGION_UP_BOUND) {
@@ -1051,13 +1051,13 @@ int request_event(struct net_device *ndev, struct channel_info *channel, dma_add
 
 	if (channel->direction == CH_DIR_TX) {
 #ifdef TC956X
-		writel(cm3_target_addr, priv->tc956x_SRAM_pci_base_addr +
+		writel(cm3_target_addr, priv->stm_SRAM_pci_base_addr +
 			SRAM_TX_PCIE_ADDR_LOC + (priv->port_num * TC956XMAC_CH_MAX * 4) +
 			(channel->channel_num * 4));
 #endif
 	} else if (channel->direction == CH_DIR_RX) {
 #ifdef TC956X
-		writel(cm3_target_addr, priv->tc956x_SRAM_pci_base_addr +
+		writel(cm3_target_addr, priv->stm_SRAM_pci_base_addr +
 			SRAM_RX_PCIE_ADDR_LOC + (priv->port_num * TC956XMAC_CH_MAX * 4) +
 			(channel->channel_num * 4));
 #endif
@@ -1123,14 +1123,14 @@ int release_event(struct net_device *ndev, struct channel_info *channel)
 
 	if (channel->direction == CH_DIR_TX) {
 #ifdef TC956X
-		writel(0, priv->tc956x_SRAM_pci_base_addr +
+		writel(0, priv->stm_SRAM_pci_base_addr +
 			SRAM_TX_PCIE_ADDR_LOC + (priv->port_num * TC956XMAC_CH_MAX * 4) +
 			(channel->channel_num * 4));
 #endif
 
 	} else if (channel->direction == CH_DIR_RX) {
 #ifdef TC956X
-		writel(0, priv->tc956x_SRAM_pci_base_addr +
+		writel(0, priv->stm_SRAM_pci_base_addr +
 			SRAM_RX_PCIE_ADDR_LOC + (priv->port_num * TC956XMAC_CH_MAX * 4) +
 			(channel->channel_num * 4));
 #endif

@@ -489,9 +489,9 @@ struct tc956xmac_resources {
 	u32 sriov_enabled;
 #endif
 #endif
-	void __iomem *tc956x_BRIDGE_CFG_pci_base_addr;
-	void __iomem *tc956x_SRAM_pci_base_addr;
-	void __iomem *tc956x_SFR_pci_base_addr;
+	void __iomem *stm_BRIDGE_CFG_pci_base_addr;
+	void __iomem *stm_SRAM_pci_base_addr;
+	void __iomem *stm_SFR_pci_base_addr;
 
 	const char *mac;
 	int wol_irq;
@@ -739,11 +739,11 @@ struct stmmac_priv {
 	s32 sriov_enabled;
 #endif
 #endif
-	void __iomem *tc956x_BRIDGE_CFG_pci_base_addr;
-	void __iomem *tc956x_SRAM_pci_base_addr;
-	void __iomem *tc956x_SFR_pci_base_addr;
+	void __iomem *stm_BRIDGE_CFG_pci_base_addr;
+	void __iomem *stm_SRAM_pci_base_addr;
+	void __iomem *stm_SFR_pci_base_addr;
 #if defined(TC956X_SRIOV_PF) | defined(TC956X_SRIOV_VF)
-	void __iomem *tc956x_SRAM_mailbox_base_addr;
+	void __iomem *stm_SRAM_mailbox_base_addr;
 #endif
 #ifdef TC956X_SRIOV_PF
 	unsigned char clear_to_send[MAX_NO_OF_VFS];
@@ -1304,7 +1304,7 @@ int tc956x_platform_resume(struct stmmac_priv *priv);
 static inline int tc956x_platform_port_interface_overlay(struct device *dev, struct tc956xmac_resources *res) { return 0; }
 #endif
 
-int tc956x_GPIO_OutputConfigPin(struct stmmac_priv *priv, u32 gpio_pin, u8 out_value);
+int stm_GPIO_OutputConfigPin(struct stmmac_priv *priv, u32 gpio_pin, u8 out_value);
 int tc956x_gpio_restore_configuration(struct stmmac_priv *priv);
 
 #ifdef TC956X_SRIOV_VF

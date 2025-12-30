@@ -938,7 +938,7 @@ static int tc956xmac_pf_ioctl_interface(struct stmmac_priv *priv,
 		if (bar_num == 4)
 			writel(val, (void __iomem *)(priv->dev->base_addr + addr));
 		else if (bar_num == 2)/*SRAM bar number 2*/
-			writel(val, (void __iomem *)(priv->tc956x_SRAM_pci_base_addr + addr));
+			writel(val, (void __iomem *)(priv->stm_SRAM_pci_base_addr + addr));
 		ack_buff[0] = OPCODE_MBX_ACK_MSG; /* set ACK opcode */
 		memset(&ack_buff[1], 0, MBX_MSG_SIZE-1);
 		break;

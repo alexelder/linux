@@ -138,7 +138,7 @@ static u8 *vf_get_mbx_mem_idx(enum mbx_msg_fns msg_src,
 int tc956x_vf_get_fn_idx_from_int_sts(struct stmmac_priv *priv,
 					     struct fn_id *fn_id_info)
 {
-	void __iomem *ioaddr = priv->tc956x_BRIDGE_CFG_pci_base_addr;
+	void __iomem *ioaddr = priv->stm_BRIDGE_CFG_pci_base_addr;
 	u32 rsc_mng_int_sts = readl(ioaddr + RSCMNG_INT_ST_REG);
 
 	if ((rsc_mng_int_sts & RSC_MNG_INT_MCU_MASK) == RSC_MNG_INT_MCU_MASK) {
@@ -213,7 +213,7 @@ void tc956x_vf_parse_mbx(struct stmmac_priv *priv,
 	 * Function id can be get earlier too
 	 */
 	if (!tc956xmac_rsc_mng_get_fn_id(priv,
-		priv->tc956x_BRIDGE_CFG_pci_base_addr, &priv->fn_id_info)) {
+		priv->stm_BRIDGE_CFG_pci_base_addr, &priv->fn_id_info)) {
 		/* Read and acknowledge the mailbox */
 		tc956xmac_mbx_read(priv, msg_buff, msg_src,
 				   &priv->fn_id_info);
@@ -248,7 +248,7 @@ static int tc956x_vf_check_for_ack(struct stmmac_priv *priv,
 
 	/* Copy the ACK inidication data (first 4 bytes) from PF->VF mailbox */
 	memcpy_fromio(ack_buff,
-	       (priv->tc956x_SRAM_mailbox_base_addr +
+	       (priv->stm_SRAM_mailbox_base_addr +
 		      ((*ptr_mail_box_idx + VF_READ_ACK_OFST) * MBX_TOT_SIZE)),
 	       MBX_ACK_SIZE);
 
@@ -275,7 +275,7 @@ static int tc956x_vf_check_for_ack(struct stmmac_priv *priv,
 
 static void tc956x_vf_mbx_init(struct stmmac_priv *priv, void *data)
 {
-	priv->tc956x_SRAM_mailbox_base_addr = priv->tc956x_SRAM_pci_base_addr + VF_MBX_SRAM_ADDR;
+	priv->stm_SRAM_mailbox_base_addr = priv->stm_SRAM_pci_base_addr + VF_MBX_SRAM_ADDR;
 }
 
 /**
@@ -342,7 +342,7 @@ static void tc956x_vf_mbx_send_ack(struct stmmac_priv *priv, u8 *msg_buff,
 	/* Copy the ACK message data to PF->VF SRAM area.
 	 * Also first 4 bytes of ACK indications also copied here
 	 */
-	memcpy_toio((priv->tc956x_SRAM_mailbox_base_addr +
+	memcpy_toio((priv->stm_SRAM_mailbox_base_addr +
 		      ((*ptr_mail_box_idx + VF_SEND_ACK_OFST) * MBX_TOT_SIZE)),
 	       msg_buff, MBX_TOT_SIZE);
 
@@ -364,7 +364,7 @@ static void tc956x_vf_mbx_send_ack(struct stmmac_priv *priv, u8 *msg_buff,
 static void tc956x_vf_trigger_interrupt(struct stmmac_priv *priv,
 					enum mbx_msg_fns msg_dst)
 {
-	void __iomem *ioaddr = priv->tc956x_BRIDGE_CFG_pci_base_addr;
+	void __iomem *ioaddr = priv->stm_BRIDGE_CFG_pci_base_addr;
 	u32 rsc_mng_interrupt_ctl = readl(ioaddr + RSCMNG_INT_CTRL_REG);
 
 	if (mcu == msg_dst)
@@ -409,14 +409,14 @@ static int tc956x_vf_mbx_write(struct stmmac_priv *priv, u8 *msg_buff,
 		return ret;
 
 	/* Clear the mailbox including ACK area (first 4 bytes) */
-	memset_io((priv->tc956x_SRAM_mailbox_base_addr +
+	memset_io((priv->stm_SRAM_mailbox_base_addr +
 		      ((*ptr_mail_box_idx + VF_SEND_RQST_OFST) * MBX_TOT_SIZE)),
 	       0, MBX_TOT_SIZE);
 
 	/* Copy the mailbox data from local buffer to VF->PF or VF->MCU
 	 * destination mailbox SRAM memory
 	 */
-	memcpy_toio((priv->tc956x_SRAM_mailbox_base_addr +
+	memcpy_toio((priv->stm_SRAM_mailbox_base_addr +
 	((*ptr_mail_box_idx + VF_SEND_RQST_OFST) * MBX_TOT_SIZE) + MBX_MSG_OFST),
 	       msg_buff, MBX_MSG_SIZE);
 
@@ -475,7 +475,7 @@ static int tc956x_vf_mbx_read(struct stmmac_priv *priv, u8 *msg_buff,
 
 	/* Copy the mailbox data from PF->VF mailbox*/
 	memcpy_fromio(msg_buff,
-	       (priv->tc956x_SRAM_mailbox_base_addr +
+	       (priv->stm_SRAM_mailbox_base_addr +
 		      ((*ptr_mail_box_idx + VF_READ_RQST_OFST) * MBX_TOT_SIZE)),
 	       MBX_TOT_SIZE);
 
@@ -505,7 +505,7 @@ static int tc956x_vf_mbx_read(struct stmmac_priv *priv, u8 *msg_buff,
 		break;
 	case OPCODE_MBX_ACK_MSG:
 		/* ACK message */
-		memset_io((priv->tc956x_SRAM_mailbox_base_addr +
+		memset_io((priv->stm_SRAM_mailbox_base_addr +
 		      ((*ptr_mail_box_idx + VF_READ_RQST_OFST) * MBX_TOT_SIZE)), 0,
 	       MBX_TOT_SIZE);
 		break;

@@ -526,7 +526,7 @@ int tc956x_dump_regs(struct net_device *net_device, struct tc956x_regs *regs)
 	DBGPR_FUNC(priv->device, "-->%s\n", __func__);
 
 	/* PCIe register dump */
-	regs->pcie_reg.rsc_mng_id = readl(priv->tc956x_BRIDGE_CFG_pci_base_addr + RSCMNG_ID_REG);
+	regs->pcie_reg.rsc_mng_id = readl(priv->stm_BRIDGE_CFG_pci_base_addr + RSCMNG_ID_REG);
 
 	/* Configuration register dump */
 	regs->config_reg.ncid = readl(priv->ioaddr + NCID_OFFSET);
@@ -649,71 +649,71 @@ int tc956x_dump_regs(struct net_device *net_device, struct tc956x_regs *regs)
 
 	/* M3 SRAM dump */
 	for (ch = 0; ch < maxq; ch++) {
-		regs->m3_reg.sram_tx_pcie_addr[ch] = readl(priv->tc956x_SRAM_pci_base_addr + SRAM_TX_PCIE_ADDR_LOC +
+		regs->m3_reg.sram_tx_pcie_addr[ch] = readl(priv->stm_SRAM_pci_base_addr + SRAM_TX_PCIE_ADDR_LOC +
 							(priv->port_num * TC956XMAC_CH_MAX * 4) + (ch * 4));
-		regs->m3_reg.sram_rx_pcie_addr[ch] = readl(priv->tc956x_SRAM_pci_base_addr + SRAM_RX_PCIE_ADDR_LOC +
+		regs->m3_reg.sram_rx_pcie_addr[ch] = readl(priv->stm_SRAM_pci_base_addr + SRAM_RX_PCIE_ADDR_LOC +
 							(priv->port_num * TC956XMAC_CH_MAX * 4) + (ch * 4));
 	}
 
-	regs->m3_reg.m3_fw_init_done = readl(priv->tc956x_SRAM_pci_base_addr + TC956X_M3_INIT_DONE);
-	regs->m3_reg.m3_fw_exit	= readl(priv->tc956x_SRAM_pci_base_addr + TC956X_M3_FW_EXIT);
+	regs->m3_reg.m3_fw_init_done = readl(priv->stm_SRAM_pci_base_addr + TC956X_M3_INIT_DONE);
+	regs->m3_reg.m3_fw_exit	= readl(priv->stm_SRAM_pci_base_addr + TC956X_M3_FW_EXIT);
 
-	regs->m3_reg.m3_debug_cnt0 = readl(priv->tc956x_SRAM_pci_base_addr +
+	regs->m3_reg.m3_debug_cnt0 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT0)));
-	regs->m3_reg.m3_debug_cnt1 = readl(priv->tc956x_SRAM_pci_base_addr +
+	regs->m3_reg.m3_debug_cnt1 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT1)));
-	regs->m3_reg.m3_debug_cnt2 = readl(priv->tc956x_SRAM_pci_base_addr +
+	regs->m3_reg.m3_debug_cnt2 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT2)));
-	regs->m3_reg.m3_debug_cnt3 = readl(priv->tc956x_SRAM_pci_base_addr +
+	regs->m3_reg.m3_debug_cnt3 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT3)));
-	regs->m3_reg.m3_debug_cnt4 = readl(priv->tc956x_SRAM_pci_base_addr +
+	regs->m3_reg.m3_debug_cnt4 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT4)));
-	regs->m3_reg.m3_debug_cnt5 = readl(priv->tc956x_SRAM_pci_base_addr +
+	regs->m3_reg.m3_debug_cnt5 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT5)));
-	regs->m3_reg.m3_debug_cnt6 = readl(priv->tc956x_SRAM_pci_base_addr +
+	regs->m3_reg.m3_debug_cnt6 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT6)));
-	regs->m3_reg.m3_debug_cnt7 = readl(priv->tc956x_SRAM_pci_base_addr +
+	regs->m3_reg.m3_debug_cnt7 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT7)));
-	regs->m3_reg.m3_debug_cnt8 = readl(priv->tc956x_SRAM_pci_base_addr +
+	regs->m3_reg.m3_debug_cnt8 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT8)));
-	regs->m3_reg.m3_debug_cnt9 = readl(priv->tc956x_SRAM_pci_base_addr +
+	regs->m3_reg.m3_debug_cnt9 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT9)));
-	regs->m3_reg.m3_debug_cnt10 = readl(priv->tc956x_SRAM_pci_base_addr +
+	regs->m3_reg.m3_debug_cnt10 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT10)));
-	regs->m3_reg.m3_watchdog_exp_cnt = readl(priv->tc956x_SRAM_pci_base_addr +
+	regs->m3_reg.m3_watchdog_exp_cnt = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT11)));
-	regs->m3_reg.m3_watchdog_monitor_cnt = readl(priv->tc956x_SRAM_pci_base_addr +
+	regs->m3_reg.m3_watchdog_monitor_cnt = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT12)));
-	regs->m3_reg.m3_debug_cnt13 = readl(priv->tc956x_SRAM_pci_base_addr +
+	regs->m3_reg.m3_debug_cnt13 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT13)));
-	regs->m3_reg.m3_debug_cnt14 = readl(priv->tc956x_SRAM_pci_base_addr +
+	regs->m3_reg.m3_debug_cnt14 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT14)));
-	regs->m3_reg.m3_systick_cnt_upper_value = readl(priv->tc956x_SRAM_pci_base_addr +
+	regs->m3_reg.m3_systick_cnt_upper_value = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT16)));
-	regs->m3_reg.m3_systick_cnt_lower_value = readl(priv->tc956x_SRAM_pci_base_addr +
+	regs->m3_reg.m3_systick_cnt_lower_value = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT15)));
-	regs->m3_reg.m3_tx_timeout_port0 = readl(priv->tc956x_SRAM_pci_base_addr +
+	regs->m3_reg.m3_tx_timeout_port0 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT17)));
-	regs->m3_reg.m3_tx_timeout_port1 = readl(priv->tc956x_SRAM_pci_base_addr +
+	regs->m3_reg.m3_tx_timeout_port1 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT18)));
-	regs->m3_reg.m3_debug_cnt19 = readl(priv->tc956x_SRAM_pci_base_addr +
+	regs->m3_reg.m3_debug_cnt19 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT19)));
 
 	regs->rxp_cfg = (struct tc956xmac_rx_parser_cfg *)&priv->plat->rxp_cfg;
 
 	/* TAMAP Information */
 	for (table_entry = 0; table_entry <= MAX_CM3_TAMAP_ENTRIES; table_entry++) {
-		regs->tamap[table_entry].trsl_addr_hi =	readl(priv->tc956x_BRIDGE_CFG_pci_base_addr +
+		regs->tamap[table_entry].trsl_addr_hi =	readl(priv->stm_BRIDGE_CFG_pci_base_addr +
 						TC956X_AXI4_SLV_TRSL_ADDR_HI(0, table_entry));
-		regs->tamap[table_entry].trsl_addr_low = readl(priv->tc956x_BRIDGE_CFG_pci_base_addr +
+		regs->tamap[table_entry].trsl_addr_low = readl(priv->stm_BRIDGE_CFG_pci_base_addr +
 						TC956X_AXI4_SLV_TRSL_ADDR_LO(0, table_entry));
-		regs->tamap[table_entry].src_addr_hi =	readl(priv->tc956x_BRIDGE_CFG_pci_base_addr +
+		regs->tamap[table_entry].src_addr_hi =	readl(priv->stm_BRIDGE_CFG_pci_base_addr +
 						TC956X_AXI4_SLV_SRC_ADDR_HI(0, table_entry));
-		regs->tamap[table_entry].src_addr_low = (readl(priv->tc956x_BRIDGE_CFG_pci_base_addr +
+		regs->tamap[table_entry].src_addr_low = (readl(priv->stm_BRIDGE_CFG_pci_base_addr +
 						TC956X_AXI4_SLV_SRC_ADDR_LO(0, table_entry)) & TC956X_SRC_LO_MASK);
-		regs->tamap[table_entry].atr_size = ((readl(priv->tc956x_BRIDGE_CFG_pci_base_addr +
+		regs->tamap[table_entry].atr_size = ((readl(priv->stm_BRIDGE_CFG_pci_base_addr +
 						TC956X_AXI4_SLV_SRC_ADDR_LO(0, table_entry)) & TC956X_ATR_SIZE_MASK) >> 1);
-		regs->tamap[table_entry].atr_impl = (readl(priv->tc956x_BRIDGE_CFG_pci_base_addr +
+		regs->tamap[table_entry].atr_impl = (readl(priv->stm_BRIDGE_CFG_pci_base_addr +
 						TC956X_AXI4_SLV_SRC_ADDR_LO(0, table_entry)) & TC956X_ATR_IMPL);
 	}
 
@@ -726,7 +726,7 @@ int tc956x_dump_regs(struct net_device *net_device, struct tc956x_regs *regs)
 	strlcpy(regs->info.version, DRV_MODULE_VERSION, sizeof(regs->info.version));
 #endif
 
-	reg = readl(priv->tc956x_SRAM_pci_base_addr + TC956X_M3_DBG_VER_START);
+	reg = readl(priv->stm_SRAM_pci_base_addr + TC956X_M3_DBG_VER_START);
 	fw_version = (struct tc956x_version *)(&reg);
 	scnprintf(fw_version_str, sizeof(fw_version_str), "FW Version %s_%d.%d-%d", (fw_version->rel_dbg == 'D')?"DBG":"REL",
 					fw_version->major, fw_version->minor, fw_version->sub_minor);
@@ -1127,58 +1127,58 @@ static ssize_t read_tc956x_m3_status(struct file *file,
 	}
 
 	/* PCIe register dump */
-	printk("pcie_reg.rsc_mng_id = 0x%x\n", readl(priv->tc956x_BRIDGE_CFG_pci_base_addr + RSCMNG_ID_REG));
+	printk("pcie_reg.rsc_mng_id = 0x%x\n", readl(priv->stm_BRIDGE_CFG_pci_base_addr + RSCMNG_ID_REG));
 
 	/* M3 SRAM dump */
 	for (ch = 0; ch < maxq; ch++) {
-		printk("sram_tx_pcie_addr[%d] = 0x%x\n", ch, readl(priv->tc956x_SRAM_pci_base_addr + SRAM_TX_PCIE_ADDR_LOC +
+		printk("sram_tx_pcie_addr[%d] = 0x%x\n", ch, readl(priv->stm_SRAM_pci_base_addr + SRAM_TX_PCIE_ADDR_LOC +
 							(priv->port_num * TC956XMAC_CH_MAX * 4) + (ch * 4)));
-		printk("sram_rx_pcie_addr[%d] = 0x%x\n", ch, readl(priv->tc956x_SRAM_pci_base_addr + SRAM_RX_PCIE_ADDR_LOC +
+		printk("sram_rx_pcie_addr[%d] = 0x%x\n", ch, readl(priv->stm_SRAM_pci_base_addr + SRAM_RX_PCIE_ADDR_LOC +
 							(priv->port_num * TC956XMAC_CH_MAX * 4) + (ch * 4)));
 	}
 
-	printk("m3_fw_init_done = 0x%x\n", readl(priv->tc956x_SRAM_pci_base_addr + TC956X_M3_INIT_DONE));
-	printk("m3_fw_exit	= 0x%x\n", readl(priv->tc956x_SRAM_pci_base_addr + TC956X_M3_FW_EXIT));
+	printk("m3_fw_init_done = 0x%x\n", readl(priv->stm_SRAM_pci_base_addr + TC956X_M3_INIT_DONE));
+	printk("m3_fw_exit	= 0x%x\n", readl(priv->stm_SRAM_pci_base_addr + TC956X_M3_FW_EXIT));
 
-	printk("m3_debug_cnt0 = 0x%x\n", readl(priv->tc956x_SRAM_pci_base_addr +
+	printk("m3_debug_cnt0 = 0x%x\n", readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT0))));
-	printk("m3_debug_cnt1 = 0x%x\n", readl(priv->tc956x_SRAM_pci_base_addr +
+	printk("m3_debug_cnt1 = 0x%x\n", readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT1))));
-	printk("m3_debug_cnt2 = 0x%x\n", readl(priv->tc956x_SRAM_pci_base_addr +
+	printk("m3_debug_cnt2 = 0x%x\n", readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT2))));
-	printk("m3_debug_cnt3 = 0x%x\n", readl(priv->tc956x_SRAM_pci_base_addr +
+	printk("m3_debug_cnt3 = 0x%x\n", readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT3))));
-	printk("m3_debug_cnt4 = 0x%x\n", readl(priv->tc956x_SRAM_pci_base_addr +
+	printk("m3_debug_cnt4 = 0x%x\n", readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT4))));
-	printk("m3_debug_cnt5 = 0x%x\n", readl(priv->tc956x_SRAM_pci_base_addr +
+	printk("m3_debug_cnt5 = 0x%x\n", readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT5))));
-	printk("m3_debug_cnt6 = 0x%x\n", readl(priv->tc956x_SRAM_pci_base_addr +
+	printk("m3_debug_cnt6 = 0x%x\n", readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT6))));
-	printk("m3_debug_cnt7 = 0x%x\n", readl(priv->tc956x_SRAM_pci_base_addr +
+	printk("m3_debug_cnt7 = 0x%x\n", readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT7))));
-	printk("m3_debug_cnt8 = 0x%x\n", readl(priv->tc956x_SRAM_pci_base_addr +
+	printk("m3_debug_cnt8 = 0x%x\n", readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT8))));
-	printk("m3_debug_cnt9 = 0x%x\n", readl(priv->tc956x_SRAM_pci_base_addr +
+	printk("m3_debug_cnt9 = 0x%x\n", readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT9))));
-	printk("m3_debug_cnt10 = 0x%x\n", readl(priv->tc956x_SRAM_pci_base_addr +
+	printk("m3_debug_cnt10 = 0x%x\n", readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT10))));
-	printk("m3_watchdog_exp_cnt = 0x%x\n", readl(priv->tc956x_SRAM_pci_base_addr +
+	printk("m3_watchdog_exp_cnt = 0x%x\n", readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT11))));
-	printk("m3_watchdog_monitor_cnt = 0x%x\n", readl(priv->tc956x_SRAM_pci_base_addr +
+	printk("m3_watchdog_monitor_cnt = 0x%x\n", readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT12))));
-	printk("m3_debug_cnt13 = 0x%x\n", readl(priv->tc956x_SRAM_pci_base_addr +
+	printk("m3_debug_cnt13 = 0x%x\n", readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT13))));
-	printk("m3_debug_cnt14 = 0x%x\n", readl(priv->tc956x_SRAM_pci_base_addr +
+	printk("m3_debug_cnt14 = 0x%x\n", readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT14))));
-	printk("m3_systick_cnt_upper_value = 0x%x\n", readl(priv->tc956x_SRAM_pci_base_addr +
+	printk("m3_systick_cnt_upper_value = 0x%x\n", readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT16))));
-	printk("m3_systick_cnt_lower_value = 0x%x\n", readl(priv->tc956x_SRAM_pci_base_addr +
+	printk("m3_systick_cnt_lower_value = 0x%x\n", readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT15))));
-	printk("m3_tx_timeout_port0 = 0x%x\n", readl(priv->tc956x_SRAM_pci_base_addr +
+	printk("m3_tx_timeout_port0 = 0x%x\n", readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT17))));
-	printk("m3_tx_timeout_port1 = 0x%x\n", readl(priv->tc956x_SRAM_pci_base_addr +
+	printk("m3_tx_timeout_port1 = 0x%x\n", readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT18))));
-	printk("m3_debug_cnt19 = 0x%x\n", readl(priv->tc956x_SRAM_pci_base_addr +
+	printk("m3_debug_cnt19 = 0x%x\n", readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT19))));
 
 	return 0;
@@ -1210,7 +1210,7 @@ static ssize_t read_tc956x_mac_status(struct file *file,
 	}
 
 	/* PCIe register dump */
-	printk("pcie_reg.rsc_mng_id = 0x%x\n", readl(priv->tc956x_BRIDGE_CFG_pci_base_addr + RSCMNG_ID_REG));
+	printk("pcie_reg.rsc_mng_id = 0x%x\n", readl(priv->stm_BRIDGE_CFG_pci_base_addr + RSCMNG_ID_REG));
 
 	/* MAC register dump */
 	printk("mac_reg.mac_tx_config = 0x%x\n", readl(priv->ioaddr + XGMAC_TX_CONFIG));
@@ -1250,7 +1250,7 @@ static ssize_t read_tc956x_mtl_status(struct file *file,
 	}
 
 	/* PCIe register dump */
-	printk("pcie_reg.rsc_mng_id = 0x%x\n", readl(priv->tc956x_BRIDGE_CFG_pci_base_addr + RSCMNG_ID_REG));
+	printk("pcie_reg.rsc_mng_id = 0x%x\n", readl(priv->stm_BRIDGE_CFG_pci_base_addr + RSCMNG_ID_REG));
 
 
 	/* MTL register dump */
@@ -1306,7 +1306,7 @@ static ssize_t read_tc956x_dma_status(struct file *file,
 	}
 
 	/* PCIe register dump */
-	printk("pcie_reg.rsc_mng_id = 0x%x\n", readl(priv->tc956x_BRIDGE_CFG_pci_base_addr + RSCMNG_ID_REG));
+	printk("pcie_reg.rsc_mng_id = 0x%x\n", readl(priv->stm_BRIDGE_CFG_pci_base_addr + RSCMNG_ID_REG));
 
 	/* DMA channel register dump */
 	printk("dma_reg.debug_sts0 = 0x%x\n", readl(priv->ioaddr + XGMAC_DMA_DEBUG_STATUS0));
@@ -1395,7 +1395,7 @@ static ssize_t read_tc956x_intr_status(struct file *file,
 	}
 
 	/* PCIe register dump */
-	printk("pcie_reg.rsc_mng_id = 0x%x\n", readl(priv->tc956x_BRIDGE_CFG_pci_base_addr + RSCMNG_ID_REG));
+	printk("pcie_reg.rsc_mng_id = 0x%x\n", readl(priv->stm_BRIDGE_CFG_pci_base_addr + RSCMNG_ID_REG));
 
 	/* MSI register dump */
 	printk("msi_reg.msi_out_en = 0x%x\n", readl(priv->ioaddr + TC956X_MSI_OUT_EN_OFFSET(priv->port_num, 0)));
@@ -1448,7 +1448,7 @@ static ssize_t read_tc956x_cnfg_status(struct file *file,
 	}
 
 	/* PCIe register dump */
-	printk("pcie_reg.rsc_mng_id = 0x%x\n", readl(priv->tc956x_BRIDGE_CFG_pci_base_addr + RSCMNG_ID_REG));
+	printk("pcie_reg.rsc_mng_id = 0x%x\n", readl(priv->stm_BRIDGE_CFG_pci_base_addr + RSCMNG_ID_REG));
 
 	/* Configuration register dump */
 	printk("config_reg.ncid = 0x%x\n", readl(priv->ioaddr + NCID_OFFSET));
@@ -1498,21 +1498,21 @@ static ssize_t read_tc956x_other_status(struct file *file,
 	}
 
 	/* PCIe register dump */
-	printk("pcie_reg.rsc_mng_id = 0x%x\n", readl(priv->tc956x_BRIDGE_CFG_pci_base_addr + RSCMNG_ID_REG));
+	printk("pcie_reg.rsc_mng_id = 0x%x\n", readl(priv->stm_BRIDGE_CFG_pci_base_addr + RSCMNG_ID_REG));
 
 	/* TAMAP Information */
 	for (table_entry = 0; table_entry <= MAX_CM3_TAMAP_ENTRIES; table_entry++) {
-		printk("TAMAP table %d, trsl_addr_hi = 0x%x\n", table_entry, (u32)readl(priv->tc956x_BRIDGE_CFG_pci_base_addr +
+		printk("TAMAP table %d, trsl_addr_hi = 0x%x\n", table_entry, (u32)readl(priv->stm_BRIDGE_CFG_pci_base_addr +
 						TC956X_AXI4_SLV_TRSL_ADDR_HI(0, table_entry)));
-		printk("TAMAP table %d, trsl_addr_low = 0x%x\n", table_entry, (u32) readl(priv->tc956x_BRIDGE_CFG_pci_base_addr +
+		printk("TAMAP table %d, trsl_addr_low = 0x%x\n", table_entry, (u32) readl(priv->stm_BRIDGE_CFG_pci_base_addr +
 						TC956X_AXI4_SLV_TRSL_ADDR_LO(0, table_entry)));
-		printk("TAMAP table %d, src_addr_hi = 0x%x\n", table_entry, (u32)readl(priv->tc956x_BRIDGE_CFG_pci_base_addr +
+		printk("TAMAP table %d, src_addr_hi = 0x%x\n", table_entry, (u32)readl(priv->stm_BRIDGE_CFG_pci_base_addr +
 						TC956X_AXI4_SLV_SRC_ADDR_HI(0, table_entry)));
-		printk("TAMAP table %d, src_addr_low = 0x%x\n", table_entry, (u32)(readl(priv->tc956x_BRIDGE_CFG_pci_base_addr +
+		printk("TAMAP table %d, src_addr_low = 0x%x\n", table_entry, (u32)(readl(priv->stm_BRIDGE_CFG_pci_base_addr +
 						TC956X_AXI4_SLV_SRC_ADDR_LO(0, table_entry)) & TC956X_SRC_LO_MASK));
-		printk("TAMAP table %d, atr_size = 0x%x\n", table_entry,  (u32)((readl(priv->tc956x_BRIDGE_CFG_pci_base_addr +
+		printk("TAMAP table %d, atr_size = 0x%x\n", table_entry,  (u32)((readl(priv->stm_BRIDGE_CFG_pci_base_addr +
 						TC956X_AXI4_SLV_SRC_ADDR_LO(0, table_entry)) & TC956X_ATR_SIZE_MASK) >> 1));
-		printk("TAMAP table %d, atr_impl = 0x%x\n", table_entry,  (u32)(readl(priv->tc956x_BRIDGE_CFG_pci_base_addr +
+		printk("TAMAP table %d, atr_impl = 0x%x\n", table_entry,  (u32)(readl(priv->stm_BRIDGE_CFG_pci_base_addr +
 						TC956X_AXI4_SLV_SRC_ADDR_LO(0, table_entry)) & TC956X_ATR_IMPL));
 	}
 
@@ -1520,7 +1520,7 @@ static ssize_t read_tc956x_other_status(struct file *file,
 	printk("info.driver = %s\n", TC956X_RESOURCE_NAME);
 	printk("info.version = %s\n", DRV_MODULE_VERSION);
 
-	reg = readl(priv->tc956x_SRAM_pci_base_addr + TC956X_M3_DBG_VER_START);
+	reg = readl(priv->stm_SRAM_pci_base_addr + TC956X_M3_DBG_VER_START);
 	fw_version = (struct tc956x_version *)(&reg);
 	scnprintf(fw_version_str, sizeof(fw_version_str), "FW Version %s_%d.%d-%d", (fw_version->rel_dbg == 'D')?"DBG":"REL",
 					fw_version->major, fw_version->minor, fw_version->sub_minor);
@@ -1774,13 +1774,13 @@ int tc956xmac_cleanup_debugfs(struct net_device *net_device)
 #endif /* TC956X_SRIOV_PF */
 
 /**
- *  tc956x_GPIO_OutputConfigPin - to configure GPIO as output and write the value
+ *  stm_GPIO_OutputConfigPin - to configure GPIO as output and write the value
  *  @priv: driver private structure
  *  @gpio_pin: GPIO pin number
  *  @out_value : value to write to the GPIO pin. Can be 0 or 1
  *  @remarks : Only GPIO0- GPIO06, GPI010-GPIO12 are allowed
  */
-int tc956x_GPIO_OutputConfigPin(struct stmmac_priv *priv, u32 gpio_pin, u8 out_value)
+int stm_GPIO_OutputConfigPin(struct stmmac_priv *priv, u32 gpio_pin, u8 out_value)
 {
 	u32 config, val;
 
@@ -3318,21 +3318,21 @@ static void tc956xmac_speed_change_init_mac(struct stmmac_priv *priv,
 
 	NMSGPR_INFO(priv->device, "-->%s\n", __func__);
 
-	reg = readl(priv->tc956x_SFR_pci_base_addr + NMISCCTL_OFFSET);
+	reg = readl(priv->stm_SFR_pci_base_addr + NMISCCTL_OFFSET);
 	reg &= MISC_CTRL;
 
 	if (priv->port_num == RM_PF0_ID) {
 		/* Enable all clocks to eMAC Port0 */
-		ret = readl(priv->tc956x_SFR_pci_base_addr + NCLKCTRL0_OFFSET);
+		ret = readl(priv->stm_SFR_pci_base_addr + NCLKCTRL0_OFFSET);
 		if ((state->interface == PHY_INTERFACE_MODE_SGMII) &&
 		   (state->speed == SPEED_2500)) {
 			ret &= ~NCLKCTRL0_MAC0125CLKEN;
 			ret &= ~NCLKCTRL0_MAC0312CLKEN;
 		}
-		writel(ret, priv->tc956x_SFR_pci_base_addr + NCLKCTRL0_OFFSET);
+		writel(ret, priv->stm_SFR_pci_base_addr + NCLKCTRL0_OFFSET);
 
 		/* Interface configuration for port0*/
-		ret = readl(priv->tc956x_SFR_pci_base_addr + NEMAC0CTL_OFFSET);
+		ret = readl(priv->stm_SFR_pci_base_addr + NEMAC0CTL_OFFSET);
 		ret &= ~(NEMACCTL_SP_SEL_MASK | NEMACCTL_PHY_INF_SEL_MASK);
 		if (state->interface == PHY_INTERFACE_MODE_SGMII) {
 			if (state->speed == SPEED_2500)
@@ -3406,12 +3406,12 @@ static void tc956xmac_speed_change_init_mac(struct stmmac_priv *priv,
 		if (SgmSigPol == 1)
 			ret |= 0x00000040; /* Set Active low */
 		ret |= (NEMACCTL_PHY_INF_SEL | NEMACCTL_LPIHWCLKEN);
-		writel(ret, priv->tc956x_SFR_pci_base_addr + NEMAC0CTL_OFFSET);
-		writel(reg, priv->tc956x_SFR_pci_base_addr + NMISCCTL_OFFSET);
+		writel(ret, priv->stm_SFR_pci_base_addr + NEMAC0CTL_OFFSET);
+		writel(reg, priv->stm_SFR_pci_base_addr + NMISCCTL_OFFSET);
 	}
 	if (priv->port_num == RM_PF1_ID) {
 		/* Enable all clocks to eMAC Port1 */
-		ret = readl(priv->tc956x_SFR_pci_base_addr + NCLKCTRL1_OFFSET);
+		ret = readl(priv->stm_SFR_pci_base_addr + NCLKCTRL1_OFFSET);
 		if ((state->interface == PHY_INTERFACE_MODE_SGMII) &&
 		   (state->speed == SPEED_2500)) {
 			ret &= ~NCLKCTRL1_MAC1125CLKEN1;
@@ -3420,10 +3420,10 @@ static void tc956xmac_speed_change_init_mac(struct stmmac_priv *priv,
 			ret &= ~NCLKCTRL1_MAC1312CLKEN1;
 			ret |= NCLKCTRL1_MAC1125CLKEN1;
 		}
-		writel(ret, priv->tc956x_SFR_pci_base_addr + NCLKCTRL1_OFFSET);
+		writel(ret, priv->stm_SFR_pci_base_addr + NCLKCTRL1_OFFSET);
 
 		/* Interface configuration for port1*/
-		ret = readl(priv->tc956x_SFR_pci_base_addr + NEMAC1CTL_OFFSET);
+		ret = readl(priv->stm_SFR_pci_base_addr + NEMAC1CTL_OFFSET);
 		ret &= ~(NEMACCTL_SP_SEL_MASK | NEMACCTL_PHY_INF_SEL_MASK);
 		if (state->interface == PHY_INTERFACE_MODE_SGMII) {
 			if (state->speed == SPEED_2500)
@@ -3497,8 +3497,8 @@ static void tc956xmac_speed_change_init_mac(struct stmmac_priv *priv,
 		if (SgmSigPol == 1)
 			ret |= 0x00000040; /* Set Active low */
 		ret |= (NEMACCTL_PHY_INF_SEL | NEMACCTL_LPIHWCLKEN);
-		writel(ret, priv->tc956x_SFR_pci_base_addr + NEMAC1CTL_OFFSET);
-		writel(reg, priv->tc956x_SFR_pci_base_addr + NMISCCTL_OFFSET);
+		writel(ret, priv->stm_SFR_pci_base_addr + NEMAC1CTL_OFFSET);
+		writel(reg, priv->stm_SFR_pci_base_addr + NMISCCTL_OFFSET);
 	}
 
 	/*PMA module init*/
@@ -6282,7 +6282,7 @@ static int tc956xmac_napi_check(struct stmmac_priv *priv, u32 chan)
 		(priv->plat->tx_dma_ch_owner[chan] == USE_IN_TC956X_SW)) {
 #endif
 #ifdef TX_COMPLETION_WITHOUT_TIMERS
-		writel(0, priv->tc956x_SRAM_pci_base_addr
+		writel(0, priv->stm_SRAM_pci_base_addr
 				+ TX_TIMER_SRAM_OFFSET(priv->port_num));
 
 #endif
@@ -7594,7 +7594,7 @@ static int tc956xmac_open(struct net_device *dev)
 #endif
 #ifdef TC956X_SRIOV_PF
 	/* Retrieve Function ID */
-	ret = tc956xmac_rsc_mng_get_fn_id(priv, priv->tc956x_BRIDGE_CFG_pci_base_addr, &priv->fn_id_info);
+	ret = tc956xmac_rsc_mng_get_fn_id(priv, priv->stm_BRIDGE_CFG_pci_base_addr, &priv->fn_id_info);
 	if (ret < 0) {
 		netdev_err(priv->dev, "%s: Invalid SRIOV Function ID\n",
 			   __func__);
@@ -7860,7 +7860,7 @@ static int tc956xmac_open(struct net_device *dev)
 #endif
 
 #ifdef TX_COMPLETION_WITHOUT_TIMERS
-		writel(0, priv->tc956x_SRAM_pci_base_addr
+		writel(0, priv->stm_SRAM_pci_base_addr
 				+ TX_TIMER_SRAM_OFFSET(priv->port_num));
 #endif
 
@@ -7871,16 +7871,16 @@ static int tc956xmac_open(struct net_device *dev)
 
 	if (priv->port_num == RM_PF0_ID) {
 		/* Write Eth0 RxBuffer Head address to DMEM */
-		writel(priv->pbridge_handle, priv->tc956x_SRAM_pci_base_addr
+		writel(priv->pbridge_handle, priv->stm_SRAM_pci_base_addr
 				+ TC956X_M3_DMEM_OFFSET + (MAC2MAC_ETH0_RXDESC_L));
 		writel(upper_32_bits(priv->pbridge_handle),
-			priv->tc956x_SRAM_pci_base_addr	+ TC956X_M3_DMEM_OFFSET + (MAC2MAC_ETH0_RXDESC_H));
+			priv->stm_SRAM_pci_base_addr	+ TC956X_M3_DMEM_OFFSET + (MAC2MAC_ETH0_RXDESC_H));
 		writel(0x1 << 0, priv->ioaddr + INTC_MCUFLG);
 	} else if (priv->port_num == RM_PF1_ID) {
 		/* Write Eth1 RxBuffer Head address to DMEM */
-		writel(priv->pbridge_handle, priv->tc956x_SRAM_pci_base_addr
+		writel(priv->pbridge_handle, priv->stm_SRAM_pci_base_addr
 			+ TC956X_M3_DMEM_OFFSET + (MAC2MAC_ETH1_RXDESC_L));
-		writel(upper_32_bits(priv->pbridge_handle), priv->tc956x_SRAM_pci_base_addr
+		writel(upper_32_bits(priv->pbridge_handle), priv->stm_SRAM_pci_base_addr
 			+ TC956X_M3_DMEM_OFFSET + (MAC2MAC_ETH1_RXDESC_H));
 		writel(0x1 << 1, priv->ioaddr + INTC_MCUFLG);
 	}
@@ -7912,7 +7912,7 @@ static int tc956xmac_open(struct net_device *dev)
 	tc956xmac_vf_reset(priv, VF_UP);
 #endif
 #ifdef TX_COMPLETION_WITHOUT_TIMERS
-		writel(0, priv->tc956x_SRAM_pci_base_addr
+		writel(0, priv->stm_SRAM_pci_base_addr
 				+ TX_TIMER_SRAM_OFFSET(priv->port_num));
 #endif
 	NMSGPR_INFO(priv->device, "<--- light weight = %d %s(2) : Port %d %s", priv->link_down_rst, __func__, priv->port_num, dev->name);
@@ -7999,7 +7999,7 @@ static int tc956xmac_release(struct net_device *dev)
 
 	NMSGPR_INFO(priv->device, " ---> light weight = %d %s : Port %d interface %s", priv->link_down_rst, __func__, priv->port_num, dev->name);
 #ifdef TX_COMPLETION_WITHOUT_TIMERS
-	writel(0, priv->tc956x_SRAM_pci_base_addr
+	writel(0, priv->stm_SRAM_pci_base_addr
 			+ TX_TIMER_SRAM_OFFSET(priv->port_num));
 
 #endif
@@ -8555,7 +8555,7 @@ static netdev_tx_t tc956xmac_tso_xmit(struct sk_buff *skb, struct net_device *de
 #endif
 
 #ifdef TX_COMPLETION_WITHOUT_TIMERS
-	writel(1, priv->tc956x_SRAM_pci_base_addr
+	writel(1, priv->stm_SRAM_pci_base_addr
 			+ TX_TIMER_SRAM_OFFSET(priv->port_num));
 #endif
 	return NETDEV_TX_OK;
@@ -8939,7 +8939,7 @@ static netdev_tx_t tc956xmac_xmit(struct sk_buff *skb, struct net_device *dev)
 #endif
 
 #ifdef TX_COMPLETION_WITHOUT_TIMERS
-	writel(1, priv->tc956x_SRAM_pci_base_addr
+	writel(1, priv->stm_SRAM_pci_base_addr
 			+ TX_TIMER_SRAM_OFFSET(priv->port_num));
 #endif
 
@@ -11135,9 +11135,9 @@ static int tc956xmac_reg_rd(struct stmmac_priv *priv, void __user *data)
 		if (ioctl_data.bar_num == 4)
 			val = readl((void __iomem *)(priv->dev->base_addr + ioctl_data.addr));
 		else if (ioctl_data.bar_num == 2)/*SRAM bar number 2*/
-			val = readl((void __iomem *)(priv->tc956x_SRAM_pci_base_addr + ioctl_data.addr));
+			val = readl((void __iomem *)(priv->stm_SRAM_pci_base_addr + ioctl_data.addr));
 		else if (ioctl_data.bar_num == 0)/*PCI bridge bar number 0*/
-			val = readl((void __iomem *)(priv->tc956x_BRIDGE_CFG_pci_base_addr + ioctl_data.addr));
+			val = readl((void __iomem *)(priv->stm_BRIDGE_CFG_pci_base_addr + ioctl_data.addr));
 #endif
 
 	if (copy_to_user(ioctl_data.ptr, &val, sizeof(unsigned int)))
@@ -11170,9 +11170,9 @@ static int tc956xmac_reg_wr(struct stmmac_priv *priv, void __user *data)
 	if (ioctl_data.bar_num == 4)
 		writel(val, (void __iomem *)(priv->dev->base_addr + ioctl_data.addr));
 	else if (ioctl_data.bar_num == 2)/*SRAM bar number 2*/
-		writel(val, (void __iomem *)(priv->tc956x_SRAM_pci_base_addr + ioctl_data.addr));
+		writel(val, (void __iomem *)(priv->stm_SRAM_pci_base_addr + ioctl_data.addr));
 	else if (ioctl_data.bar_num == 0)/*PCI bridge bar number 0*/
-		writel(val, (void __iomem *)(priv->tc956x_BRIDGE_CFG_pci_base_addr + ioctl_data.addr));
+		writel(val, (void __iomem *)(priv->stm_BRIDGE_CFG_pci_base_addr + ioctl_data.addr));
 #endif
 
 	DBGPR_FUNC(priv->device, "<--%s\n", __func__);
@@ -11367,7 +11367,7 @@ static int tc956x_xgmac_get_fw_status(struct stmmac_priv *priv,
 	/* Read the WDT counter and Systik count value */
 	wdt_count1 = readl(priv->ioaddr + INTC_INTINTWDMON);
 #ifdef TC956X
-	systick_count1 = readl(priv->tc956x_SRAM_pci_base_addr
+	systick_count1 = readl(priv->stm_SRAM_pci_base_addr
 				+ SYSTCIK_SRAM_OFFSET);
 #endif
 
@@ -11376,7 +11376,7 @@ static int tc956x_xgmac_get_fw_status(struct stmmac_priv *priv,
 	/* Read the WDT counter and Systick count value */
 	wdt_count2 = readl(priv->ioaddr + INTC_INTINTWDMON);
 #ifdef TC956X
-	systick_count2 = readl(priv->tc956x_SRAM_pci_base_addr
+	systick_count2 = readl(priv->stm_SRAM_pci_base_addr
 				+ SYSTCIK_SRAM_OFFSET);
 #endif
 	fw_status  = 1; /* running */
@@ -11783,7 +11783,7 @@ static int tc956xmac_config_ptpoffload(struct stmmac_priv *priv, void __user *da
 	pto_cntrl |= (ioctl_data.domain_num << 8);
 
 	if ((ioctl_data.en_dis != TC956X_PTP_OFFLOADING_DISABLE) && (ioctl_data.mc_uc == 1))
-		tc956x_add_mac_addr(priv->dev, ioctl_data.mc_uc_addr);
+		stm_add_mac_addr(priv->dev, ioctl_data.mc_uc_addr);
 
 	if (ioctl_data.en_dis == TC956X_PTP_OFFLOADING_DISABLE) {
 		pto_cntrl = 0;
@@ -15464,10 +15464,10 @@ int tc956x_platform_probe(struct stmmac_priv *priv, struct tc956xmac_resources *
 {
 #ifdef RBTC9563_3MA
 #ifdef RBTC9563_3DB
-	tc956x_GPIO_OutputConfigPin(priv, GPIO_12, 0);
+	stm_GPIO_OutputConfigPin(priv, GPIO_12, 0);
 #else
-	tc956x_GPIO_OutputConfigPin(priv, GPIO_12, 1);
-	tc956x_GPIO_OutputConfigPin(priv, GPIO_13, 0);
+	stm_GPIO_OutputConfigPin(priv, GPIO_12, 1);
+	stm_GPIO_OutputConfigPin(priv, GPIO_13, 0);
 #endif
 #endif
 	return 0;
@@ -15484,10 +15484,10 @@ int tc956x_platform_resume(struct stmmac_priv *priv)
 {
 #ifdef RBTC9563_3MA
 #ifdef RBTC9563_3DB
-		tc956x_GPIO_OutputConfigPin(priv, GPIO_12, 0);
+		stm_GPIO_OutputConfigPin(priv, GPIO_12, 0);
 #else
-		tc956x_GPIO_OutputConfigPin(priv, GPIO_12, 1);
-		tc956x_GPIO_OutputConfigPin(priv, GPIO_13, 0);
+		stm_GPIO_OutputConfigPin(priv, GPIO_12, 1);
+		stm_GPIO_OutputConfigPin(priv, GPIO_13, 0);
 #endif
 #endif
 
@@ -15579,9 +15579,9 @@ int tc956xmac_vf_dvr_probe(struct device *device,
 	priv->sriov_enabled = res->sriov_enabled;
 #endif
 #ifdef TC956X
-	priv->tc956x_SFR_pci_base_addr = res->tc956x_SFR_pci_base_addr;
-	priv->tc956x_SRAM_pci_base_addr = res->tc956x_SRAM_pci_base_addr;
-	priv->tc956x_BRIDGE_CFG_pci_base_addr = res->tc956x_BRIDGE_CFG_pci_base_addr;
+	priv->stm_SFR_pci_base_addr = res->stm_SFR_pci_base_addr;
+	priv->stm_SRAM_pci_base_addr = res->stm_SRAM_pci_base_addr;
+	priv->stm_BRIDGE_CFG_pci_base_addr = res->stm_BRIDGE_CFG_pci_base_addr;
 #endif
 	priv->port_num = res->port_num;
 	priv->dev->base_addr = (unsigned long)res->addr;
@@ -15791,7 +15791,7 @@ int tc956xmac_vf_dvr_probe(struct device *device,
 #ifdef TC956X
 #ifdef TC956X_SRIOV_VF
 
-	mac_addr = readl(priv->tc956x_SRAM_pci_base_addr +
+	mac_addr = readl(priv->stm_SRAM_pci_base_addr +
 		TC956X_M3_SRAM_EEPROM_MAC_ADDR + (EEPROM_PORT_OFFSET * TC956X_EIGHT) +
 		(priv->plat->vf_id * TC956X_SIXTEEN));
 
@@ -15805,7 +15805,7 @@ int tc956xmac_vf_dvr_probe(struct device *device,
 		dev_addr[priv->port_num][priv->plat->vf_id][3] =
 						(mac_addr & EEPROM_MAC_ADDR_MASK4) >> TC956X_TWENTY_FOUR;
 
-		mac_addr = readl(priv->tc956x_SRAM_pci_base_addr +
+		mac_addr = readl(priv->stm_SRAM_pci_base_addr +
 			TC956X_M3_SRAM_EEPROM_MAC_ADDR + (EEPROM_PORT_OFFSET * TC956X_EIGHT) +
 			(priv->plat->vf_id * TC956X_SIXTEEN) + TC956X_FOUR);
 
@@ -15815,7 +15815,7 @@ int tc956xmac_vf_dvr_probe(struct device *device,
 	}
 
 #else
-	mac_addr = readl(priv->tc956x_SRAM_pci_base_addr +
+	mac_addr = readl(priv->stm_SRAM_pci_base_addr +
 		TC956X_M3_SRAM_EEPROM_MAC_ADDR + (TC956X_EIGHT * priv->probe_seq_no));
 
 	if (mac_addr != 0) {
@@ -15824,7 +15824,7 @@ int tc956xmac_vf_dvr_probe(struct device *device,
 		dev_addr[priv->probe_seq_no][2] = (mac_addr & EEPROM_MAC_ADDR_MASK3) >> TC956X_SIXTEEN;
 		dev_addr[priv->probe_seq_no][3] = (mac_addr & EEPROM_MAC_ADDR_MASK4) >> TC956X_TWENTY_FOUR;
 
-		mac_addr = readl(priv->tc956x_SRAM_pci_base_addr +
+		mac_addr = readl(priv->stm_SRAM_pci_base_addr +
 			TC956X_M3_SRAM_EEPROM_MAC_ADDR + (TC956X_EIGHT * priv->probe_seq_no) + TC956X_FOUR);
 		dev_addr[priv->probe_seq_no][4] = (mac_addr & EEPROM_MAC_ADDR_MASK1);
 		dev_addr[priv->probe_seq_no][5] = (mac_addr & EEPROM_MAC_ADDR_MASK2) >> TC956X_EIGHT;
@@ -16018,7 +16018,7 @@ int tc956xmac_vf_dvr_probe(struct device *device,
 #ifdef TC956X_SRIOV_VF
 	/* Get the VF function id information */
 
-	if (tc956xmac_rsc_mng_get_fn_id(priv, priv->tc956x_BRIDGE_CFG_pci_base_addr,
+	if (tc956xmac_rsc_mng_get_fn_id(priv, priv->stm_BRIDGE_CFG_pci_base_addr,
 					&priv->fn_id_info)) {
 		netdev_err(priv->dev,
 				"%s: Wrong function id for the driver (error: %d)\n",
@@ -16394,11 +16394,11 @@ error_mdio_register:
 	}
 #endif /* TC956X_SRIOV_VF */
 	if (priv->port_num == 0) {
-		nrst_reg = priv->tc956x_SFR_pci_base_addr + NRSTCTRL0_OFFSET;
-		nclk_reg = priv->tc956x_SFR_pci_base_addr + NCLKCTRL0_OFFSET;
+		nrst_reg = priv->stm_SFR_pci_base_addr + NRSTCTRL0_OFFSET;
+		nclk_reg = priv->stm_SFR_pci_base_addr + NCLKCTRL0_OFFSET;
 	} else {
-		nrst_reg = priv->tc956x_SFR_pci_base_addr + NRSTCTRL1_OFFSET;
-		nclk_reg = priv->tc956x_SFR_pci_base_addr + NCLKCTRL1_OFFSET;
+		nrst_reg = priv->stm_SFR_pci_base_addr + NRSTCTRL1_OFFSET;
+		nclk_reg = priv->stm_SFR_pci_base_addr + NCLKCTRL1_OFFSET;
 	}
 	nrst_val = readl(nrst_reg);
 	nclk_val = readl(nclk_reg);
@@ -16512,12 +16512,12 @@ int tc956xmac_vf_dvr_remove(struct device *dev)
 
 #ifndef TC956X_SRIOV_VF
 #ifdef TC956X
-	val = ioread32((void __iomem *)(priv->tc956x_SRAM_pci_base_addr + TC956X_M3_FW_EXIT));
+	val = ioread32((void __iomem *)(priv->stm_SRAM_pci_base_addr + TC956X_M3_FW_EXIT));
 	val += 1;
 #ifdef DISABLE_EMAC_PORT1
 	val = TC956X_M3_FW_EXIT_VALUE;
 #endif
-	iowrite32(val, (void __iomem *)(priv->tc956x_SRAM_pci_base_addr + TC956X_M3_FW_EXIT));
+	iowrite32(val, (void __iomem *)(priv->stm_SRAM_pci_base_addr + TC956X_M3_FW_EXIT));
 #endif
 
 #ifdef TC956X_ENABLE_MAC2MAC_BRIDGE
@@ -16700,9 +16700,9 @@ int tc956xmac_vf_resume(struct device *dev)
 #ifndef TC956X_SRIOV_VF
 	cm3_reset_status = readl((priv->ioaddr + NRSTCTRL0_OFFSET));
 	if ((cm3_reset_status & NRSTCTRL0_MCURST) == NRSTCTRL0_MCURST) {
-		res.tc956x_SFR_pci_base_addr = priv->tc956x_SFR_pci_base_addr;
+		res.stm_SFR_pci_base_addr = priv->stm_SFR_pci_base_addr;
 		res.addr = priv->ioaddr;
-		res.tc956x_SRAM_pci_base_addr = priv->tc956x_SRAM_pci_base_addr;
+		res.stm_SRAM_pci_base_addr = priv->stm_SRAM_pci_base_addr;
 		res.irq = priv->dev->irq;
 		fw_load_status = tc956x_load_firmware(dev, &res);
 		if (fw_load_status < 0) {
@@ -16716,9 +16716,9 @@ int tc956xmac_vf_resume(struct device *dev)
 	//	phy_speed_up(phydev);
 	//}
 #elif defined(TC956X_SRIOV_VF)
-	res.tc956x_SFR_pci_base_addr = priv->tc956x_SFR_pci_base_addr;
+	res.stm_SFR_pci_base_addr = priv->stm_SFR_pci_base_addr;
 	res.addr = priv->ioaddr;
-	res.tc956x_SRAM_pci_base_addr = priv->tc956x_SRAM_pci_base_addr;
+	res.stm_SRAM_pci_base_addr = priv->stm_SRAM_pci_base_addr;
 	res.irq = priv->dev->irq;
 #endif
 #endif /* TC956X */
@@ -16753,11 +16753,11 @@ clean_exit:
 			priv->plat->phy_addr);
 		/* Set Clocks same as before suspend */
 		if (priv->port_num == 0) {
-			nrst_reg = priv->tc956x_SFR_pci_base_addr + NRSTCTRL0_OFFSET;
-			nclk_reg = priv->tc956x_SFR_pci_base_addr + NCLKCTRL0_OFFSET;
+			nrst_reg = priv->stm_SFR_pci_base_addr + NRSTCTRL0_OFFSET;
+			nclk_reg = priv->stm_SFR_pci_base_addr + NCLKCTRL0_OFFSET;
 		} else {
-			nrst_reg = priv->tc956x_SFR_pci_base_addr + NRSTCTRL1_OFFSET;
-			nclk_reg = priv->tc956x_SFR_pci_base_addr + NCLKCTRL1_OFFSET;
+			nrst_reg = priv->stm_SFR_pci_base_addr + NRSTCTRL1_OFFSET;
+			nclk_reg = priv->stm_SFR_pci_base_addr + NCLKCTRL1_OFFSET;
 		}
 		nrst_val = readl(nrst_reg);
 		nclk_val = readl(nclk_reg);
@@ -16807,11 +16807,11 @@ void tc956xmac_link_change_set_power(struct stmmac_priv *priv, enum TC956X_PORT_
 
 		/* Select register address by port */
 		if (priv->port_num == 0) {
-			nrst_reg = priv->tc956x_SFR_pci_base_addr + NRSTCTRL0_OFFSET;
-			nclk_reg = priv->tc956x_SFR_pci_base_addr + NCLKCTRL0_OFFSET;
+			nrst_reg = priv->stm_SFR_pci_base_addr + NRSTCTRL0_OFFSET;
+			nclk_reg = priv->stm_SFR_pci_base_addr + NCLKCTRL0_OFFSET;
 		} else {
-			nrst_reg = priv->tc956x_SFR_pci_base_addr + NRSTCTRL1_OFFSET;
-			nclk_reg = priv->tc956x_SFR_pci_base_addr + NCLKCTRL1_OFFSET;
+			nrst_reg = priv->stm_SFR_pci_base_addr + NRSTCTRL1_OFFSET;
+			nclk_reg = priv->stm_SFR_pci_base_addr + NCLKCTRL1_OFFSET;
 		}
 		if (state == LINK_DOWN) {
 			NMSGPR_INFO(priv->device, "%s : Port %d %s Set Power for Link Down", __func__, priv->port_num, priv->dev->name);
@@ -16834,8 +16834,8 @@ void tc956xmac_link_change_set_power(struct stmmac_priv *priv, enum TC956X_PORT_
 			tx956x_pci_shrd_mem[priv->pci_bd].eth_link_down_cnt++; /* Increment counter for Link Down */
 			if (tx956x_pci_shrd_mem[priv->pci_bd].eth_link_down_cnt == TC956X_ALL_MAC_PORT_LINK_DOWN) {
 				/* Save Common register values */
-				commonrst_reg = priv->tc956x_SFR_pci_base_addr + NRSTCTRL0_OFFSET;
-				commonclk_reg = priv->tc956x_SFR_pci_base_addr + NCLKCTRL0_OFFSET;
+				commonrst_reg = priv->stm_SFR_pci_base_addr + NRSTCTRL0_OFFSET;
+				commonclk_reg = priv->stm_SFR_pci_base_addr + NCLKCTRL0_OFFSET;
 				commonrst_val = readl(commonrst_reg);
 				commonclk_val = readl(commonclk_reg);
 				NMSGPR_INFO(priv->device, "%s : Port %d %s Common Rd RST Reg:%x, CLK Reg:%x", __func__, priv->port_num, priv->dev->name,
@@ -16853,8 +16853,8 @@ void tc956xmac_link_change_set_power(struct stmmac_priv *priv, enum TC956X_PORT_
 				NMSGPR_INFO(priv->device, "%s : Port %d %s pm_saved_cmn_linkdown_clk %x, pm_saved_cmn_linkdown_rst %x", __func__,
 					priv->port_num, priv->dev->name, pm_saved_cmn_linkdown_clk, pm_saved_cmn_linkdown_rst);
 				/* Enable Common Clock and De-Assert Common Resets */
-				commonclk_reg = priv->tc956x_SFR_pci_base_addr + NCLKCTRL0_OFFSET;
-				commonrst_reg = priv->tc956x_SFR_pci_base_addr + NRSTCTRL0_OFFSET;
+				commonclk_reg = priv->stm_SFR_pci_base_addr + NCLKCTRL0_OFFSET;
+				commonrst_reg = priv->stm_SFR_pci_base_addr + NRSTCTRL0_OFFSET;
 				commonclk_val = readl(commonclk_reg);
 				commonrst_val = readl(commonrst_reg);
 				NMSGPR_INFO(priv->device, "%s : Port %d %s Common Rd CLK Reg:%x, RST Reg:%x ", __func__, priv->port_num, priv->dev->name,

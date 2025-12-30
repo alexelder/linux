@@ -1123,7 +1123,7 @@ static void tc956x_del_sw_mac_table(struct net_device *dev,
 	}
 }
 
-static int tc956x_add_actual_mac_table(struct net_device *dev,
+static int stm_add_actual_mac_table(struct net_device *dev,
 							const u8 *mac, int vf)
 {
 	int i;
@@ -1251,7 +1251,7 @@ static int tc956x_check_mac_duplication(struct net_device *dev, const u8 *mac, i
 	return ret_value;
 }
 
-static int tc956x_add_sw_mac_table(struct net_device *dev, const u8 *mac, int vf)
+static int stm_add_sw_mac_table(struct net_device *dev, const u8 *mac, int vf)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 	void __iomem *ioaddr = (void __iomem *)dev->base_addr;
@@ -1282,7 +1282,7 @@ static int tc956x_add_sw_mac_table(struct net_device *dev, const u8 *mac, int vf
 
 	ret_value = tc956x_check_mac_duplication(dev, mac, vf);
 	if (ret_value == TC956X_MAC_STATE_NEW)
-		ret_value = tc956x_add_actual_mac_table(dev, mac, vf);
+		ret_value = stm_add_actual_mac_table(dev, mac, vf);
 
 	reg_value = readl(ioaddr + XGMAC_PACKET_FILTER);
 	if (reg_value & XGMAC_FILTER_RA)
@@ -1301,7 +1301,7 @@ int tc956x_pf_set_mac_filter(struct net_device *dev,
 				int vf, const u8 *mac)
 {
 
-	if (tc956x_add_sw_mac_table(dev, mac, vf) >= 0)
+	if (stm_add_sw_mac_table(dev, mac, vf) >= 0)
 		return 0;
 	else
 		return -EPERM;
@@ -1324,9 +1324,9 @@ void tc956x_pf_del_umac_addr(struct stmmac_priv *priv,
 #endif
 
 #ifdef TC956X_SRIOV_PF
-int tc956x_add_mac_addr(struct net_device *dev, const unsigned char *mac)
+int stm_add_mac_addr(struct net_device *dev, const unsigned char *mac)
 #elif defined TC956X_SRIOV_VF
-static int tc956x_add_mac_addr(struct net_device *dev, const unsigned char *mac)
+static int stm_add_mac_addr(struct net_device *dev, const unsigned char *mac)
 #endif
 {
 	int ret_value;
@@ -1336,7 +1336,7 @@ static int tc956x_add_mac_addr(struct net_device *dev, const unsigned char *mac)
 
 	spin_lock_irqsave(&priv->spn_lock.mac_filter, flags);
 #endif
-	ret_value = tc956x_add_sw_mac_table(dev, mac, PF_DRIVER);
+	ret_value = stm_add_sw_mac_table(dev, mac, PF_DRIVER);
 
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 	spin_unlock_irqrestore(&priv->spn_lock.mac_filter, flags);
@@ -1397,9 +1397,9 @@ static void dwxgmac2_set_filter(struct stmmac_priv *priv, struct mac_device_info
 		for (i = 0; i < XGMAC_MAX_HASH_TABLE; i++)
 			writel(~0x0, ioaddr + XGMAC_HASH_TABLE(i));
 	} else {
-		__dev_uc_sync(dev, tc956x_add_mac_addr, tc956x_delete_mac_addr);
+		__dev_uc_sync(dev, stm_add_mac_addr, tc956x_delete_mac_addr);
 
-		__dev_mc_sync(dev, tc956x_add_mac_addr, tc956x_delete_mac_addr);
+		__dev_mc_sync(dev, stm_add_mac_addr, tc956x_delete_mac_addr);
 	}
 #ifdef TC956X
 	if (dev->features & NETIF_F_HW_VLAN_CTAG_FILTER)
@@ -1647,7 +1647,7 @@ static void tc956x_del_sw_vlan_table(struct stmmac_priv *priv, struct net_device
 	}
 }
 
-static int tc956x_add_actual_vlan_table(struct net_device *dev, u16 vid, int vf)
+static int stm_add_actual_vlan_table(struct net_device *dev, u16 vid, int vf)
 {
 	int i;
 	int ret_value = -1;
@@ -1814,7 +1814,7 @@ static void dwxgmac2_update_vlan_hash(struct stmmac_priv *priv,
 
 	ret_value = tc956x_check_vlan_duplication(dev, vid, vf);
 	if (ret_value == TC956X_MAC_STATE_NEW)
-		ret_value = tc956x_add_actual_vlan_table(dev, vid, vf);
+		ret_value = stm_add_actual_vlan_table(dev, vid, vf);
 
 }
 

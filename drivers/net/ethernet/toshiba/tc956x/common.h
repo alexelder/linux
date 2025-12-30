@@ -2962,7 +2962,7 @@ void tc956xmac_set_mac_addr(void __iomem *ioaddr, u8 addr[6],
 void tc956xmac_get_mac_addr(void __iomem *ioaddr, unsigned char *addr,
 			 unsigned int high, unsigned int low);
 void tc956xmac_set_mac(struct stmmac_priv *priv, void __iomem *ioaddr, bool enable);
-int tc956x_add_mac_addr(struct net_device *dev, const unsigned char *mac);
+int stm_add_mac_addr(struct net_device *dev, const unsigned char *mac);
 #elif defined TC956X_SRIOV_VF
 void tc956xmac_vf_set_mac_addr(void __iomem *ioaddr, u8 addr[6],
 			 unsigned int high, unsigned int low);

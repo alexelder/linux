@@ -937,7 +937,7 @@ static void tc956xmac_ethtool_getdrvinfo(struct net_device *dev,
 	char fw_version_str[32];
 
 #ifdef TC956X
-	reg = readl(priv->tc956x_SRAM_pci_base_addr + TC956X_M3_DBG_VER_START);
+	reg = readl(priv->stm_SRAM_pci_base_addr + TC956X_M3_DBG_VER_START);
 #endif
 
 	fw_version = (struct tc956x_version *)(&reg);
@@ -1332,60 +1332,60 @@ static void tc956xmac_m3fw_stats_read(struct stmmac_priv *priv)
 			readl(priv->ioaddr + XGMAC_DMA_CH_Rx_WATCHDOG(chno));
 	}
 	/* Reading M3 Debug Counters*/
-	priv->xstats.m3_debug_cnt0 = readl(priv->tc956x_SRAM_pci_base_addr +
+	priv->xstats.m3_debug_cnt0 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT0)));
-	priv->xstats.m3_debug_cnt1 = readl(priv->tc956x_SRAM_pci_base_addr +
+	priv->xstats.m3_debug_cnt1 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT1)));
-	priv->xstats.m3_debug_cnt2 = readl(priv->tc956x_SRAM_pci_base_addr +
+	priv->xstats.m3_debug_cnt2 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT2)));
-	priv->xstats.m3_debug_cnt3 = readl(priv->tc956x_SRAM_pci_base_addr +
+	priv->xstats.m3_debug_cnt3 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT3)));
-	priv->xstats.m3_debug_cnt4 = readl(priv->tc956x_SRAM_pci_base_addr +
+	priv->xstats.m3_debug_cnt4 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT4)));
-	priv->xstats.m3_debug_cnt5 = readl(priv->tc956x_SRAM_pci_base_addr +
+	priv->xstats.m3_debug_cnt5 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT5)));
-	priv->xstats.m3_debug_cnt6 = readl(priv->tc956x_SRAM_pci_base_addr +
+	priv->xstats.m3_debug_cnt6 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT6)));
-	priv->xstats.m3_debug_cnt7 = readl(priv->tc956x_SRAM_pci_base_addr +
+	priv->xstats.m3_debug_cnt7 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT7)));
-	priv->xstats.m3_debug_cnt8 = readl(priv->tc956x_SRAM_pci_base_addr +
+	priv->xstats.m3_debug_cnt8 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT8)));
-	priv->xstats.m3_debug_cnt9 = readl(priv->tc956x_SRAM_pci_base_addr +
+	priv->xstats.m3_debug_cnt9 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT9)));
-	priv->xstats.m3_debug_cnt10 = readl(priv->tc956x_SRAM_pci_base_addr +
+	priv->xstats.m3_debug_cnt10 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT10)));
-	priv->xstats.m3_watchdog_exp_cnt = readl(priv->tc956x_SRAM_pci_base_addr +
+	priv->xstats.m3_watchdog_exp_cnt = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT11)));
-	priv->xstats.m3_watchdog_monitor_cnt = readl(priv->tc956x_SRAM_pci_base_addr +
+	priv->xstats.m3_watchdog_monitor_cnt = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT12)));
-	priv->xstats.m3_debug_cnt13 = readl(priv->tc956x_SRAM_pci_base_addr +
+	priv->xstats.m3_debug_cnt13 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT13)));
-	priv->xstats.m3_debug_cnt14 = readl(priv->tc956x_SRAM_pci_base_addr +
+	priv->xstats.m3_debug_cnt14 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT14)));
-	priv->xstats.m3_systick_cnt_upper_value = readl(priv->tc956x_SRAM_pci_base_addr +
+	priv->xstats.m3_systick_cnt_upper_value = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT16)));
-	priv->xstats.m3_systick_cnt_lower_value = readl(priv->tc956x_SRAM_pci_base_addr +
+	priv->xstats.m3_systick_cnt_lower_value = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT15)));
-	priv->xstats.m3_tx_timeout_port0 = readl(priv->tc956x_SRAM_pci_base_addr +
+	priv->xstats.m3_tx_timeout_port0 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT17)));
-	priv->xstats.m3_tx_timeout_port1 = readl(priv->tc956x_SRAM_pci_base_addr +
+	priv->xstats.m3_tx_timeout_port1 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT18)));
-	priv->xstats.m3_debug_cnt19 = readl(priv->tc956x_SRAM_pci_base_addr +
+	priv->xstats.m3_debug_cnt19 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT19)));
 	for (chno = 0; chno < tx_queues_count; chno++) {
-		priv->xstats.m3_tx_pcie_addr_loc_port0[chno] = readl(priv->tc956x_SRAM_pci_base_addr +
+		priv->xstats.m3_tx_pcie_addr_loc_port0[chno] = readl(priv->stm_SRAM_pci_base_addr +
 				(SRAM_TX_PCIE_ADDR_LOC + (chno * 4)));
 	}
 	for (chno = 0; chno < tx_queues_count; chno++) {
-		priv->xstats.m3_tx_pcie_addr_loc_port1[chno] = readl(priv->tc956x_SRAM_pci_base_addr +
+		priv->xstats.m3_tx_pcie_addr_loc_port1[chno] = readl(priv->stm_SRAM_pci_base_addr +
 				(SRAM_TX_PCIE_ADDR_LOC + (TC956XMAC_CH_MAX * 4) + (chno * 4)));
 	}
 	for (chno = 0; chno < rx_queues_count; chno++) {
-		priv->xstats.m3_rx_pcie_addr_loc_port0[chno] = readl(priv->tc956x_SRAM_pci_base_addr +
+		priv->xstats.m3_rx_pcie_addr_loc_port0[chno] = readl(priv->stm_SRAM_pci_base_addr +
 				(SRAM_RX_PCIE_ADDR_LOC + (chno * 4)));
 	}
 	for (chno = 0; chno < rx_queues_count; chno++) {
-		priv->xstats.m3_rx_pcie_addr_loc_port1[chno] = readl(priv->tc956x_SRAM_pci_base_addr +
+		priv->xstats.m3_rx_pcie_addr_loc_port1[chno] = readl(priv->stm_SRAM_pci_base_addr +
 				(SRAM_RX_PCIE_ADDR_LOC + (TC956XMAC_CH_MAX * 4) + (chno * 4)));
 	}
 
