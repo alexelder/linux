@@ -131,9 +131,9 @@
 #define XPCS_USX_5G_MODE				(0x1 << 10)
 #define XPCS_USX_2_5G_MODE				(0x2 << 10)
 
-u32 tc956x_xpcs_read(void __iomem *xpcsaddr, u32 pcs_reg_num);
-u32 tc956x_xpcs_write(void __iomem *xpcsaddr, u32 pcs_reg_num, u32 value);
-void tc956x_xpcs_ctrl_ane(struct stmmac_priv *priv, bool ane);
-int tc956x_xpcs_init(struct stmmac_priv *priv, void __iomem *xpcsaddr);
-void tc956x_xpcs_ctrl0_lrx(struct stmmac_priv *priv, bool lrx);
+u32 stm_xpcs_read(void __iomem *xpcsaddr, u32 pcs_reg_num);
+u32 stm_xpcs_write(void __iomem *xpcsaddr, u32 pcs_reg_num, u32 value);
+void stm_xpcs_ctrl_ane(struct stmmac_priv *priv, bool ane);
+int stm_xpcs_init(struct stmmac_priv *priv, void __iomem *xpcsaddr);
+void stm_xpcs_ctrl0_lrx(struct stmmac_priv *priv, bool lrx);
 #endif /* __TC956X_XPCS_H__ */

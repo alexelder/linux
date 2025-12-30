@@ -95,7 +95,7 @@ void stm_pf_set_vlan_filter(struct net_device *dev, u16 vf, u16 vid);
 void stm_pf_del_vlan_filter(struct net_device *dev, u16 vf, u16 vid);
 #endif
 
-static void tc956x_set_mac_addr(struct stmmac_priv *priv, struct mac_device_info *hw,
+static void stm_set_mac_addr(struct stmmac_priv *priv, struct mac_device_info *hw,
 				const u8 *mac, int index, int vf);
 #ifdef TC956X
 static void dwxgmac2_disable_tx_vlan(struct stmmac_priv *priv,
@@ -292,7 +292,7 @@ static void dwxgmac2_tx_queue_prio(struct stmmac_priv *priv,
 }
 #endif /* TC956X_UNSUPPORTED_UNTESTED_FEATURE */
 
-static void tc956x_rx_queue_routing(struct stmmac_priv *priv,
+static void stm_rx_queue_routing(struct stmmac_priv *priv,
 				    struct mac_device_info *hw,
 				    u8 packet, u32 queue)
 {
@@ -593,7 +593,7 @@ static int dwxgmac2_host_irq_status(struct stmmac_priv *priv,
 		}
 
 #ifdef EEE
-		val = tc956x_xpcs_read(priv->xpcsaddr, XGMAC_VR_XS_PCS_DIG_STS);
+		val = stm_xpcs_read(priv->xpcsaddr, XGMAC_VR_XS_PCS_DIG_STS);
 		KPRINT_INFO("XPCS LPI status : %x........\n", val);
 		if (val & XGMAC_LTX_LRX_STATE) {
 			if (val & XGMAC_LPI_RECEIVE_STATE)
@@ -602,7 +602,7 @@ static int dwxgmac2_host_irq_status(struct stmmac_priv *priv,
 				KPRINT_INFO("XPCS LPI transmit state.....\n");
 		}
 
-		val = tc956x_xpcs_read(priv->xpcsaddr, XGMAC_SR_XS_PCS_STS1);
+		val = stm_xpcs_read(priv->xpcsaddr, XGMAC_SR_XS_PCS_STS1);
 		if (val & XGMAC_RX_LPI_RECEIVE)
 			KPRINT_INFO("XPCS RX LPI Received......");
 		if (val & XGAMC_TX_LPI_RECEIVE)
@@ -702,7 +702,7 @@ static void dwxgmac2_set_umac_addr(struct stmmac_priv *priv,
 				   unsigned int vf)
 {
 
-	tc956x_set_mac_addr(priv, hw, addr, reg_n, vf);
+	stm_set_mac_addr(priv, hw, addr, reg_n, vf);
 }
 
 static void dwxgmac2_get_umac_addr(struct stmmac_priv *priv,
@@ -913,9 +913,9 @@ void stm_filter_debug(struct stmmac_priv *priv)
 }
 #endif
 #ifdef TC956X_ENABLE_MAC2MAC_BRIDGE
-static void tc956x_set_dma_ch(struct stmmac_priv *priv, struct mac_device_info *hw, int index, int vf, bool mc_addr)
+static void stm_set_dma_ch(struct stmmac_priv *priv, struct mac_device_info *hw, int index, int vf, bool mc_addr)
 #else
-static void tc956x_set_dma_ch(struct stmmac_priv *priv, struct mac_device_info *hw, int index, int vf)
+static void stm_set_dma_ch(struct stmmac_priv *priv, struct mac_device_info *hw, int index, int vf)
 #endif
 {
 	u32 data = 0, reg_data = 0;
@@ -987,7 +987,7 @@ static void stm_del_dma_ch(struct stmmac_priv *priv, struct mac_device_info *hw,
 
 #endif
 
-static void tc956x_set_mac_addr(struct stmmac_priv *priv, struct mac_device_info *hw,
+static void stm_set_mac_addr(struct stmmac_priv *priv, struct mac_device_info *hw,
 				const u8 *mac, int index, int vf)
 {
 	void __iomem *ioaddr = hw->pcsr;
@@ -1022,9 +1022,9 @@ static void tc956x_set_mac_addr(struct stmmac_priv *priv, struct mac_device_info
 	if (!memcmp(&flow_ctrl_addr[0], &mac[0], TC956X_SIX))
 		multicast_addr = false;
 
-	tc956x_set_dma_ch(priv, hw, index, vf, multicast_addr);
+	stm_set_dma_ch(priv, hw, index, vf, multicast_addr);
 #else
-	tc956x_set_dma_ch(priv, hw, index, vf);
+	stm_set_dma_ch(priv, hw, index, vf);
 #endif
 #endif
 }
@@ -1160,7 +1160,7 @@ static int stm_add_actual_mac_table(struct net_device *dev,
 
 			dwxgmac2_set_mchash(priv, ioaddr, mc_filter, mcbitslog2);
 		}
-		tc956x_set_mac_addr(priv, hw, mac, i, vf);
+		stm_set_mac_addr(priv, hw, mac, i, vf);
 	} else {
 
 		KPRINT_INFO("Space is not available in MAC_Table\n");
@@ -1210,9 +1210,9 @@ static int stm_mac_duplication(struct stmmac_priv *priv,
 					mac_table->vf[free_index] = vf;
 					mac_table->counter++;
 #ifdef TC956X_ENABLE_MAC2MAC_BRIDGE
-					tc956x_set_dma_ch(priv, hw, i, vf, false);
+					stm_set_dma_ch(priv, hw, i, vf, false);
 #else
-					tc956x_set_dma_ch(priv, hw, i, vf);
+					stm_set_dma_ch(priv, hw, i, vf);
 #endif
 					ret_value = TC956X_MAC_STATE_MODIFIED;
 					return ret_value;
@@ -1506,7 +1506,7 @@ static void stm_del_vlan_addr(struct stmmac_priv *priv, struct mac_device_info *
 
 }
 
-static void tc956x_vlan_addr_reg(struct stmmac_priv *priv, struct mac_device_info *hw, int count,
+static void stm_vlan_addr_reg(struct stmmac_priv *priv, struct mac_device_info *hw, int count,
 				 u16 VLAN)
 {
 	void __iomem *ioaddr = hw->pcsr;
@@ -1700,7 +1700,7 @@ static int stm_add_actual_vlan_table(struct net_device *dev, u16 vid, int vf)
 			old_index |= new_index;
 			writel(old_index, priv->ioaddr + XGMAC_VLAN_HASH_TABLE);
 		}
-		tc956x_vlan_addr_reg(priv, hw, i, vid);
+		stm_vlan_addr_reg(priv, hw, i, vid);
 	} else {
 		KPRINT_INFO("VLAN table is full\n");
 	}
@@ -1708,7 +1708,7 @@ static int stm_add_actual_vlan_table(struct net_device *dev, u16 vid, int vf)
 }
 
 
-static int tc956x_vlan_duplication_helper(struct stm_vlan_id *vlan_table,
+static int stm_vlan_duplication_helper(struct stm_vlan_id *vlan_table,
 						u16 vid, int vf)
 {
 	int vf_no, vm_found = 0;
@@ -1759,7 +1759,7 @@ static int stm_check_vlan_duplication(struct net_device *dev, u16 vid, int vf)
 			if (vlan_table->status == TC956X_MAC_STATE_OCCUPIED) {
 				if (vid == vlan_table->vid) {
 					ret_value =
-					tc956x_vlan_duplication_helper
+					stm_vlan_duplication_helper
 					(vlan_table, vid, vf);
 					break;
 				} else
@@ -3191,7 +3191,7 @@ const struct stmmac_ops dwxgmac210_ops = {
 #ifdef TC956X_UNSUPPORTED_UNTESTED_FEATURE
 	.tx_queue_prio = dwxgmac2_tx_queue_prio,
 #endif /* TC956X_UNSUPPORTED_UNTESTED_FEATURE */
-	.rx_queue_routing = tc956x_rx_queue_routing,
+	.rx_queue_routing = stm_rx_queue_routing,
 	.prog_mtl_rx_algorithms = dwxgmac2_prog_mtl_rx_algorithms,
 	.prog_mtl_tx_algorithms = dwxgmac2_prog_mtl_tx_algorithms,
 	.set_mtl_tx_queue_weight = dwxgmac2_set_mtl_tx_queue_weight,
@@ -3215,8 +3215,8 @@ const struct stmmac_ops dwxgmac210_ops = {
 	.pcs_get_adv_lp = NULL,
 #ifndef TC956X_SRIOV_VF
 #ifdef TC956X
-	.xpcs_init = tc956x_xpcs_init,
-	.xpcs_ctrl_ane = tc956x_xpcs_ctrl_ane,
+	.xpcs_init = stm_xpcs_init,
+	.xpcs_ctrl_ane = stm_xpcs_ctrl_ane,
 #endif
 #endif
 	.debug = dwxgmac2_debug,

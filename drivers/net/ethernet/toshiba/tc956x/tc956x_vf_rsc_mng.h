@@ -1,7 +1,7 @@
 /*
  * TC956X ethernet driver.
  *
- * tc956x_vf_rsc_mng.h
+ * stm_vf_rsc_mng.h
  *
  * Copyright (C) 2021 Toshiba Electronic Devices & Storage Corporation
  *

@@ -287,7 +287,7 @@ struct tc956xmac_cm3_tamap;
 #define DRV_MODULE_VERSION	"V_06-00-00"
 #define TC956X_FW_MAX_SIZE	(64*1024)
 #elif (defined TC956X_SRIOV_VF)
-#define TC956X_RESOURCE_NAME	"tc956x_vf_pci-eth"
+#define TC956X_RESOURCE_NAME	"stm_vf_pci-eth"
 #define DRV_MODULE_VERSION	"V_01-01-59"
 #endif
 #define ATR_AXI4_SLV_BASE		0x0800
@@ -699,7 +699,7 @@ struct work_queue_param {
 #endif
 
 /* Rx Frame Steering */
-enum tc956x_rfs_type {
+enum stm_rfs_type {
 	TC956X_RFS_T_VLAN,
 	TC956X_RFS_T_LLDP,
 	TC956X_RFS_T_1588,
@@ -794,7 +794,7 @@ struct stmmac_priv {
 	struct dma_features dma_cap;
 	struct stmmac_counters mmc;
 #ifdef TC956X_SRIOV_VF
-	struct tc956x_sw_counters sw_stats;
+	struct stm_sw_counters sw_stats;
 #endif
 	int hw_cap_support;
 	int synopsys_id;
@@ -962,7 +962,7 @@ struct stmmac_priv {
 	uint16_t probe_seq_no;
 };
 
-struct tc956x_version {
+struct stm_version {
 	unsigned char rel_dbg; /* 'R' for release, 'D' for debug */
 	unsigned char major;
 	unsigned char minor;
@@ -978,7 +978,7 @@ enum tc956xmac_state {
 	TC956XMAC_SERVICE_SCHED,
 };
 
-struct tc956x_regs_config {
+struct stm_regs_config {
 	u32 ncid;
 	u32 nclkctrl0;
 	u32 nrstctrl0;
@@ -993,11 +993,11 @@ struct tc956x_regs_config {
 	u32 gpioe1;
 };
 
-struct tc956x_regs_pcie {
+struct stm_regs_pcie {
 	u32 rsc_mng_id;
 };
 
-struct tc956x_regs_msi {
+struct stm_regs_msi {
 	u32 msi_out_en;
 	u32 msi_mask_set;
 	u32 msi_mask_clr;
@@ -1015,13 +1015,13 @@ struct tc956x_regs_msi {
 	u32 cnt_int24;
 };
 
-struct tc956x_regs_intc {
+struct stm_regs_intc {
 	u32 intmcumask0;
 	u32 intmcumask1;
 	u32 intmcumask2;
 };
 
-struct tc956x_regs_dma_ch {
+struct stm_regs_dma_ch {
 	u32 control;
 	u32 list_haddr;
 	u32 list_laddr;
@@ -1054,22 +1054,22 @@ struct tx956x_rx_desc_buf_addrs {
 	struct tc956xmac_rx_buffer *buf_pool;
 };
 
-struct tc956x_regs_dma {
+struct stm_regs_dma {
 	u32 debug_sts0;
 	u32 ch_control[TC956XMAC_CH_MAX];
 	u32 interrupt_enable[TC956XMAC_CH_MAX];
 	u32 ch_status[TC956XMAC_CH_MAX];
 	u32 debug_status[TC956XMAC_CH_MAX];
 	u32 rxch_watchdog_timer[TC956XMAC_CH_MAX];
-	struct tc956x_regs_dma_ch tx_ch[TC956XMAC_CH_MAX];
-	struct tc956x_regs_dma_ch rx_ch[TC956XMAC_CH_MAX];
+	struct stm_regs_dma_ch tx_ch[TC956XMAC_CH_MAX];
+	struct stm_regs_dma_ch rx_ch[TC956XMAC_CH_MAX];
 	/* RX Channels */
 	struct tx956x_rx_desc_buf_addrs rx_queue[MTL_MAX_RX_QUEUES];
 	/* TX Channels */
 	struct tx956x_tx_desc_buf_addrs tx_queue[MTL_MAX_TX_QUEUES];
 };
 
-struct tc956x_regs_mac {
+struct stm_regs_mac {
 	u32 mac_tx_config;
 	u32 mac_rx_config;
 	u32 mac_pkt_filter;
@@ -1077,28 +1077,28 @@ struct tc956x_regs_mac {
 	u32 mac_debug;
 };
 
-struct tc956x_regs_mtl_tx {
+struct stm_regs_mtl_tx {
 	u32 op_mode;
 	u32 underflow;
 	u32 debug;
 };
 
-struct tc956x_regs_mtl_rx {
+struct stm_regs_mtl_rx {
 	u32 op_mode;
 	u32 miss_pkt_overflow;
 	u32 debug;
 	u32 flow_control;
 };
 
-struct tc956x_regs_mtl {
+struct stm_regs_mtl {
 	u32 op_mode;
 	u32 mtl_rxq_dma_map0;
 	u32 mtl_rxq_dma_map1;
-	struct tc956x_regs_mtl_tx tx_info[MTL_MAX_TX_QUEUES];
-	struct tc956x_regs_mtl_rx rx_info[MTL_MAX_RX_QUEUES];
+	struct stm_regs_mtl_tx tx_info[MTL_MAX_TX_QUEUES];
+	struct stm_regs_mtl_rx rx_info[MTL_MAX_RX_QUEUES];
 };
 
-struct tc956x_regs_m3 {
+struct stm_regs_m3 {
 	u32 sram_tx_pcie_addr[TC956XMAC_CH_MAX];
 	u32 sram_rx_pcie_addr[TC956XMAC_CH_MAX];
 
@@ -1127,7 +1127,7 @@ struct tc956x_regs_m3 {
 	u32 m3_debug_cnt19;
 };
 
-struct tc956x_tamap {
+struct stm_tamap {
 	u32 trsl_addr_hi;
 	u32 trsl_addr_low;
 	u32 src_addr_hi;
@@ -1142,7 +1142,7 @@ struct tx956x_driver_info {
 	u8 fw_version[32];
 };
 
-struct tc956x_statistics {
+struct stm_statistics {
 	u64 rx_buf_unav_irq[TC956XMAC_CH_MAX];
 	u64 tx_pkt_n[TC956XMAC_CH_MAX];
 	u64 tx_pkt_errors_n[TC956XMAC_CH_MAX];
@@ -1187,48 +1187,48 @@ struct tc956x_statistics {
 	u64 mmc_rx_lpi_tran_cntr;
 };
 
-struct tc956x_regs {
+struct stm_regs {
 
 	/*PCIe register*/
-	struct tc956x_regs_pcie pcie_reg;
+	struct stm_regs_pcie pcie_reg;
 
 	/*Configuration register*/
-	struct tc956x_regs_config config_reg;
+	struct stm_regs_config config_reg;
 
 	/*MSI register*/
-	struct tc956x_regs_msi msi_reg;
+	struct stm_regs_msi msi_reg;
 
 	/*INTC register*/
-	struct tc956x_regs_intc intc_reg;
+	struct stm_regs_intc intc_reg;
 
 	/*DMA Descriptor stats*/
-	struct tc956x_regs_dma dma_reg;
+	struct stm_regs_dma dma_reg;
 
 	/*MAC debug stats*/
-	struct tc956x_regs_mac mac_reg;
+	struct stm_regs_mac mac_reg;
 
 	/*MTL debug stats*/
-	struct tc956x_regs_mtl mtl_reg;
+	struct stm_regs_mtl mtl_reg;
 
 	/*M3 stats*/
-	struct tc956x_regs_m3 m3_reg;
+	struct stm_regs_m3 m3_reg;
 
 	/*FRP Table*/
 	struct tc956xmac_rx_parser_cfg *rxp_cfg;
 
 	/* TAMAP */
-	struct tc956x_tamap tamap[MAX_CM3_TAMAP_ENTRIES + 1]; /*0th for PCIe-eMAC 1,2,3 for IPA*/
+	struct stm_tamap tamap[MAX_CM3_TAMAP_ENTRIES + 1]; /*0th for PCIe-eMAC 1,2,3 for IPA*/
 
 	/*Driver & FW Information */
 	struct tx956x_driver_info info;
 
 	/* Statistics counters*/
-	struct tc956x_statistics stats;
+	struct stm_statistics stats;
 
 };
 
-int stm_dump_regs(struct net_device *net_device, struct tc956x_regs *regs);
-int tc956x_print_debug_regs(struct net_device *net_device, struct tc956x_regs *regs);
+int stm_dump_regs(struct net_device *net_device, struct stm_regs *regs);
+int tc956x_print_debug_regs(struct net_device *net_device, struct stm_regs *regs);
 int tc956xmac_mdio_unregister(struct net_device *ndev);
 int tc956xmac_mdio_register(struct net_device *ndev);
 int tc956xmac_mdio_reset(struct mii_bus *mii);
@@ -1308,11 +1308,11 @@ int stm_GPIO_OutputConfigPin(struct stmmac_priv *priv, u32 gpio_pin, u8 out_valu
 int stm_gpio_restore_configuration(struct stmmac_priv *priv);
 
 #ifdef TC956X_SRIOV_VF
-int tc956x_vf_get_fn_idx_from_int_sts(struct stmmac_priv *priv,
+int stm_vf_get_fn_idx_from_int_sts(struct stmmac_priv *priv,
 					     struct fn_id *fn_id_info);
-void tc956x_vf_parse_mbx(struct stmmac_priv *priv,
+void stm_vf_parse_mbx(struct stmmac_priv *priv,
 				enum mbx_msg_fns msg_src);
-int tc956x_vf_rsc_mng_get_fn_id(struct stmmac_priv *priv, void __iomem *reg_pci_bridge_config_addr,
+int stm_vf_rsc_mng_get_fn_id(struct stmmac_priv *priv, void __iomem *reg_pci_bridge_config_addr,
 				       struct fn_id *fn_id_info);
 
 #endif
@@ -1320,7 +1320,7 @@ void stm_config_CM3_tamap(struct device *dev,
 				void __iomem *reg_pci_base_addr,
 				struct tc956xmac_cm3_tamap *tamap,
 				u8 table_entry);
-int tc956x_set_pci_speed(struct pci_dev *pdev, u32 speed);
+int stm_set_pci_speed(struct pci_dev *pdev, u32 speed);
 uint8_t get_stm_index(struct pci_dev *pdev);
 void tc956xmac_link_change_set_power(struct stmmac_priv *priv, enum TC956X_PORT_LINK_CHANGE_STATE state);
 uint16_t stm_get_shared_mem_offset(struct pci_dev *pdev, uint16_t pci_bd);

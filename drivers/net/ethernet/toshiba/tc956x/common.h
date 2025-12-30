@@ -2436,7 +2436,7 @@ struct stmmac_safety_stats {
 };
 
 #ifdef TC956X_SRIOV_VF
-struct tc956x_sw_counters {
+struct stm_sw_counters {
 	u64 tx_frame_count_good_bad;
 	u64 rx_frame_count_good_bad;
 	u64 rx_frame_count_good;

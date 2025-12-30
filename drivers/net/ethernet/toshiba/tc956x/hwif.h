@@ -533,17 +533,17 @@ struct stmmac_ops {
 #ifdef TC956X_SRIOV_VF
 #define stm_phy_link(__priv, __args...) \
 	tc956xmac_do_callback(__priv, mbx_wrapper, phy_link, __args)
-#define tc956x_setup_mbx_etf(__priv, __args...) \
+#define stm_setup_mbx_etf(__priv, __args...) \
 	tc956xmac_do_callback(__priv, mbx_wrapper, setup_mbx_etf, __args)
 #define stm_get_drv_cap(__priv, __args...) \
 	tc956xmac_do_void_callback(__priv, mbx_wrapper, get_drv_cap, __args)
-#define tc956x_rx_crc(__priv, __args...) \
+#define stm_rx_crc(__priv, __args...) \
 	tc956xmac_do_callback(__priv, mbx_wrapper, rx_crc, __args)
-#define tc956x_rx_dma_ch_tlptr(__priv, __args...) \
+#define stm_rx_dma_ch_tlptr(__priv, __args...) \
 	tc956xmac_do_callback(__priv, mbx_wrapper, rx_dma_ch_tlptr, __args)
-#define tc956x_rx_dma_err(__priv, __args...) \
+#define stm_rx_dma_err(__priv, __args...) \
 	tc956xmac_do_callback(__priv, mbx_wrapper, rx_dma_err, __args)
-#define tc956x_rx_csum(__priv, __args...) \
+#define stm_rx_csum(__priv, __args...) \
 	tc956xmac_do_callback(__priv, mbx_wrapper, rx_csum, __args)
 #define stm_mbx_flr(__priv, __args...) \
 	tc956xmac_do_callback(__priv, mbx_wrapper, pf_flr, __args)

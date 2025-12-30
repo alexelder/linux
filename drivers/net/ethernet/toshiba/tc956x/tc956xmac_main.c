@@ -242,7 +242,7 @@
 #endif
 
 #ifdef TC956X_SRIOV_VF
-#include "tc956x_vf_mbx.h"
+#include "stm_vf_mbx.h"
 #endif
 #ifdef TC956X_PCIE_LOGSTAT
 #include "tc956x_pcie_logstat.h"
@@ -510,7 +510,7 @@ static int dwxgmac2_rx_parser_read_entry(struct stmmac_priv *priv,
 }
 
 
-int stm_dump_regs(struct net_device *net_device, struct tc956x_regs *regs)
+int stm_dump_regs(struct net_device *net_device, struct stm_regs *regs)
 {
 	struct stmmac_priv *priv = netdev_priv(net_device);
 	u32 rx_queues_cnt = priv->plat->rx_queues_to_use;
@@ -520,7 +520,7 @@ int stm_dump_regs(struct net_device *net_device, struct tc956x_regs *regs)
 	struct tc956xmac_tx_queue *tx_q;
 	struct tc956xmac_rx_queue *rx_q;
 	u8 fw_version_str[32];
-	struct tc956x_version *fw_version;
+	struct stm_version *fw_version;
 
 	DBGPR_FUNC(priv->device, "-->%s\n", __func__);
 
@@ -726,7 +726,7 @@ int stm_dump_regs(struct net_device *net_device, struct tc956x_regs *regs)
 #endif
 
 	reg = readl(priv->stm_SRAM_pci_base_addr + TC956X_M3_DBG_VER_START);
-	fw_version = (struct tc956x_version *)(&reg);
+	fw_version = (struct stm_version *)(&reg);
 	scnprintf(fw_version_str, sizeof(fw_version_str), "FW Version %s_%d.%d-%d", (fw_version->rel_dbg == 'D')?"DBG":"REL",
 					fw_version->major, fw_version->minor, fw_version->sub_minor);
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 8, 0)
@@ -793,7 +793,7 @@ int stm_dump_regs(struct net_device *net_device, struct tc956x_regs *regs)
 EXPORT_SYMBOL_GPL(stm_dump_regs);
 #endif
 
-int tc956x_print_debug_regs(struct net_device *net_device, struct tc956x_regs *regs)
+int tc956x_print_debug_regs(struct net_device *net_device, struct stm_regs *regs)
 {
 
 	struct stmmac_priv *priv = netdev_priv(net_device);
@@ -1064,12 +1064,12 @@ static void dump_all_reg(struct stmmac_priv *priv)
 #ifndef TC956X_SRIOV_VF
 	printk("--------------------------------------------------------\n");
 	printk("XPCS register dump\n");
-	printk("XPCS Reg 0x%08x = 0x%08x\n", XGMAC_SR_MII_CTRL, tc956x_xpcs_read(priv->xpcsaddr, XGMAC_SR_MII_CTRL));
-	printk("XPCS Reg 0x%08x = 0x%08x\n", XGMAC_SR_XS_PCS_CTRL2, tc956x_xpcs_read(priv->xpcsaddr, XGMAC_SR_XS_PCS_CTRL2));
-	printk("XPCS Reg 0x%08x = 0x%08x\n", XGMAC_VR_MII_AN_CTRL, tc956x_xpcs_read(priv->xpcsaddr, XGMAC_VR_MII_AN_CTRL));
-	printk("XPCS Reg 0x%08x = 0x%08x\n", XGMAC_VR_MII_DIG_CTRL1, tc956x_xpcs_read(priv->xpcsaddr, XGMAC_VR_MII_DIG_CTRL1));
-	printk("XPCS Reg 0x%08x = 0x%08x\n", XGMAC_VR_XS_PCS_DIG_CTRL1, tc956x_xpcs_read(priv->xpcsaddr, XGMAC_VR_XS_PCS_DIG_CTRL1));
-	printk("XPCS Reg 0x%08x = 0x%08x\n", XGMAC_VR_MII_AN_INTR_STS, tc956x_xpcs_read(priv->xpcsaddr, XGMAC_VR_MII_AN_INTR_STS));
+	printk("XPCS Reg 0x%08x = 0x%08x\n", XGMAC_SR_MII_CTRL, stm_xpcs_read(priv->xpcsaddr, XGMAC_SR_MII_CTRL));
+	printk("XPCS Reg 0x%08x = 0x%08x\n", XGMAC_SR_XS_PCS_CTRL2, stm_xpcs_read(priv->xpcsaddr, XGMAC_SR_XS_PCS_CTRL2));
+	printk("XPCS Reg 0x%08x = 0x%08x\n", XGMAC_VR_MII_AN_CTRL, stm_xpcs_read(priv->xpcsaddr, XGMAC_VR_MII_AN_CTRL));
+	printk("XPCS Reg 0x%08x = 0x%08x\n", XGMAC_VR_MII_DIG_CTRL1, stm_xpcs_read(priv->xpcsaddr, XGMAC_VR_MII_DIG_CTRL1));
+	printk("XPCS Reg 0x%08x = 0x%08x\n", XGMAC_VR_XS_PCS_DIG_CTRL1, stm_xpcs_read(priv->xpcsaddr, XGMAC_VR_XS_PCS_DIG_CTRL1));
+	printk("XPCS Reg 0x%08x = 0x%08x\n", XGMAC_VR_MII_AN_INTR_STS, stm_xpcs_read(priv->xpcsaddr, XGMAC_VR_MII_AN_INTR_STS));
 #endif
 	printk("--------------------------------------------------------\n");
 	printk("XGMAC-MAC register dump\n");
@@ -1488,7 +1488,7 @@ static ssize_t read_stm_other_status(struct file *file,
 	u32 tx_queues_cnt = priv->plat->tx_queues_to_use;
 	u32 ch, table_entry, reg = 0;
 	u8 fw_version_str[32];
-	struct tc956x_version *fw_version;
+	struct stm_version *fw_version;
 	struct tc956xmac_rx_parser_cfg *rxp_cfg;
 
 	if (!priv) {
@@ -1520,7 +1520,7 @@ static ssize_t read_stm_other_status(struct file *file,
 	printk("info.version = %s\n", DRV_MODULE_VERSION);
 
 	reg = readl(priv->stm_SRAM_pci_base_addr + TC956X_M3_DBG_VER_START);
-	fw_version = (struct tc956x_version *)(&reg);
+	fw_version = (struct stm_version *)(&reg);
 	scnprintf(fw_version_str, sizeof(fw_version_str), "FW Version %s_%d.%d-%d", (fw_version->rel_dbg == 'D')?"DBG":"REL",
 					fw_version->major, fw_version->minor, fw_version->sub_minor);
 	printk("info.fw_version = %s\n", fw_version_str);
@@ -1600,14 +1600,14 @@ static const struct file_operations fops_other_stats = {
 };
 
 /**
- * read_tc956x_reg_dump_status() - Debugfs read command for dumping all registers of MAC, MTL, DMA...
+ * read_stm_reg_dump_status() - Debugfs read command for dumping all registers of MAC, MTL, DMA...
  *
  * @file: "reg_dump" debugfs file
  * @user_buf: user-space target buffer pointer
  * @count: number of bytes to read
  * @ppos: address of the file position field
  */
-static ssize_t read_tc956x_reg_dump_status(struct file *file,
+static ssize_t read_stm_reg_dump_status(struct file *file,
 	char __user *user_buf, size_t count, loff_t *ppos)
 {
 	struct stmmac_priv *priv = file->private_data;
@@ -1622,7 +1622,7 @@ static ssize_t read_tc956x_reg_dump_status(struct file *file,
 }
 
 static const struct file_operations fops_reg_dump_stats = {
-	.read = read_tc956x_reg_dump_status,
+	.read = read_stm_reg_dump_status,
 	.open = simple_open,
 	.owner = THIS_MODULE,
 	.llseek = default_llseek,
@@ -3158,7 +3158,7 @@ static void tc956xmac_mac_pcs_get_state(struct phylink_config *config,
 	struct stmmac_priv *priv = netdev_priv(to_net_dev(config->dev));
 	u32 reg_value;
 
-	reg_value = tc956x_xpcs_read(priv->xpcsaddr, XGMAC_VR_MII_AN_INTR_STS);
+	reg_value = stm_xpcs_read(priv->xpcsaddr, XGMAC_VR_MII_AN_INTR_STS);
 	if (reg_value & XGMAC_C37_AN_COMPL) {/*check if AN 37 is complete CL37_ANCMPLT_INTR*/
 		KPRINT_INFO("AN clause 37 completed");
 		if ((priv->plat->interface == PHY_INTERFACE_MODE_USXGMII) ||
@@ -3229,7 +3229,7 @@ static int tc956xmac_mac_link_state(struct phylink_config *config,
 	struct stmmac_priv *priv = netdev_priv(to_net_dev(config->dev));
 	u32 reg_value;
 
-	reg_value = tc956x_xpcs_read(priv->xpcsaddr, XGMAC_VR_MII_AN_INTR_STS);
+	reg_value = stm_xpcs_read(priv->xpcsaddr, XGMAC_VR_MII_AN_INTR_STS);
 	if (reg_value & XGMAC_C37_AN_COMPL) {/*check if AN 37 is complete CL37_ANCMPLT_INTR*/
 		KPRINT_INFO("AN clause 37 completed");
 		if ((priv->plat->interface == PHY_INTERFACE_MODE_USXGMII) ||
@@ -3393,13 +3393,13 @@ static void tc956xmac_speed_change_init_mac(struct stmmac_priv *priv,
 					reg |= SP_ETH_10M << SP_ETH_SHIFT;
 				}
 			}
-			reg_value = tc956x_xpcs_read(priv->xpcsaddr, XGMAC_VR_XS_PCS_KR_CTRL);
+			reg_value = stm_xpcs_read(priv->xpcsaddr, XGMAC_VR_XS_PCS_KR_CTRL);
 			reg_value &= ~XGMAC_USXG_MODE; /*USXG_MODE : 0x000*/
 			if ((priv->plat->port_interface == ENABLE_USXGMII_5G_INTERFACE) || ((priv->port_interface == ENABLE_USXGMII_INTERFACE) && (state->speed == SPEED_5000)))
 				reg_value |= XPCS_USX_5G_MODE;
 			else if ((priv->plat->port_interface == ENABLE_USXGMII_2_5G_INTERFACE) || ((priv->port_interface == ENABLE_USXGMII_INTERFACE) && (state->speed == SPEED_2500)))
 				reg_value |= XPCS_USX_2_5G_MODE;
-			tc956x_xpcs_write(priv->xpcsaddr, XGMAC_VR_XS_PCS_KR_CTRL, reg_value);
+			stm_xpcs_write(priv->xpcsaddr, XGMAC_VR_XS_PCS_KR_CTRL, reg_value);
 		}
 		ret &= ~(0x00000040); /* Mask Polarity */
 		if (SgmSigPol == 1)
@@ -3483,13 +3483,13 @@ static void tc956xmac_speed_change_init_mac(struct stmmac_priv *priv,
 					reg |= SP_ETH_10M << SP_ETH_SHIFT;
 				}
 			}
-			reg_value = tc956x_xpcs_read(priv->xpcsaddr, XGMAC_VR_XS_PCS_KR_CTRL);
+			reg_value = stm_xpcs_read(priv->xpcsaddr, XGMAC_VR_XS_PCS_KR_CTRL);
 			reg_value &= ~XGMAC_USXG_MODE; /*USXG_MODE : 0x000*/
 			if ((priv->plat->port_interface == ENABLE_USXGMII_5G_INTERFACE) || ((priv->port_interface == ENABLE_USXGMII_INTERFACE) && (state->speed == SPEED_5000)))
 				reg_value |= XPCS_USX_5G_MODE;
 			else if ((priv->plat->port_interface == ENABLE_USXGMII_2_5G_INTERFACE) || ((priv->port_interface == ENABLE_USXGMII_INTERFACE) && (state->speed == SPEED_2500)))
 				reg_value |= XPCS_USX_2_5G_MODE;
-			tc956x_xpcs_write(priv->xpcsaddr, XGMAC_VR_XS_PCS_KR_CTRL, reg_value);
+			stm_xpcs_write(priv->xpcsaddr, XGMAC_VR_XS_PCS_KR_CTRL, reg_value);
 		}
 
 		ret &= ~(0x00000040); /* Mask Polarity */
@@ -3555,21 +3555,21 @@ static void tc956xmac_speed_change_init_mac(struct stmmac_priv *priv,
 			enable_an = true;
 		}
 
-		ret = tc956x_xpcs_init(priv, priv->xpcsaddr);
+		ret = stm_xpcs_init(priv, priv->xpcsaddr);
 		if (ret < 0)
 			KPRINT_INFO("XPCS initialization error\n");
 
 		if (priv->port_interface == ENABLE_USXGMII_INTERFACE) {
-			reg_value = tc956x_xpcs_read(priv->xpcsaddr, XGMAC_VR_XS_PCS_KR_CTRL);
+			reg_value = stm_xpcs_read(priv->xpcsaddr, XGMAC_VR_XS_PCS_KR_CTRL);
 			reg_value &= ~XGMAC_USXG_MODE; /*USXG_MODE : 0x000*/
 			if (state->speed == SPEED_5000)
 				reg_value |= XPCS_USX_5G_MODE;
 			else if (state->speed == SPEED_2500)
 				reg_value |= XPCS_USX_2_5G_MODE;
-			tc956x_xpcs_write(priv->xpcsaddr, XGMAC_VR_XS_PCS_KR_CTRL, reg_value);
+			stm_xpcs_write(priv->xpcsaddr, XGMAC_VR_XS_PCS_KR_CTRL, reg_value);
 		}
 
-		tc956x_xpcs_ctrl_ane(priv, enable_an);
+		stm_xpcs_ctrl_ane(priv, enable_an);
 	}
 }
 
@@ -3603,11 +3603,11 @@ static void tc956xmac_mac_config(struct phylink_config *config, unsigned int mod
 	misc_ctrl &= MISC_CTRL;
 
 	if (priv->hw->xpcs) {
-		reg_value = tc956x_xpcs_read(priv->xpcsaddr, XGMAC_VR_MII_AN_INTR_STS);
+		reg_value = stm_xpcs_read(priv->xpcsaddr, XGMAC_VR_MII_AN_INTR_STS);
 		if (reg_value & XGMAC_C37_AN_COMPL) {/*check if AN 37 is complete CL37_ANCMPLT_INTR*/
 			KPRINT_INFO("AN clause 37 completed");
 			reg_value &= ~(XGMAC_C37_AN_COMPL);
-			tc956x_xpcs_write(priv->xpcsaddr, XGMAC_VR_MII_AN_INTR_STS, reg_value);
+			stm_xpcs_write(priv->xpcsaddr, XGMAC_VR_MII_AN_INTR_STS, reg_value);
 			KPRINT_INFO("AN clause 37 complete bit cleared");
 		}
 
@@ -3625,7 +3625,7 @@ static void tc956xmac_mac_config(struct phylink_config *config, unsigned int mod
 				}
 
 				/* Program autonegotiated speed to SR_MII_CTRL */
-				val = tc956x_xpcs_read(priv->xpcsaddr, XGMAC_SR_MII_CTRL);
+				val = stm_xpcs_read(priv->xpcsaddr, XGMAC_SR_MII_CTRL);
 				val &= ~XGMAC_SR_MII_CTRL_SPEED; /* Mask speed ss13, ss6, ss5 */
 
 				switch (state->speed) {
@@ -3689,23 +3689,23 @@ static void tc956xmac_mac_config(struct phylink_config *config, unsigned int mod
 					return;
 				}
 
-				tc956x_xpcs_write(priv->xpcsaddr, XGMAC_SR_MII_CTRL, val);
+				stm_xpcs_write(priv->xpcsaddr, XGMAC_SR_MII_CTRL, val);
 
 				/* USRA_RST set to 1 */
-				val = tc956x_xpcs_read(priv->xpcsaddr, XGMAC_VR_XS_PCS_DIG_CTRL1);
+				val = stm_xpcs_read(priv->xpcsaddr, XGMAC_VR_XS_PCS_DIG_CTRL1);
 				val |= XGMAC_USRA_RST;
-				tc956x_xpcs_write(priv->xpcsaddr, XGMAC_VR_XS_PCS_DIG_CTRL1, val);
+				stm_xpcs_write(priv->xpcsaddr, XGMAC_VR_XS_PCS_DIG_CTRL1, val);
 				config_done = true;
 			}
 		if ((state->interface == PHY_INTERFACE_MODE_SGMII)
 			&& (priv->port_interface != ENABLE_2500BASE_X_INTERFACE)) { /* Autonegotiation not supported for SGMII */
-			reg_value = tc956x_xpcs_read(priv->xpcsaddr, XGMAC_VR_MII_AN_INTR_STS);
+			reg_value = stm_xpcs_read(priv->xpcsaddr, XGMAC_VR_MII_AN_INTR_STS);
 			/* Clear autonegotiation only if completed. As for XPCS, 2.5G autonegotiation is not supported */
 			/* Switching from SGMII 2.5G to any speed doesn't cause AN completion */
 			if (reg_value & XGMAC_C37_AN_COMPL) {/*check if AN 37 is complete CL37_ANCMPLT_INTR*/
 				KPRINT_INFO("AN clause 37 completed");
 				reg_value &= ~(XGMAC_C37_AN_COMPL);
-				tc956x_xpcs_write(priv->xpcsaddr, XGMAC_VR_MII_AN_INTR_STS, reg_value);
+				stm_xpcs_write(priv->xpcsaddr, XGMAC_VR_MII_AN_INTR_STS, reg_value);
 				KPRINT_INFO("AN clause 37 complete bit cleared");
 			}
 			/* Invoke this only during speed change */
@@ -3715,7 +3715,7 @@ static void tc956xmac_mac_config(struct phylink_config *config, unsigned int mod
 			} else {
 				return;
 			}
-			val = tc956x_xpcs_read(priv->xpcsaddr, XGMAC_SR_MII_CTRL);
+			val = stm_xpcs_read(priv->xpcsaddr, XGMAC_SR_MII_CTRL);
 			val &= ~XGMAC_SR_MII_CTRL_SPEED; /* Mask speed ss13, ss6, ss5 */
 			switch (state->speed) {
 			case SPEED_2500:
@@ -3742,7 +3742,7 @@ static void tc956xmac_mac_config(struct phylink_config *config, unsigned int mod
 			default:
 				return;
 			}
-			tc956x_xpcs_write(priv->xpcsaddr, XGMAC_SR_MII_CTRL, val);
+			stm_xpcs_write(priv->xpcsaddr, XGMAC_SR_MII_CTRL, val);
 			config_done = true;
 		}
 #ifdef CONFIG_TC956X_MAGIC_PACKET_WOL_CONF
@@ -3750,20 +3750,20 @@ static void tc956xmac_mac_config(struct phylink_config *config, unsigned int mod
 			/* Configure Speed for WOL SGMII 1Gbps */
 			KPRINT_INFO("%s Port %d %s: Entered with flag priv->wol_config_enabled %d", __func__, priv->port_num, priv->dev->name, priv->wol_config_enabled);
 			KPRINT_INFO("%s Port %d %s: Speed to configure %d", __func__, priv->port_num, priv->dev->name, state->speed);
-			reg_value = tc956x_xpcs_read(priv->xpcsaddr, XGMAC_VR_MII_AN_INTR_STS);
+			reg_value = stm_xpcs_read(priv->xpcsaddr, XGMAC_VR_MII_AN_INTR_STS);
 			/* Clear autonegotiation only if completed. As for XPCS, 2.5G autonegotiation is not supported */
 			/* Switching from SGMII 2.5G to any speed doesn't cause AN completion */
 			if (reg_value & XGMAC_C37_AN_COMPL) {/*check if AN 37 is complete CL37_ANCMPLT_INTR*/
 				KPRINT_INFO("AN clause 37 completed");
 				reg_value &= ~(XGMAC_C37_AN_COMPL);
-				tc956x_xpcs_write(priv->xpcsaddr, XGMAC_VR_MII_AN_INTR_STS, reg_value);
+				stm_xpcs_write(priv->xpcsaddr, XGMAC_VR_MII_AN_INTR_STS, reg_value);
 				KPRINT_INFO("AN clause 37 complete bit cleared");
 			}
-			ret = tc956x_xpcs_init(priv, priv->xpcsaddr);
+			ret = stm_xpcs_init(priv, priv->xpcsaddr);
 			if (ret < 0)
 				KPRINT_INFO("XPCS initialization error\n");
-			tc956x_xpcs_ctrl_ane(priv, true);
-			val = tc956x_xpcs_read(priv->xpcsaddr, XGMAC_SR_MII_CTRL);
+			stm_xpcs_ctrl_ane(priv, true);
+			val = stm_xpcs_read(priv->xpcsaddr, XGMAC_SR_MII_CTRL);
 			val &= ~XGMAC_SR_MII_CTRL_SPEED; /* Mask speed ss13, ss6, ss5 */
 			switch (state->speed) {
 			case SPEED_1000:
@@ -3779,7 +3779,7 @@ static void tc956xmac_mac_config(struct phylink_config *config, unsigned int mod
 			default:
 				return;
 			}
-			tc956x_xpcs_write(priv->xpcsaddr, XGMAC_SR_MII_CTRL, val);
+			stm_xpcs_write(priv->xpcsaddr, XGMAC_SR_MII_CTRL, val);
 			config_done = true;
 		} /* End of if (priv->wol_config_enabled != true) */
 #endif /* #ifdef CONFIG_TC956X_MAGIC_PACKET_WOL_CONF */
@@ -3876,7 +3876,7 @@ static void tc956xmac_mac_an_restart(struct phylink_config *config)
 			enable_en = true;
 			KPRINT_INFO("%s : Port %d %s AN Enable:%d", __func__, priv->port_num, priv->dev->name, enable_en);
 		}
-		tc956x_xpcs_ctrl_ane(priv, enable_en);
+		stm_xpcs_ctrl_ane(priv, enable_en);
 	}
 #else
 	/*Not supported*/
@@ -4193,11 +4193,11 @@ static void tc956xmac_mac_link_up(struct phylink_config *config,
 	NMSGPR_INFO(priv->device, "-->%s\n", __func__);
 
 	if (priv->hw->xpcs) {
-		reg_value = tc956x_xpcs_read(priv->xpcsaddr, XGMAC_VR_MII_AN_INTR_STS);
+		reg_value = stm_xpcs_read(priv->xpcsaddr, XGMAC_VR_MII_AN_INTR_STS);
 		if (reg_value & XGMAC_C37_AN_COMPL) {/*check if AN 37 is complete CL37_ANCMPLT_INTR*/
 			KPRINT_INFO("AN clause 37 completed");
 			reg_value &= ~(XGMAC_C37_AN_COMPL);
-			tc956x_xpcs_write(priv->xpcsaddr, XGMAC_VR_MII_AN_INTR_STS, reg_value);
+			stm_xpcs_write(priv->xpcsaddr, XGMAC_VR_MII_AN_INTR_STS, reg_value);
 			KPRINT_INFO("AN clause 37 complete bit cleared");
 		}
 
@@ -4213,7 +4213,7 @@ static void tc956xmac_mac_link_up(struct phylink_config *config,
 					return;
 				}
 				/* Program autonegotiated speed to SR_MII_CTRL */
-				val = tc956x_xpcs_read(priv->xpcsaddr, XGMAC_SR_MII_CTRL);
+				val = stm_xpcs_read(priv->xpcsaddr, XGMAC_SR_MII_CTRL);
 				val &= ~XGMAC_SR_MII_CTRL_SPEED; /* Mask speed ss13, ss6, ss5 */
 
 				switch (speed) {
@@ -4276,24 +4276,24 @@ static void tc956xmac_mac_link_up(struct phylink_config *config,
 				default:
 					return;
 				}
-				tc956x_xpcs_write(priv->xpcsaddr, XGMAC_SR_MII_CTRL, val);
+				stm_xpcs_write(priv->xpcsaddr, XGMAC_SR_MII_CTRL, val);
 
 				/* USRA_RST set to 1 */
-				val = tc956x_xpcs_read(priv->xpcsaddr, XGMAC_VR_XS_PCS_DIG_CTRL1);
+				val = stm_xpcs_read(priv->xpcsaddr, XGMAC_VR_XS_PCS_DIG_CTRL1);
 				val |= XGMAC_USRA_RST;
-				tc956x_xpcs_write(priv->xpcsaddr, XGMAC_VR_XS_PCS_DIG_CTRL1, val);
+				stm_xpcs_write(priv->xpcsaddr, XGMAC_VR_XS_PCS_DIG_CTRL1, val);
 				config_done = true;
 			}
 			if ((interface == PHY_INTERFACE_MODE_SGMII) &&
 			(priv->port_interface != ENABLE_2500BASE_X_INTERFACE)) {
-				reg_value = tc956x_xpcs_read(priv->xpcsaddr, XGMAC_VR_MII_AN_INTR_STS);
+				reg_value = stm_xpcs_read(priv->xpcsaddr, XGMAC_VR_MII_AN_INTR_STS);
 				/* Clear autonegotiation only if completed. As for XPCS, 2.5G autonegotiation is not supported */
 				/* Switching from SGMII 2.5G to any speed doesn't cause AN completion */
 
 				if (reg_value & XGMAC_C37_AN_COMPL) {/*check if AN 37 is complete CL37_ANCMPLT_INTR*/
 					KPRINT_INFO("AN clause 37 completed");
 					reg_value &= ~(XGMAC_C37_AN_COMPL);
-					tc956x_xpcs_write(priv->xpcsaddr, XGMAC_VR_MII_AN_INTR_STS, reg_value);
+					stm_xpcs_write(priv->xpcsaddr, XGMAC_VR_MII_AN_INTR_STS, reg_value);
 					KPRINT_INFO("AN clause 37 complete bit cleared");
 				}
 
@@ -4305,7 +4305,7 @@ static void tc956xmac_mac_link_up(struct phylink_config *config,
 					return;
 				}
 
-				val = tc956x_xpcs_read(priv->xpcsaddr, XGMAC_SR_MII_CTRL);
+				val = stm_xpcs_read(priv->xpcsaddr, XGMAC_SR_MII_CTRL);
 				val &= ~XGMAC_SR_MII_CTRL_SPEED; /* Mask speed ss13, ss6, ss5 */
 
 				switch (speed) {
@@ -4333,7 +4333,7 @@ static void tc956xmac_mac_link_up(struct phylink_config *config,
 				default:
 					return;
 				}
-				tc956x_xpcs_write(priv->xpcsaddr, XGMAC_SR_MII_CTRL, val);
+				stm_xpcs_write(priv->xpcsaddr, XGMAC_SR_MII_CTRL, val);
 				config_done = true;
 			}
 #ifdef CONFIG_TC956X_MAGIC_PACKET_WOL_CONF
@@ -4341,22 +4341,22 @@ static void tc956xmac_mac_link_up(struct phylink_config *config,
 			/* Configure Speed for WOL SGMII 1Gbps */
 			KPRINT_INFO("%s Port %d %s : Entered with flag priv->wol_config_enabled %d", __func__, priv->port_num, priv->dev->name, priv->wol_config_enabled);
 			KPRINT_INFO("%s Port %d %s : Speed to configure %d", __func__, priv->port_num, priv->dev->name, speed);
-			reg_value = tc956x_xpcs_read(priv->xpcsaddr, XGMAC_VR_MII_AN_INTR_STS);
+			reg_value = stm_xpcs_read(priv->xpcsaddr, XGMAC_VR_MII_AN_INTR_STS);
 
 			/* Clear autonegotiation only if completed. As for XPCS, 2.5G autonegotiation is not supported */
 			/* Switching from SGMII 2.5G to any speed doesn't cause AN completion */
 			if (reg_value & XGMAC_C37_AN_COMPL) {/*check if AN 37 is complete CL37_ANCMPLT_INTR*/
 				KPRINT_INFO("AN clause 37 completed");
 				reg_value &= ~(XGMAC_C37_AN_COMPL);
-				tc956x_xpcs_write(priv->xpcsaddr, XGMAC_VR_MII_AN_INTR_STS, reg_value);
+				stm_xpcs_write(priv->xpcsaddr, XGMAC_VR_MII_AN_INTR_STS, reg_value);
 				KPRINT_INFO("AN clause 37 complete bit cleared");
 			}
 
-			ret = tc956x_xpcs_init(priv, priv->xpcsaddr);
+			ret = stm_xpcs_init(priv, priv->xpcsaddr);
 			if (ret < 0)
 				KPRINT_INFO("XPCS initialization error\n");
-			tc956x_xpcs_ctrl_ane(priv, true);
-			val = tc956x_xpcs_read(priv->xpcsaddr, XGMAC_SR_MII_CTRL);
+			stm_xpcs_ctrl_ane(priv, true);
+			val = stm_xpcs_read(priv->xpcsaddr, XGMAC_SR_MII_CTRL);
 			val &= ~XGMAC_SR_MII_CTRL_SPEED; /* Mask speed ss13, ss6, ss5 */
 			switch (speed) {
 			case SPEED_1000:
@@ -4372,7 +4372,7 @@ static void tc956xmac_mac_link_up(struct phylink_config *config,
 			default:
 				return;
 			}
-			tc956x_xpcs_write(priv->xpcsaddr, XGMAC_SR_MII_CTRL, val);
+			stm_xpcs_write(priv->xpcsaddr, XGMAC_SR_MII_CTRL, val);
 			config_done = true;
 		} /* End of if (priv->wol_config_enabled != true) */
 #endif /* #ifdef CONFIG_TC956X_MAGIC_PACKET_WOL_CONF */
@@ -6390,7 +6390,7 @@ static void tc956xmac_mmc_setup(struct stmmac_priv *priv)
 	} else
 		netdev_info(priv->dev, "No MAC Management Counters available\n");
 #else
-	memset(&priv->sw_stats, 0, sizeof(struct tc956x_sw_counters));
+	memset(&priv->sw_stats, 0, sizeof(struct stm_sw_counters));
 #endif
 }
 
@@ -7048,12 +7048,12 @@ static void tc956xmac_safety_feat_configuration(struct stmmac_priv *priv)
 }
 
 /**
- * tc956x_rx_crc_pad_config - Rx packets CRC and Padding configuration.
+ * stm_rx_crc_pad_config - Rx packets CRC and Padding configuration.
  *
  * @priv: pointer to private structure
  * @crc_pad: CRC padding configuration
  */
-static void tc956x_rx_crc_pad_config(struct stmmac_priv *priv, u32 crc_pad)
+static void stm_rx_crc_pad_config(struct stmmac_priv *priv, u32 crc_pad)
 {
 
 #ifdef TC956X
@@ -7238,7 +7238,7 @@ static int tc956xmac_hw_setup(struct net_device *dev, bool init_ptp)
 	 */
 
 #ifndef TC956X_SRIOV_VF
-	tc956x_rx_crc_pad_config(priv, priv->rx_crc_pad_state);
+	stm_rx_crc_pad_config(priv, priv->rx_crc_pad_state);
 #ifdef TC956X_SRIOV_PF
 	/* Update driver cap to let VF know about feature enable/disable */
 	priv->pf_drv_cap.crc_en = priv->rx_crc_pad_state;
@@ -7304,7 +7304,7 @@ static int tc956xmac_hw_setup(struct net_device *dev, bool init_ptp)
 				enable_en = true;
 		} else
 			enable_en = true;
-		tc956x_xpcs_ctrl_ane(priv, enable_en);
+		stm_xpcs_ctrl_ane(priv, enable_en);
 	}
 #else
 	if (priv->hw->pcs)
@@ -7646,7 +7646,7 @@ static int tc956xmac_open(struct net_device *dev)
 	memset(&priv->xstats, 0, sizeof(struct stmmac_extra_stats));
 	priv->xstats.threshold = tc;
 #elif defined TC956X_SRIOV_VF
-	memset(&priv->sw_stats, 0, sizeof(struct tc956x_sw_counters));
+	memset(&priv->sw_stats, 0, sizeof(struct stm_sw_counters));
 #endif
 
 #ifdef TC956X_SRIOV_VF
@@ -9454,7 +9454,7 @@ static void tc956xmac_tx_timeout(struct net_device *dev)
 }
 
 #ifdef TC956X_SRIOV_VF
-static int tc956x_vf_add_mac_addr(struct net_device *dev, const unsigned char *mac)
+static int stm_vf_add_mac_addr(struct net_device *dev, const unsigned char *mac)
 {
 	int ret_value;
 	struct stmmac_priv *priv = netdev_priv(dev);
@@ -9464,7 +9464,7 @@ static int tc956x_vf_add_mac_addr(struct net_device *dev, const unsigned char *m
 	return ret_value;
 }
 
-static int tc956x_vf_delete_mac_addr(struct net_device *dev,
+static int stm_vf_delete_mac_addr(struct net_device *dev,
 				const unsigned char *mac)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
@@ -9472,12 +9472,12 @@ static int tc956x_vf_delete_mac_addr(struct net_device *dev,
 	tc956xmac_delete_mac(priv, mac);
 	return 0;
 }
-static void tc956x_vf_set_filter(struct mac_device_info *hw,
+static void stm_vf_set_filter(struct mac_device_info *hw,
 				struct net_device *dev)
 {
-	__dev_uc_sync(dev, tc956x_vf_add_mac_addr, tc956x_vf_delete_mac_addr);
+	__dev_uc_sync(dev, stm_vf_add_mac_addr, stm_vf_delete_mac_addr);
 
-	__dev_mc_sync(dev, tc956x_vf_add_mac_addr, tc956x_vf_delete_mac_addr);
+	__dev_mc_sync(dev, stm_vf_add_mac_addr, stm_vf_delete_mac_addr);
 }
 #endif
 
@@ -9496,7 +9496,7 @@ static void tc956xmac_set_rx_mode(struct net_device *dev)
 #ifndef TC956X_SRIOV_VF
 	tc956xmac_set_filter(priv, priv->hw, dev);
 #else
-	tc956x_vf_set_filter(priv->hw, dev);
+	stm_vf_set_filter(priv->hw, dev);
 #endif
 }
 
@@ -9694,7 +9694,7 @@ static int tc956xmac_set_features(struct net_device *netdev,
 		}
 	}
 
-	tc956x_rx_crc_pad_config(priv, priv->rx_crc_pad_state);
+	stm_rx_crc_pad_config(priv, priv->rx_crc_pad_state);
 	KPRINT_DEBUG1("priv->rx_crc_pad_state = %d\n", priv->rx_crc_pad_state);
 
 	sph_en = (priv->hw->rx_csum > 0) && priv->sph;
@@ -10093,13 +10093,13 @@ static irqreturn_t tc956xmac_interrupt_v0(int irq, void *dev_id)
 		/* Run the through the loop PF and MCU */
 
 	for (i = 0; i < PFS_MAX; i++) {
-		msg_src = tc956x_vf_get_fn_idx_from_int_sts(priv,
+		msg_src = stm_vf_get_fn_idx_from_int_sts(priv,
 							    &priv->fn_id_info);
 		if (msg_src >= 0 && msg_src <= 2) {
 			/* Read and ack the mail and call respective
 			 * message type functions to perform the action
 			 */
-			tc956x_vf_parse_mbx(priv, msg_src);
+			stm_vf_parse_mbx(priv, msg_src);
 		} else {
 			/* No valid Interrupt*/
 		}
@@ -10354,7 +10354,7 @@ int tc956xmac_rx_parser_configuration(struct stmmac_priv *priv)
 	/* Disable EEE before configuring FRP */
 	if (priv->eee_enabled) {
 		if (priv->hw->xpcs) {
-			tc956x_xpcs_ctrl0_lrx(priv, false);
+			stm_xpcs_ctrl0_lrx(priv, false);
 			re_init_eee = 1;
 
 		} else if (priv->dev->phydev && priv->dev->phydev->link) {
@@ -10403,7 +10403,7 @@ int tc956xmac_rx_parser_configuration(struct stmmac_priv *priv)
 	if (re_init_eee) {
 		re_init_eee = 0;
 		if (priv->hw->xpcs)
-			tc956x_xpcs_ctrl0_lrx(priv, true);
+			stm_xpcs_ctrl0_lrx(priv, true);
 		else {
 			ret_val = phylink_ethtool_get_eee(priv->phylink, &edata);
 			if (ret_val)
@@ -11339,7 +11339,7 @@ static int tc956xmac_config_vlan_filter(struct stmmac_priv *priv, void __user *d
 }
 
 /**
- * tc956x_xgmac_get_fw_status()
+ * stm_xgmac_get_fw_status()
  *
  * @priv: driver private structure
  * @data: user space target IOCTL data buffer
@@ -11349,7 +11349,7 @@ static int tc956xmac_config_vlan_filter(struct stmmac_priv *priv, void __user *d
  * \param[in] An IOCTL specefic structure, that can contain a data pointer
  * \return 0 (success) or Error value (fail)
  */
-static int tc956x_xgmac_get_fw_status(struct stmmac_priv *priv,
+static int stm_xgmac_get_fw_status(struct stmmac_priv *priv,
 					void __user *data)
 {
 	struct stm_ioctl_fwstatus ioctl_data;
@@ -11712,7 +11712,7 @@ static int tc956xmac_ptp_clk_config(struct stmmac_priv *priv, void __user *data)
 	value = readl(priv->ptpaddr + PTP_TCR);
 	/* Note : TSENA never disabled. */
 	if (!(value & 0x00000001)) {
-		DBGPR_FUNC(priv->device, "tc956x_xgmac_ptp_clk_config : init systime\n");
+		DBGPR_FUNC(priv->device, "stm_xgmac_ptp_clk_config : init systime\n");
 		/* initialize system time */
 		ktime_get_real_ts64(&now);
 		tc956xmac_init_systime(priv, priv->ptpaddr, (u32)now.tv_sec, now.tv_nsec);
@@ -13869,7 +13869,7 @@ static int tc956xmac_pcie_speed_change(struct stmmac_priv *priv, void __user *da
 	if (copy_from_user(&ioctl_data, data, sizeof(ioctl_data)))
 		return -EFAULT;
 
-	return tc956x_set_pci_speed(pdev, (u32)ioctl_data.speed);
+	return stm_set_pci_speed(pdev, (u32)ioctl_data.speed);
 }
 
 #endif /*#define TC956X*/
@@ -14025,7 +14025,7 @@ static int tc956xmac_extension_ioctl(struct stmmac_priv *priv,
 
 #ifdef TC956X_SRIOV_PF
 	case TC956X_GET_FW_STATUS:
-		return tc956x_xgmac_get_fw_status(priv, data);
+		return stm_xgmac_get_fw_status(priv, data);
 	case TC956XMAC_VLAN_FILTERING:
 		return tc956xmac_config_vlan_filter(priv, data);
 #endif
@@ -16292,7 +16292,7 @@ int tc956xmac_vf_dvr_probe(struct device *device,
 			} while ((NEMACCTL_INIT_DONE & ret) != NEMACCTL_INIT_DONE);
 		}
 
-		ret = tc956x_xpcs_init(priv, priv->xpcsaddr);
+		ret = stm_xpcs_init(priv, priv->xpcsaddr);
 		if (ret < 0)
 			KPRINT_INFO("XPCS initialization error\n");
 	}
@@ -16887,7 +16887,7 @@ void tc956xmac_link_change_set_power(struct stmmac_priv *priv, enum TC956X_PORT_
 			priv->port_link_down = false;
 
 			/* Re-Init XPCS module as MACxPONRST is asserted during link-down */
-			ret = tc956x_xpcs_init(priv, priv->xpcsaddr);
+			ret = stm_xpcs_init(priv, priv->xpcsaddr);
 			if (ret < 0)
 				NMSGPR_INFO(priv->device, "XPCS initialization error\n");
 
@@ -16907,7 +16907,7 @@ void tc956xmac_link_change_set_power(struct stmmac_priv *priv, enum TC956X_PORT_
 			} else
 				enable_en = true;
 
-			tc956x_xpcs_ctrl_ane(priv, enable_en);
+			stm_xpcs_ctrl_ane(priv, enable_en);
 		}
 		NMSGPR_INFO(priv->device, "%s : Port %d %s Rd RST Reg:%x, CLK Reg:%x", __func__, priv->port_num, priv->dev->name,
 			readl(nrst_reg), readl(nclk_reg));

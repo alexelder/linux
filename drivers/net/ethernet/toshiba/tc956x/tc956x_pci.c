@@ -240,7 +240,7 @@
 #include "fw.h"
 #endif
 #ifdef TC956X_SRIOV_VF
-#include "tc956x_vf_rsc_mng.h"
+#include "stm_vf_rsc_mng.h"
 #endif
 
 #ifdef TC956X_PCIE_LOGSTAT
@@ -576,12 +576,12 @@ static unsigned int mac1_axi_rd_osr_lmt = 31;
 
 static unsigned int mac0_axi_blen;
 static unsigned int mac1_axi_blen;
-static const struct tc956x_version stm_drv_version = {0, 6, 0, 0, 0, 0};
+static const struct stm_version stm_drv_version = {0, 6, 0, 0, 0, 0};
 int tc956xmac_pm_usage_counter; /* Device Usage Counter */
 int stm_dsp_count;
 #ifdef TC956X_SRIOV_PF
 #ifdef CONFIG_TC956X_MAGIC_PACKET_WOL_GPIO
-static void tc956x_wol_gpio_trigger(void __iomem *reg_base_addr, bool mode);
+static void stm_wol_gpio_trigger(void __iomem *reg_base_addr, bool mode);
 #endif
 #endif
 /*
@@ -2163,7 +2163,7 @@ static const struct tc956xmac_pci_info tc956xmac_xgmac3_2_5g_mdio_pci_info = {
  *
  * \return none
  */
-static void tc956x_reset_SRAM(struct device *dev, struct tc956xmac_resources *res)
+static void stm_reset_SRAM(struct device *dev, struct tc956xmac_resources *res)
 {
 	NMSGPR_INFO(dev,  "Resetting SRAM Region start\n");
 	/* Resetting SRAM IMEM Region */
@@ -2221,7 +2221,7 @@ s32 stm_load_firmware(struct device *dev, struct tc956xmac_resources *res)
 			TC956X_M3_INIT_DONE));
 	iowrite32(0, (void __iomem *)(res->stm_SRAM_pci_base_addr +
 			TC956X_M3_FW_EXIT));
-	tc956x_reset_SRAM(dev, res);
+	stm_reset_SRAM(dev, res);
 	mdelay(10);
 	iowrite8(EEPROM_OFFSET, (void __iomem *)(res->stm_SRAM_pci_base_addr +
 			TC956X_M3_SRAM_EEPROM_OFFSET_ADDR));
@@ -2288,7 +2288,7 @@ s32 stm_load_firmware(struct device *dev, struct tc956xmac_resources *res)
 #endif
 
 #ifdef TC956X
-	tc956x_reset_SRAM(dev, res);
+	stm_reset_SRAM(dev, res);
 
 	mdelay(10);
 	iowrite8(EEPROM_OFFSET, (void __iomem *)(res->stm_SRAM_pci_base_addr +
@@ -2452,7 +2452,7 @@ static void stm_config_tamap(struct device *dev,
 #endif
 
 #ifdef TC956X_SRIOV_VF
-static int tc956x_vf_get_fn_id(void __iomem *reg_pci_bridge_config_addr,
+static int stm_vf_get_fn_id(void __iomem *reg_pci_bridge_config_addr,
 				       struct fn_id *fn_id_info)
 {
 	void __iomem *ioaddr = reg_pci_bridge_config_addr;
@@ -2484,7 +2484,7 @@ static int get_vf_id(struct plat_tc956xmacenet_data *plat_dat,
 {
 	struct fn_id fn_id_info;
 
-	tc956x_vf_get_fn_id(res->stm_BRIDGE_CFG_pci_base_addr, &fn_id_info);
+	stm_vf_get_fn_id(res->stm_BRIDGE_CFG_pci_base_addr, &fn_id_info);
 
 	plat_dat->vf_id = fn_id_info.vf_no - 1;
 	return 0;
@@ -2625,7 +2625,7 @@ static void stm_pcie_disable_dsp2_port(struct device *dev,
 #endif /*#ifdef TC956X_PCIE_DISABLE_DSP2*/
 
 //#ifdef CONFIG_TC956X_PCIE_GEN3_SETTING
-static int tc956x_replace_aspm(struct pci_dev *pdev, u16 replace_value, u16 *org_value)
+static int stm_replace_aspm(struct pci_dev *pdev, u16 replace_value, u16 *org_value)
 {
 	int err;
 	u16 lnkctl;
@@ -2643,7 +2643,7 @@ static int tc956x_replace_aspm(struct pci_dev *pdev, u16 replace_value, u16 *org
 	return err;
 }
 
-static int tc956x_set_speed(struct pci_dev *pdev, u32 speed)
+static int stm_set_speed(struct pci_dev *pdev, u32 speed)
 {
 	int ret;
 	u16 lnksta, lnkctl, lnkctl_new, lnkctl2, lnkctl2_new;
@@ -2702,7 +2702,7 @@ static int stm_get_speed(struct pci_dev *pdev, u32 *speed)
 	return ret;
 }
 
-int tc956x_set_pci_speed(struct pci_dev *pdev, u32 speed)
+int stm_set_pci_speed(struct pci_dev *pdev, u32 speed)
 {
 	struct pci_dev *usp;
 	struct pci_dev *root;
@@ -2760,17 +2760,17 @@ int tc956x_set_pci_speed(struct pci_dev *pdev, u32 speed)
 
 	/* Save ASPM and set zero */
 	for (i = 0; i < dev_num; i++)
-		tc956x_replace_aspm(devs[i], 0, &aspm_org[i]);
+		stm_replace_aspm(devs[i], 0, &aspm_org[i]);
 
-	tc956x_set_speed(root, speed);
-	tc956x_set_speed(dsp[0], speed);
-	tc956x_set_speed(dsp[1], speed);
-	tc956x_set_speed(dsp[2], speed);
-	tc956x_set_speed(root, speed);
+	stm_set_speed(root, speed);
+	stm_set_speed(dsp[0], speed);
+	stm_set_speed(dsp[1], speed);
+	stm_set_speed(dsp[2], speed);
+	stm_set_speed(root, speed);
 
 	/* Restore ASPM */
 	for (i = 0; i < dev_num; i++)
-		tc956x_replace_aspm(devs[i], aspm_org[i], NULL);
+		stm_replace_aspm(devs[i], aspm_org[i], NULL);
 
 	kfree(aspm_org);
 	kfree(devs);
@@ -3067,7 +3067,7 @@ static int tc956xmac_pci_probe(struct pci_dev *pdev,
 	}
 
 	if ((pcie_link_speed >= 1) && (pcie_link_speed <= 3))
-		tc956x_set_pci_speed(pdev, pcie_link_speed);
+		stm_set_pci_speed(pdev, pcie_link_speed);
 #endif
 #endif /*#ifdef TC956X_SRIOV_VF*/
 
@@ -3221,7 +3221,7 @@ static int tc956xmac_pci_probe(struct pci_dev *pdev,
 #ifdef CONFIG_TC956X_MAGIC_PACKET_WOL_GPIO
 	if (res.port_num == RM_PF0_ID) {
 		KPRINT_INFO("%s: Port %d Bus number %x - Configuring GPIO for WOL", __func__, res.port_num, pdev->bus->number);
-		tc956x_wol_gpio_trigger(res.addr, false); /* Set to LOW */
+		stm_wol_gpio_trigger(res.addr, false); /* Set to LOW */
 	}
 #endif
 #endif /* TC956X_SRIOV_PF */
@@ -4086,7 +4086,7 @@ static int stm_pcie_suspend(struct device *dev)
 #ifdef CONFIG_TC956X_MAGIC_PACKET_WOL_GPIO
 	if (priv->port_num == RM_PF0_ID) {
 		KPRINT_INFO("%s: Port %d %s - Configuring GPIO for WOL", __func__, priv->port_num, priv->dev->name);
-		tc956x_wol_gpio_trigger(priv->ioaddr, true); /* Set to HIGH */
+		stm_wol_gpio_trigger(priv->ioaddr, true); /* Set to HIGH */
 	}
 #endif
 #endif
@@ -4294,7 +4294,7 @@ static int stm_pcie_resume_config(struct pci_dev *pdev)
 		} while ((NEMACCTL_INIT_DONE & ret) != NEMACCTL_INIT_DONE);
 		}
 #ifndef TC956X_SRIOV_VF
-		ret = tc956x_xpcs_init(priv, priv->xpcsaddr);
+		ret = stm_xpcs_init(priv, priv->xpcsaddr);
 #endif
 		if (ret < 0)
 			KPRINT_INFO("XPCS initialization error\n");
@@ -4384,7 +4384,7 @@ static int stm_pcie_resume(struct device *dev)
 		}
 
 		if ((pcie_link_speed >= 1) && (pcie_link_speed <= 3))
-			tc956x_set_pci_speed(pdev, pcie_link_speed);
+			stm_set_pci_speed(pdev, pcie_link_speed);
 	}
 #endif
 #endif
@@ -4440,7 +4440,7 @@ static int stm_pcie_resume(struct device *dev)
 #ifdef CONFIG_TC956X_MAGIC_PACKET_WOL_GPIO
 	if (priv->port_num == RM_PF0_ID) {
 		KPRINT_INFO("%s: Port %d - Configuring GPIO for WOL", __func__, priv->port_num);
-		tc956x_wol_gpio_trigger(priv->ioaddr, false); /* Set to LOW */
+		stm_wol_gpio_trigger(priv->ioaddr, false); /* Set to LOW */
 	}
 #endif
 #ifdef TC956X_PCIE_LOGSTAT
@@ -4496,7 +4496,7 @@ err:
  * \param[in] reg_base_addr - pointer to BAR 4 base address.
  * \param[in] mode - true or false
  */
-static void tc956x_wol_gpio_trigger(void __iomem *reg_base_addr, bool mode)
+static void stm_wol_gpio_trigger(void __iomem *reg_base_addr, bool mode)
 {
 	u32 reg;
 

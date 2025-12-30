@@ -1,7 +1,7 @@
 /*
  * TC956X ethernet driver.
  *
- * tc956x_vf_rsc_mng.c
+ * stm_vf_rsc_mng.c
  *
  * Copyright (C) 2021 Toshiba Electronic Devices & Storage Corporation
  *
@@ -28,12 +28,12 @@
  *  VERSION     : 01-02
  */
 
-#include "tc956x_vf_rsc_mng.h"
+#include "stm_vf_rsc_mng.h"
 #include "tc956xmac.h"
 
 
 /**
- * tc956x_vf_rsc_mng_init
+ * stm_vf_rsc_mng_init
  *
  * \brief API to initialise resource manager parameters
  *
@@ -45,13 +45,13 @@
  * \return None
  */
 
-static int tc956x_vf_rsc_mng_init(struct stmmac_priv *priv, struct net_device *ndev)
+static int stm_vf_rsc_mng_init(struct stmmac_priv *priv, struct net_device *ndev)
 {
 	return 0;
 }
 
 /**
- * tc956x_vf_rsc_mng_get_fn_id
+ * stm_vf_rsc_mng_get_fn_id
  *
  * \brief API to get function ID of this function
  *
@@ -64,7 +64,7 @@ static int tc956x_vf_rsc_mng_init(struct stmmac_priv *priv, struct net_device *n
  * \return success or error
  */
 
-int tc956x_vf_rsc_mng_get_fn_id(struct stmmac_priv *priv, void __iomem *reg_pci_bridge_config_addr,
+int stm_vf_rsc_mng_get_fn_id(struct stmmac_priv *priv, void __iomem *reg_pci_bridge_config_addr,
 				       struct fn_id *fn_id_info)
 {
 	void __iomem *ioaddr = reg_pci_bridge_config_addr;
@@ -92,7 +92,7 @@ int tc956x_vf_rsc_mng_get_fn_id(struct stmmac_priv *priv, void __iomem *reg_pci_
 }
 
 /**
- * tc956x_vf_rsc_mng_get_rscs
+ * stm_vf_rsc_mng_get_rscs
  *
  * \brief API to get the DMA channel resources allocated
  *
@@ -105,15 +105,15 @@ int tc956x_vf_rsc_mng_get_fn_id(struct stmmac_priv *priv, void __iomem *reg_pci_
  * \return None
  */
 
-static void tc956x_vf_rsc_mng_get_rscs(struct stmmac_priv *priv, struct net_device *dev, u8 *rscs)
+static void stm_vf_rsc_mng_get_rscs(struct stmmac_priv *priv, struct net_device *dev, u8 *rscs)
 {
 	void __iomem *ioaddr = (void __iomem *)priv->stm_BRIDGE_CFG_pci_base_addr;
 	*rscs = ((readl(ioaddr + RSCMNG_RSC_ST_REG)) & RSC_MNG_RSC_STATUS_MASK);
 }
 
 const struct mac_rsc_mng_ops tc956xmac_rsc_mng_ops = {
-	.init = tc956x_vf_rsc_mng_init,
-	.get_fn_id = tc956x_vf_rsc_mng_get_fn_id,
+	.init = stm_vf_rsc_mng_init,
+	.get_fn_id = stm_vf_rsc_mng_get_fn_id,
 	.set_rscs = NULL, /* Not applicable for VF */
-	.get_rscs = tc956x_vf_rsc_mng_get_rscs,
+	.get_rscs = stm_vf_rsc_mng_get_rscs,
 };

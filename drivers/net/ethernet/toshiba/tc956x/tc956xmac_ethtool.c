@@ -86,7 +86,7 @@
 #ifdef TC956X_SRIOV_PF
 #define XGMAC_ETHTOOL_NAME	TC956X_RESOURCE_NAME
 #elif defined TC956X_SRIOV_VF
-#define XGMAC_ETHTOOL_NAME	"tc956x_vf_pcie_eth"
+#define XGMAC_ETHTOOL_NAME	"stm_vf_pcie_eth"
 #endif
 #define ETHTOOL_DMA_OFFSET	55
 #ifdef TC956X_SRIOV_DEBUG
@@ -852,10 +852,10 @@ static const struct stmmac_stats tc956xmac_mmc[] = {
 #ifdef TC956X_SRIOV_VF
 /* SW counters */
 #define TC956X_SW_STAT(m)	\
-	{ #m, sizeof_field(struct tc956x_sw_counters, m),	\
+	{ #m, sizeof_field(struct stm_sw_counters, m),	\
 	offsetof(struct stmmac_priv, sw_stats.m)}
 
-static const struct stmmac_stats tc956x_sw[] = {
+static const struct stmmac_stats stm_sw[] = {
 	TC956X_SW_STAT(tx_frame_count_good_bad),
 	TC956X_SW_STAT(rx_frame_count_good_bad),
 	TC956X_SW_STAT(rx_frame_count_good),
@@ -918,7 +918,7 @@ static const struct stmmac_stats tc956x_sw[] = {
 	TC956X_SW_STAT(rx_ptp_msg_pkt_signaling),
 	TC956X_SW_STAT(rx_ptp_msg_pkt_reserved_type),
 };
-#define TC956X_SW_STATS_LEN ARRAY_SIZE(tc956x_sw)
+#define TC956X_SW_STATS_LEN ARRAY_SIZE(stm_sw)
 #endif
 static const char stm_priv_flags_strings[][ETH_GSTRING_LEN] = {
 #define TC956XMAC_TX_FCS	BIT(0)
@@ -932,7 +932,7 @@ static void tc956xmac_ethtool_getdrvinfo(struct net_device *dev,
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 	struct pci_dev *pdev = to_pci_dev(priv->device);
-	struct tc956x_version *fw_version;
+	struct stm_version *fw_version;
 	int reg = 0;
 	char fw_version_str[32];
 
@@ -940,7 +940,7 @@ static void tc956xmac_ethtool_getdrvinfo(struct net_device *dev,
 	reg = readl(priv->stm_SRAM_pci_base_addr + TC956X_M3_DBG_VER_START);
 #endif
 
-	fw_version = (struct tc956x_version *)(&reg);
+	fw_version = (struct stm_version *)(&reg);
 	scnprintf(fw_version_str, sizeof(fw_version_str), "Firmware Version %s_%d.%d-%d", (fw_version->rel_dbg == 'D')?"DBG":"REL",
 								fw_version->major, fw_version->minor,
 								fw_version->sub_minor);
@@ -1094,7 +1094,7 @@ tc956xmac_ethtool_set_link_ksettings(struct net_device *dev,
 		mutex_lock(&priv->lock);
 #ifndef TC956X_SRIOV_VF
 #ifdef TC956X
-		tc956x_xpcs_ctrl_ane(priv, 1);
+		stm_xpcs_ctrl_ane(priv, 1);
 #else
 		tc956xmac_pcs_ctrl_ane(priv, priv->ioaddr, 1, priv->hw->ps, 0);
 #endif
@@ -1180,7 +1180,7 @@ static u32 rxp_read_frp_stat(struct stmmac_priv *priv, void __iomem *ioaddr,
 
 }
 
-static void tc956x_read_frp_stats(struct stmmac_priv *priv)
+static void stm_read_frp_stats(struct stmmac_priv *priv)
 {
 	u32 ch;
 
@@ -1207,7 +1207,7 @@ static void tc956xmac_ethtool_gregs(struct net_device *dev,
 	tc956xmac_dump_dma_regs(priv, priv->ioaddr, reg_space);
 #ifdef TC956X_SRIOV_PF
 #ifdef TC956X_SRIOV_DEBUG
-	tc956x_read_frp_stats(priv);
+	stm_read_frp_stats(priv);
 	stm_filter_debug(priv);
 #endif
 #endif
@@ -1413,9 +1413,9 @@ static void tc956xmac_get_ethtool_stats(struct net_device *dev,
 	for (i = 0; i < TC956X_SW_STATS_LEN; i++) {
 		char *p;
 
-		p = (char *)priv + tc956x_sw[i].stat_offset;
+		p = (char *)priv + stm_sw[i].stat_offset;
 
-		data[j++] = (tc956x_sw[i].sizeof_stat ==
+		data[j++] = (stm_sw[i].sizeof_stat ==
 			     sizeof(u64)) ? (*(u64 *)p) :
 			     (*(u32 *)p);
 	}
@@ -1538,7 +1538,7 @@ static void tc956xmac_get_strings(struct net_device *dev, u32 stringset, u8 *dat
 	case ETH_SS_STATS:
 #ifdef TC956X_SRIOV_VF
 		for (i = 0; i < TC956X_SW_STATS_LEN; i++) {
-			memcpy(p, tc956x_sw[i].stat_string,
+			memcpy(p, stm_sw[i].stat_string,
 				ETH_GSTRING_LEN);
 			p += ETH_GSTRING_LEN;
 		}
@@ -2592,7 +2592,7 @@ static int tc956xmac_set_tunable(struct net_device *dev,
 #endif
 
 #ifdef TC956X
-static int tc956x_set_priv_flag(struct net_device *dev, u32 priv_flag)
+static int stm_set_priv_flag(struct net_device *dev, u32 priv_flag)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 
@@ -2681,7 +2681,7 @@ static const struct ethtool_ops tc956xmac_ethtool_ops = {
 	.set_link_ksettings = tc956xmac_ethtool_set_link_ksettings,
 #endif  /* TC956X_SRIOV_VF */
 #ifdef TC956X
-	.set_priv_flags = tc956x_set_priv_flag,
+	.set_priv_flags = stm_set_priv_flag,
 	.get_priv_flags = stm_get_priv_flag,
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
 	.get_mm = stm_get_mm,
