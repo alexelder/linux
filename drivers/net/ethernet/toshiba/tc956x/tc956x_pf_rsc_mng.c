@@ -34,6 +34,10 @@
 /**
  * tc956x_pf_rsc_mng_get_fn_id
  *
+ * @priv: pointer to the stmmac private structure
+ * @reg_pci_bridge_config_addr:
+ * @fn_id_info: pointer to the function ID information structure
+ *
  * \brief API to get function ID of this function
  *
  * \details This function is called to get the function ID from
@@ -71,6 +75,10 @@ static int tc956x_pf_rsc_mng_get_fn_id(struct stmmac_priv *priv, void __iomem *r
 
 /**
  * tc956x_pf_rsc_mng_set_rscs
+ *
+ * @priv: pointer to the stmmac private structure
+ * @dev: pointer to the net device structure
+ * @rscs: array of (MAX_FUNCTIONS_PER_PF=4) resources
  *
  * \brief API to set the DMA channel resources for the functions
  *
@@ -133,6 +141,10 @@ static void tc956x_pf_rsc_mng_set_rscs(struct stmmac_priv *priv, struct net_devi
 
 /**
  * tc956x_pf_rsc_mng_get_rscs
+ *
+ * @priv: pointer to the stmmac private structure
+ * @dev: pointer to the net device structure
+ * @rscs: array of (MAX_FUNCTIONS_PER_PF=4) resources
  *
  * \brief API to get the DMA channel resources allocated
  *

@@ -368,6 +368,7 @@ static void dwxgmac2_init_tx_desc(struct stmmac_priv *priv,
  * dwxgmac2_prepare_tx_desc - Fill descriptors based on the provided input
  * parameters.
  *
+ * @priv: pointer to the stmmac private structure
  * @p: pointer to dma_desc descriptor
  * @is_fs: 1 - first descriptor, 0 - not first descriptor
  * @len: buffer length

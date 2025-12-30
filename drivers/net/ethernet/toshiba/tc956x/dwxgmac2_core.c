@@ -3151,6 +3151,7 @@ static void dwxgmac3_set_ptp_offload(struct stmmac_priv *priv,
 /**
  * tc956x_enable_jumbo_frm - Enable jumbo frame support for Tx and Rx in EMAC.
  *
+ * @priv: pointer to the stmmac private structure
  * @dev: pointer to net_device structure
  * @en: Enable/Disable
  */

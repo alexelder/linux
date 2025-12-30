@@ -243,6 +243,7 @@ static void dwxgmac2_dma_dump_regs(struct stmmac_priv *priv,
 /**
  * dwxgmac2_dma_rx_mode - Configure Rx MTL registers.
  *
+ * @priv: pointer to the stmmac private structure
  * @ioaddr: Device SFR base address
  * @mode: MTL operating mode
  * @channel: Rx channel number

@@ -142,7 +142,10 @@ static uint8_t DlActive = LOGSTAT_DUMMY_VALUE, LinkSpeed = LOGSTAT_DUMMY_VALUE, 
  */
 
 /**
- * tc956x_pcie_ioctl_state_log_summary
+ * tc956x_pcie_ioctl_state_log_summary()
+ *
+ * @priv: pointer to pcie private data.
+ * @data: data passed from user space.
  *
  * \brief IOCTL Function to read and print State Log summary.
  *
@@ -185,7 +188,10 @@ int tc956x_pcie_ioctl_state_log_summary(const struct stmmac_priv *priv, void __u
 }
 
 /**
- * tc956x_pcie_ioctl_state_log_summary
+ * tc956x_logstat_state_log_summary()
+ *
+ * @pbase_addr: user space target buffer for IOCTL
+ * @nport: PCIe port number
  *
  * \brief IOCTL Function to read and print State Log summary.
  *
@@ -280,7 +286,11 @@ end:
 }
 
 /**
- * tc956x_logstat_get_state_log_stop_status
+ * tc956x_logstat_get_state_log_stop_status()
+ *
+ * @pbase_addr: pointer to Bar4 base address.
+ * @nport: log start/stop for port passed.
+ * @pstop_status: state logging status (1 : stopped, 0 : still running).
  *
  * \brief Function to get State Log Stop Status.
  *
@@ -317,7 +327,11 @@ int tc956x_logstat_get_state_log_stop_status(void __iomem *pbase_addr, enum port
 
 
 /**
- * tc956x_logstat_set_state_log_fifo_ptr
+ * tc956x_logstat_set_state_log_fifo_ptr()
+ *
+ * @pbase_addr: pointer to Bar4 base address.
+ * @nport: log start/stop for port passed.
+ * @fifo_pointer: fifo pointer (0 to 31) for which state log to be read.
  *
  * \brief Function to set State Log FIFO Read Pointer.
  *
@@ -354,7 +368,11 @@ int tc956x_logstat_set_state_log_fifo_ptr(void __iomem *pbase_addr, enum ports n
 }
 
 /**
- * tc956x_logstat_get_state_log_data
+ * tc956x_logstat_get_state_log_data()
+ *
+ * @pbase_addr: pointer to Bar4 base address.
+ * @nport: log start/stop for port passed.
+ * @pstate_log_data: pointer to state log data read.
  *
  * \brief Function to read State Log Data.
  *
@@ -386,7 +404,9 @@ int tc956x_logstat_get_state_log_data(void __iomem *pbase_addr, enum ports nport
 }
 
 /**
- * tc956x_logstat_state_log_analyze
+ * tc956x_logstat_state_log_analyze()
+ *
+ * @cur_state: FIFO register data containing current state of pcie.
  *
  * \brief Function to analyze State Log Data.
  *
@@ -500,7 +520,10 @@ int tc956x_logstat_state_log_analyze(uint32_t cur_state)
 }
 
 /**
- * tc956x_pcie_ioctl_get_pcie_link_params
+ * tc956x_pcie_ioctl_get_pcie_link_params()
+ *
+ * @priv: pointer to pcie private data.
+ * @data: data passed from user space.
  *
  * \brief IOCTL Function to read PCIe Link LTSSM, DL State, Speed and Width.
  *
@@ -548,7 +571,11 @@ int tc956x_pcie_ioctl_get_pcie_link_params(const struct stmmac_priv *priv, void 
 }
 
 /**
- * tc956x_logstat_get_pcie_cur_ltssm
+ * tc956x_logstat_get_pcie_cur_ltssm()
+ *
+ * @pbase_addr: pointer to BAR4 base address.
+ * @nport: port for which to get current ltssm value.
+ * @pltssm: pointer to ltssm value from register.
  *
  * \brief Function to read current PCIe Link LTSSM State.
  *
@@ -585,7 +612,11 @@ int tc956x_logstat_get_pcie_cur_ltssm(void __iomem *pbase_addr, enum ports nport
 }
 
 /**
- * tc956x_logstat_get_pcie_cur_dll
+ * tc956x_logstat_get_pcie_cur_dll()
+ *
+ * @pbase_addr: pointer to BAR4 base address.
+ * @nport: port for which to get current ltssm value.
+ * @pdll: pointer to dll active state value from register.
  *
  * \brief Function to read current PCIe Link DLL Active State.
  *
@@ -619,7 +650,11 @@ int tc956x_logstat_get_pcie_cur_dll(void __iomem *pbase_addr, enum ports nport, 
 }
 
 /**
- * tc956x_logstat_get_pcie_cur_speed
+ * tc956x_logstat_get_pcie_cur_speed()
+ *
+ * @pbase_addr: pointer to BAR4 base address.
+ * @nport: port for which to get current ltssm value.
+ * @pspeed_val: pointer to current link speed value from register.
  *
  * \brief Function to read current PCIe Link Speed.
  *
@@ -651,7 +686,11 @@ int tc956x_logstat_get_pcie_cur_speed(void __iomem *pbase_addr, enum ports nport
 }
 
 /**
- * tc956x_logstat_get_pcie_cur_width
+ * tc956x_logstat_get_pcie_cur_width()
+ *
+ * @pbase_addr: pointer to BAR4 base address.
+ * @nport: port for which to get current ltssm value.
+ * @plane_width_val: pointer to current lane width value from register.
  *
  * \brief Function to read current PCIe Link Width.
  *
@@ -684,7 +723,10 @@ int tc956x_logstat_get_pcie_cur_width(void __iomem *pbase_addr, enum ports nport
 
 
 /**
- * tc956x_pcie_ioctl_StateLogStop
+ * tc956x_pcie_ioctl_state_log_enable()
+ *
+ * @priv: pointer to pcie private data.
+ * @data: data passed from user space.
  *
  * \brief IOCTL Function to Enable and Disable State Logging.
  *
@@ -718,7 +760,11 @@ int tc956x_pcie_ioctl_state_log_enable(const struct stmmac_priv *priv, void __us
 }
 
 /**
- * tc956x_logstat_set_state_log_enable
+ * tc956x_logstat_set_state_log_enable()
+ *
+ * @pbase_addr: pointer to BAR4 base address
+ * @nport: log start/stop for port passed
+ * @enable: whether to start or stop state logging
  *
  * \brief Function to Enable and Disable State Log.
  *

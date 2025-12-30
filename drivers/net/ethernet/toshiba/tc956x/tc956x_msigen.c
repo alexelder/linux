@@ -44,6 +44,9 @@
 /**
  * tc956x_msigen_init
  *
+ * @priv: pointer to the stmmac private structure
+ * @dev: pointer to the net device structure
+ *
  * \brief API to Initialize and configure MSIGEN module
  *
  * \details This function is used to configures clock, reset, sets mask and
@@ -93,6 +96,10 @@ static void tc956x_msigen_init(struct stmmac_priv *priv, struct net_device *dev)
 
 /**
  * tc956x_interrupt_en
+ *
+ * @priv: pointer to the stmmac private structure
+ * @dev: pointer to the net device structure
+ * @en: whether to enable or disable interrupts
  *
  * \brief API to enable disable MSI interrupts
  *
@@ -155,6 +162,10 @@ static void tc956x_interrupt_en(struct stmmac_priv *priv, struct net_device *dev
 /**
  * tc956x_interrupt_clr
  *
+ * @priv: pointer to the stmmac private structure
+ * @dev: pointer to the net device structure
+ * @vector: MSI vector to clear
+ *
  * \brief API to enable clear MSI vector
  *
  * \details This function is used to clear MSI vector. To be called
@@ -174,6 +185,10 @@ static void tc956x_interrupt_clr(struct stmmac_priv *priv, struct net_device *de
 #elif defined TC956X_SRIOV_VF
 /**
  * tc956x_msigen_init
+ *
+ * @priv: pointer to the stmmac private structure
+ * @dev: pointer to the net device structure
+ * @fn_id_info: pointer to the function ID information structure
  *
  * \brief API to Initialize and configure MSIGEN module
  *
@@ -220,6 +235,11 @@ static void tc956x_msigen_init(struct stmmac_priv *priv, struct net_device *dev,
 /**
  * tc956x_interrupt_en
  *
+ * @priv: pointer to the stmmac private structure
+ * @dev: pointer to the net device structure
+ * @fn_id_info: pointer to the function ID information structure
+ * @en: whether to enable or disable the interrupt
+ *
  * \brief API to enable disable MSI interrupts
  *
  * \details This function is used to set/clear interrupts
@@ -264,6 +284,11 @@ static void tc956x_interrupt_en(struct stmmac_priv *priv, struct net_device *dev
 
 /**
  * tc956x_interrupt_clr
+ *
+ * @priv: pointer to the stmmac private structure
+ * @dev: pointer to the net device structure
+ * @vector: MSI vector to clear
+ * @fn_id_info: pointer to the function ID information structure
  *
  * \brief API to enable clear MSI vector
  *

@@ -1105,8 +1105,12 @@ static void dump_all_reg(struct stmmac_priv *priv)
 #ifdef TC956X_SRIOV_PF
 #ifdef CONFIG_DEBUG_FS
 /**
- * read_tc956x_status() - Debugfs read command for m3 status info
+ * read_tc956x_m3_status() - Debugfs read command for m3 status info
  *
+ * @file: "m3_stats" debugfs file
+ * @user_buf: user-space target buffer pointer
+ * @count: number of bytes to read
+ * @ppos: address of the file position field
  */
 static ssize_t read_tc956x_m3_status(struct file *file,
 	char __user *user_buf, size_t count, loff_t *ppos)
@@ -1188,8 +1192,12 @@ static const struct file_operations fops_m3_stats = {
 };
 
 /**
- * read_tc956x_status() - Debugfs read command for mac info
+ * read_tc956x_mac_status() - Debugfs read command for mac info
  *
+ * @file: "mac_stats" debugfs file
+ * @user_buf: user-space target buffer pointer
+ * @count: number of bytes to read
+ * @ppos: address of the file position field
  */
 static ssize_t read_tc956x_mac_status(struct file *file,
 	char __user *user_buf, size_t count, loff_t *ppos)
@@ -1223,8 +1231,12 @@ static const struct file_operations fops_mac_stats = {
 };
 
 /**
- * read_tc956x_status() - Debugfs read command for mtl status info
+ * read_tc956x_mtl_status() - Debugfs read command for mtl status info
  *
+ * @file: "mtl_stats" debugfs file
+ * @user_buf: user-space target buffer pointer
+ * @count: number of bytes to read
+ * @ppos: address of the file position field
  */
 static ssize_t read_tc956x_mtl_status(struct file *file,
 	char __user *user_buf, size_t count, loff_t *ppos)
@@ -1270,8 +1282,12 @@ static const struct file_operations fops_mtl_stats = {
 };
 
 /**
- * read_tc956x_status() - Debugfs read command for dma status info
+ * read_tc956x_dma_status() - Debugfs read command for dma status info
  *
+ * @file: "dma_stats" debugfs file
+ * @user_buf: user-space target buffer pointer
+ * @count: number of bytes to read
+ * @ppos: address of the file position field
  */
 static ssize_t read_tc956x_dma_status(struct file *file,
 	char __user *user_buf, size_t count, loff_t *ppos)
@@ -1361,8 +1377,12 @@ static const struct file_operations fops_dma_stats = {
 };
 
 /**
- * read_tc956x_status() - Debugfs read command for interrupt status info
+ * read_tc956x_intr_status() - Debugfs read command for interrupt status info
  *
+ * @file: "interrupt_stats" debugfs file
+ * @user_buf: user-space target buffer pointer
+ * @count: number of bytes to read
+ * @ppos: address of the file position field
  */
 static ssize_t read_tc956x_intr_status(struct file *file,
 	char __user *user_buf, size_t count, loff_t *ppos)
@@ -1410,8 +1430,12 @@ static const struct file_operations fops_intr_stats = {
 };
 
 /**
- * read_tc956x_status() - Debugfs read command for configuration register status info
+ * read_tc956x_cnfg_status() - Debugfs read command for configuration register status info
  *
+ * @file: "config_stats" debugfs file
+ * @user_buf: user-space target buffer pointer
+ * @count: number of bytes to read
+ * @ppos: address of the file position field
  */
 static ssize_t read_tc956x_cnfg_status(struct file *file,
 	char __user *user_buf, size_t count, loff_t *ppos)
@@ -1451,8 +1475,12 @@ static const struct file_operations fops_cnfg_stats = {
 };
 
 /**
- * read_tc956x_status() - Debugfs read command for other status info like TAMP, FRP Table, MMC counters, Version Info
+ * read_tc956x_other_status() - Debugfs read command for other status info like TAMP, FRP Table, MMC counters, Version Info
  *
+ * @file: "other_stats" debugfs file
+ * @user_buf: user-space target buffer pointer
+ * @count: number of bytes to read
+ * @ppos: address of the file position field
  */
 static ssize_t read_tc956x_other_status(struct file *file,
 	char __user *user_buf, size_t count, loff_t *ppos)
@@ -1573,8 +1601,12 @@ static const struct file_operations fops_other_stats = {
 };
 
 /**
- * read_tc956x_status() - Debugfs read command for dumping all registers of MAC, MTL, DMA...
+ * read_tc956x_reg_dump_status() - Debugfs read command for dumping all registers of MAC, MTL, DMA...
  *
+ * @file: "reg_dump" debugfs file
+ * @user_buf: user-space target buffer pointer
+ * @count: number of bytes to read
+ * @ppos: address of the file position field
  */
 static ssize_t read_tc956x_reg_dump_status(struct file *file,
 	char __user *user_buf, size_t count, loff_t *ppos)
@@ -1598,8 +1630,9 @@ static const struct file_operations fops_reg_dump_stats = {
 };
 
 /**
- * tc956xmac_create_debugfs() - API to create debugfs node
- * for debugging.
+ * tc956xmac_create_debugfs() - API to create debugfs node for debugging.
+ *
+ * @net_device: pointer to the net device structure
  *
  * IN: Network device structure: TC956x network interface structure specific to port.
  * OUT: 0 on success and -1 on failure
@@ -1709,6 +1742,8 @@ fail:
 /**
  * tc956xmac_cleanup_debugfs() - API to cleanup debugfs node
  * for debugging.
+ *
+ * @net_device: pointer to the net device structure
  *
  * IN: Network device structure: TC956x network interface structure specific to port.
  * OUT: 0 on success and -1 on failure
@@ -2943,7 +2978,10 @@ static void tc956xmac_release_ptp(struct stmmac_priv *priv)
 #ifndef TC956X_SRIOV_VF
 /**
  *  tc956xmac_mac_flow_ctrl - Configure flow control in all queues
+ *
  *  @priv: driver private structure
+ *  @duplex: duplex value (?)
+ *
  *  Description: It is used for configuring the flow control in all queues
  */
 static void tc956xmac_mac_flow_ctrl(struct stmmac_priv *priv, u32 duplex)
@@ -5949,8 +5987,11 @@ static void tc956xmac_dma_operation_mode(struct stmmac_priv *priv)
 
 /**
  * tc956xmac_tx_clean - to manage the transmission completion
+ *
  * @priv: driver private structure
+ * @budget: NAPI budget (?)
  * @queue: TX queue index
+ *
  * Description: it reclaims the transmit resources after transmission completes.
  */
 static int tc956xmac_tx_clean(struct stmmac_priv *priv, int budget, u32 queue)
@@ -6539,7 +6580,9 @@ static void tc956xmac_tx_timer_arm(struct stmmac_priv *priv, u32 queue)
 
 /**
  * tc956xmac_tx_timer - mitigation sw timer for tx.
- * @data: data pointer
+ *
+ * @t: timer pointer
+ *
  * Description:
  * This is the timer handler to directly invoke the tc956xmac_tx_clean.
  */
@@ -7033,7 +7076,10 @@ static void tc956x_rx_crc_pad_config(struct stmmac_priv *priv, u32 crc_pad)
 #endif
 /**
  * tc956xmac_hw_setup - setup mac in a usable state.
- *  @dev : pointer to the device structure.
+ *
+ *  @dev: pointer to the device structure.
+ *  @init_ptp: whether to initialize PTP
+ *
  *  Description:
  *  this is the main function to setup the HW in a usable state because the
  *  dma engine is reset, the core registers are configured (e.g. AXI,
@@ -8187,7 +8233,7 @@ static bool tc956xmac_vlan_insert(struct stmmac_priv *priv, struct sk_buff *skb,
  *  @priv: driver private structure
  *  @des: buffer start address
  *  @total_len: total length to fill in descriptors
- *  @last_segmant: condition for the last descriptor
+ *  @last_segment: condition for the last descriptor
  *  @queue: TX queue index
  *  Description:
  *  This function fills descriptor and request new descriptors according to
@@ -9388,7 +9434,10 @@ static int tc956xmac_napi_poll_tx(struct napi_struct *napi, int budget)
 
 /**
  *  tc956xmac_tx_timeout
- *  @dev : Pointer to net device structure
+ *
+ *  @dev: Pointer to net device structure
+ *  @txqueue: (unused; kernel 5.6+)
+ *
  *  Description: this function is called when a packet transmission fails to
  *   complete within a reasonable time. The driver will mark the error in the
  *   netdev structure and arrange for the device to be reset to a sane state
@@ -9692,6 +9741,8 @@ static int tc956xmac_set_features(struct net_device *netdev,
 #if defined(TC956X_SRIOV_PF) && !defined(TC956X_AUTOMOTIVE_CONFIG) && !defined(TC956X_CPE_CONFIG) && !defined(TC956X_ENABLE_MAC2MAC_BRIDGE)
 /**
  * tc956xmac_rx_dma_error_recovery
+ *
+ * @priv: driver private structure
  *
  * \brief API to handle and recover from the dma err
  *
@@ -11289,15 +11340,11 @@ static int tc956xmac_config_vlan_filter(struct stmmac_priv *priv, void __user *d
 }
 
 /**
- *  tc956xmac_ioctl - Entry point for the Ioctl
- *  @dev: Device pointer.
- *  @rq: An IOCTL specefic structure, that can contain a pointer to
- *  a proprietary structure used to pass information to the driver.
- *  @cmd: IOCTL command
- *  Description:
- *  Currently it supports the phy_mii_ioctl(...) and HW time stamping.
- */
-/*!
+ * tc956x_xgmac_get_fw_status()
+ *
+ * @priv: driver private structure
+ * @data: user space target IOCTL data buffer
+ *
  * \brief API to Check the FW status
  * \param[in] tc956xmac priv structure
  * \param[in] An IOCTL specefic structure, that can contain a data pointer
@@ -11363,7 +11410,10 @@ static int tc956x_xgmac_get_fw_status(struct stmmac_priv *priv,
 
 /**
  * tc956x_ptp_configuration - Configure PTP
+ *
  * @priv: driver private structure
+ * @tcr_config: configuration value
+ *
  * Description: It is used for configuring the PTP
  * Return value:
  * 0 on success or negative error number.
@@ -15423,7 +15473,8 @@ int tc956x_platform_probe(struct stmmac_priv *priv, struct tc956xmac_resources *
 	return 0;
 }
 /**
- * tc956x_platform_probe
+ * tc956x_platform_resume()
+ *
  * @priv: driver private structure
  * @res: tc956xmac resource pointer
  * Description: this is the platform specific function
@@ -16575,7 +16626,7 @@ EXPORT_SYMBOL_GPL(tc956xmac_vf_suspend);
 #ifndef TC956X
 /**
  * tc956xmac_reset_queues_param - reset queue parameters
- * @dev: device pointer
+ * @priv: driver private structure
  */
 static void tc956xmac_reset_queues_param(struct stmmac_priv *priv)
 {

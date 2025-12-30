@@ -1819,7 +1819,7 @@ int phy_ethtool_get_eee_local(struct phy_device *phydev, struct ethtool_eee *dat
 
 /**
  * phylink_ethtool_get_eee_local() - read the energy efficient ethernet parameters
- * @pl: a pointer to a &struct phylink returned from phylink_create()
+ * @phydev: a pointer to a &struct phylink returned from phylink_create()
  * @eee: a pointer to a &struct ethtool_keee for the read parameters
  */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6,9,0)
