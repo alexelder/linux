@@ -1050,7 +1050,7 @@ static int tc_setup_cls(struct stmmac_priv *priv,
 }
 
 #if LINUX_VERSION_CODE > KERNEL_VERSION(5, 5, 0)
-struct timespec64 tc956x_calc_basetime(ktime_t old_base_time,
+struct timespec64 stm_calc_basetime(ktime_t old_base_time,
 					   ktime_t current_time,
 					   u64 cycle_time)
 {
@@ -1218,7 +1218,7 @@ static int tc_setup_taprio(struct stmmac_priv *priv,
 
 	tc956xmac_get_systime(priv, priv->ptpaddr, &system_time);
 	current_time_ns = ns_to_ktime(system_time);
-	time = tc956x_calc_basetime(qopt->base_time, current_time_ns, qopt->cycle_time);
+	time = stm_calc_basetime(qopt->base_time, current_time_ns, qopt->cycle_time);
 
 	tc956xmac_get_systime(priv, priv->ptpaddr, &system_time);
 

@@ -1430,14 +1430,14 @@ static const struct file_operations fops_intr_stats = {
 };
 
 /**
- * read_tc956x_cnfg_status() - Debugfs read command for configuration register status info
+ * read_stm_cnfg_status() - Debugfs read command for configuration register status info
  *
  * @file: "config_stats" debugfs file
  * @user_buf: user-space target buffer pointer
  * @count: number of bytes to read
  * @ppos: address of the file position field
  */
-static ssize_t read_tc956x_cnfg_status(struct file *file,
+static ssize_t read_stm_cnfg_status(struct file *file,
 	char __user *user_buf, size_t count, loff_t *ppos)
 {
 	struct stmmac_priv *priv = file->private_data;
@@ -1468,7 +1468,7 @@ static ssize_t read_tc956x_cnfg_status(struct file *file,
 }
 
 static const struct file_operations fops_cnfg_stats = {
-	.read = read_tc956x_cnfg_status,
+	.read = read_stm_cnfg_status,
 	.open = simple_open,
 	.owner = THIS_MODULE,
 	.llseek = default_llseek,
@@ -11734,7 +11734,7 @@ static int tc956xmac_config_ptpoffload(struct stmmac_priv *priv, void __user *da
 {
 	u32 pto_cntrl;
 	u32 varMAC_TCR;
-	struct tc956x_config_ptpoffloading ioctl_data;
+	struct stm_config_ptpoffloading ioctl_data;
 
 	DBGPR_FUNC(priv->device, "--> %s\n", __func__);
 
@@ -11876,7 +11876,7 @@ static int tc956xmac_aux_timestamp_enable(struct stmmac_priv *priv, void __user 
  */
 static int tc956xmac_config_onestep_timestamp(struct stmmac_priv *priv, void __user *data)
 {
-	struct tc956x_config_ost ioctl_data;
+	struct stm_config_ost ioctl_data;
 
 	DBGPR_FUNC(priv->device, "--> %s\n", __func__);
 

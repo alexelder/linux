@@ -271,7 +271,7 @@ struct tc956x_ioctl_aux_snapshot {
 	__u32 aux_snapshot_ctrl;
 };
 #ifdef TC956X_SRIOV_PF
-struct tc956x_config_ptpoffloading {
+struct stm_config_ptpoffloading {
 	__u32 cmd;
 	bool en_dis; /* Enable/Disable */
 	int mode;  /* PTP Ordinary/Transparent Slave, Ordinary/Transparent Master, Peer to Peer Transparent */
@@ -280,7 +280,7 @@ struct tc956x_config_ptpoffloading {
 	unsigned char mc_uc_addr[ETH_ALEN]; /* Mac Address */
 };
 
-struct tc956x_config_ost {
+struct stm_config_ost {
 	__u32 cmd;
 	bool en_dis; /* Enable/Disable OST */
 };
@@ -291,7 +291,7 @@ struct tc956xmac_ioctl_qmode_cfg {
 	__u32 queue_mode;
 };
 #elif defined TC956X_SRIOV_VF
-struct tc956x_config_ptpoffloading {
+struct stm_config_ptpoffloading {
 	__u32 cmd;
 	int en_dis;
 	int mode;
@@ -300,7 +300,7 @@ struct tc956x_config_ptpoffloading {
 	unsigned char mc_uc_addr[ETH_ALEN];
 };
 
-struct tc956x_config_ost {
+struct stm_config_ost {
 	__u32 cmd;
 	int en_dis;
 };

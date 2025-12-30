@@ -2338,7 +2338,7 @@ s32 tc956x_load_firmware(struct device *dev, struct tc956xmac_resources *res)
  * param[in] id   - pointer to base address of registers.
  * param[in] id	  - pointer to structure containing the TAMAP parameters
  */
-void tc956x_config_CM3_tamap(struct device *dev,
+void stm_config_CM3_tamap(struct device *dev,
 				void __iomem *reg_pci_base_addr,
 				struct tc956xmac_cm3_tamap *tamap,
 				u8 table_entry)
@@ -2388,7 +2388,7 @@ void tc956x_config_CM3_tamap(struct device *dev,
  * param[in] dev  - pointer to device structure.
  * param[in] id   - pointer to base address of registers.
  */
-static void tc956x_config_tamap(struct device *dev,
+static void stm_config_tamap(struct device *dev,
 				void __iomem *reg_pci_base_addr)
 {
 #ifdef TC956X
@@ -3459,7 +3459,7 @@ static int tc956xmac_pci_probe(struct pci_dev *pdev,
 		/* Configure Address Transslation block
 		 * Bridge Base address to be passed for TC956X
 		 */
-		tc956x_config_tamap(&pdev->dev, res.stm_BRIDGE_CFG_pci_base_addr);
+		stm_config_tamap(&pdev->dev, res.stm_BRIDGE_CFG_pci_base_addr);
 	}
 #endif /*#ifdef TC956X_SRIOV_VF*/
 #endif
@@ -4393,11 +4393,11 @@ static int tc956x_pcie_resume(struct device *dev)
 
 	if (tx956x_pci_shrd_mem[priv->pci_bd].pci_dev_active_cnt == TC956X_ALL_MAC_PORT_SUSPENDED) {
 		DBGPR_FUNC(&(pdev->dev), "%s : Tamap Re-configuration", __func__);
-		tc956x_config_tamap(&pdev->dev, priv->stm_BRIDGE_CFG_pci_base_addr);
+		stm_config_tamap(&pdev->dev, priv->stm_BRIDGE_CFG_pci_base_addr);
 #ifdef CONFIG_TC956X_DMA_OFFLOAD_ENABLE
 		for (i = 1; i <= MAX_CM3_TAMAP_ENTRIES; i++) {
 			if (priv->cm3_tamap[i-1].valid)
-				tc956x_config_CM3_tamap(&pdev->dev, priv->stm_BRIDGE_CFG_pci_base_addr,
+				stm_config_CM3_tamap(&pdev->dev, priv->stm_BRIDGE_CFG_pci_base_addr,
 							&priv->cm3_tamap[i-1], i);
 		}
 

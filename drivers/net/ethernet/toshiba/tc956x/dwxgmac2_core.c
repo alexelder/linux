@@ -1234,7 +1234,7 @@ static int tc956x_mac_duplication(struct stmmac_priv *priv,
 
 }
 
-static int tc956x_check_mac_duplication(struct net_device *dev, const u8 *mac, int vf)
+static int stm_check_mac_duplication(struct net_device *dev, const u8 *mac, int vf)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 	struct stm_mac_addr *mac_table = &priv->mac_table[0];
@@ -1280,7 +1280,7 @@ static int stm_add_sw_mac_table(struct net_device *dev, const u8 *mac, int vf)
 	} else {
 	}
 
-	ret_value = tc956x_check_mac_duplication(dev, mac, vf);
+	ret_value = stm_check_mac_duplication(dev, mac, vf);
 	if (ret_value == TC956X_MAC_STATE_NEW)
 		ret_value = stm_add_actual_mac_table(dev, mac, vf);
 
@@ -1743,7 +1743,7 @@ static int tc956x_vlan_duplication_helper(struct stm_vlan_id *vlan_table,
 	return ret_value;
 }
 
-static int tc956x_check_vlan_duplication(struct net_device *dev, u16 vid, int vf)
+static int stm_check_vlan_duplication(struct net_device *dev, u16 vid, int vf)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 	struct stm_vlan_id *vlan_table = &priv->vlan_table[0];
@@ -1812,7 +1812,7 @@ static void dwxgmac2_update_vlan_hash(struct stmmac_priv *priv,
 		writel(value, ioaddr + XGMAC_VLAN_TAG);
 	}
 
-	ret_value = tc956x_check_vlan_duplication(dev, vid, vf);
+	ret_value = stm_check_vlan_duplication(dev, vid, vf);
 	if (ret_value == TC956X_MAC_STATE_NEW)
 		ret_value = stm_add_actual_vlan_table(dev, vid, vf);
 

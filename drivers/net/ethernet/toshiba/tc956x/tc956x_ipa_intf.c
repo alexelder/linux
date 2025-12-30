@@ -1020,7 +1020,7 @@ int request_event(struct net_device *ndev, struct channel_info *channel, dma_add
 			tamap.trsl_addr_low = lower_32_bits(trsl_addr);
 			tamap.atr_size = CM3_TAMAP_ATR_SIZE;
 
-			tc956x_config_CM3_tamap(priv->device, priv->stm_BRIDGE_CFG_pci_base_addr,
+			stm_config_CM3_tamap(priv->device, priv->stm_BRIDGE_CFG_pci_base_addr,
 							&tamap, table_entry);
 			break;
 		}

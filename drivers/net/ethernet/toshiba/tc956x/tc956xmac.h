@@ -656,7 +656,7 @@ struct tc956xmac_rfs_entry {
 	int tc;
 };
 
-struct tc956x_cbs_params {
+struct stm_cbs_params {
 	u32 send_slope;
 	u32 idle_slope;
 	u32 high_credit;
@@ -849,11 +849,11 @@ struct stmmac_priv {
 	unsigned char flag;
 #endif
 	/* CBS configurations */
-	struct tc956x_cbs_params cbs_speed100_cfg[8];
-	struct tc956x_cbs_params cbs_speed1000_cfg[8];
-	struct tc956x_cbs_params cbs_speed2500_cfg[8];
-	struct tc956x_cbs_params cbs_speed5000_cfg[8];
-	struct tc956x_cbs_params cbs_speed10000_cfg[8];
+	struct stm_cbs_params cbs_speed100_cfg[8];
+	struct stm_cbs_params cbs_speed1000_cfg[8];
+	struct stm_cbs_params cbs_speed2500_cfg[8];
+	struct stm_cbs_params cbs_speed5000_cfg[8];
+	struct stm_cbs_params cbs_speed10000_cfg[8];
 	/* TC Handling */
 	unsigned int tc_entries_max;
 	unsigned int tc_off_max;
@@ -1316,7 +1316,7 @@ int tc956x_vf_rsc_mng_get_fn_id(struct stmmac_priv *priv, void __iomem *reg_pci_
 				       struct fn_id *fn_id_info);
 
 #endif
-void tc956x_config_CM3_tamap(struct device *dev,
+void stm_config_CM3_tamap(struct device *dev,
 				void __iomem *reg_pci_base_addr,
 				struct tc956xmac_cm3_tamap *tamap,
 				u8 table_entry);
@@ -1361,7 +1361,7 @@ extern int phy_ethtool_set_eee_2p5(struct phy_device *phydev, struct ethtool_eee
 #endif /* TC956X_SRIOV_VF */
 
 #if LINUX_VERSION_CODE > KERNEL_VERSION(5, 5, 0)
-struct timespec64 tc956x_calc_basetime(ktime_t old_base_time,
+struct timespec64 stm_calc_basetime(ktime_t old_base_time,
 					   ktime_t current_time,
 					   u64 cycle_time);
 #endif

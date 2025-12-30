@@ -100,7 +100,7 @@ struct rx_filter_info {
 	struct rxp_filter_entry entries[128];	/* FRP table entries */
 };
 
-enum tc956x_ch_flags {
+enum stm_ch_flags {
 	TC956X_CONTIG_BUFS = BIT(0), /* Alloc entire ring buffer memory as a contiguous block */
 	/*...*/
 };
