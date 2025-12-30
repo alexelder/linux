@@ -576,9 +576,9 @@ static unsigned int mac1_axi_rd_osr_lmt = 31;
 
 static unsigned int mac0_axi_blen;
 static unsigned int mac1_axi_blen;
-static const struct tc956x_version tc956x_drv_version = {0, 6, 0, 0, 0, 0};
+static const struct tc956x_version stm_drv_version = {0, 6, 0, 0, 0, 0};
 int tc956xmac_pm_usage_counter; /* Device Usage Counter */
-int tc956x_dsp_count;
+int stm_dsp_count;
 #ifdef TC956X_SRIOV_PF
 #ifdef CONFIG_TC956X_MAGIC_PACKET_WOL_GPIO
 static void tc956x_wol_gpio_trigger(void __iomem *reg_base_addr, bool mode);
@@ -2840,16 +2840,16 @@ static int tc956xmac_pci_probe(struct pci_dev *pdev,
 	DBGPR_FUNC(&(pdev->dev), "-->%s\n", __func__);
 #ifndef TC956X_SRIOV_VF
 	scnprintf(version_str, sizeof(version_str), "Host Driver Version %d%d-%d%d-%d%d",
-		tc956x_drv_version.rel_dbg,
-		tc956x_drv_version.major, tc956x_drv_version.minor,
-		tc956x_drv_version.sub_minor,
-		tc956x_drv_version.patch_rel_major, tc956x_drv_version.patch_rel_minor);
+		stm_drv_version.rel_dbg,
+		stm_drv_version.major, stm_drv_version.minor,
+		stm_drv_version.sub_minor,
+		stm_drv_version.patch_rel_major, stm_drv_version.patch_rel_minor);
 #else
 	scnprintf(version_str, sizeof(version_str), "Virtual Function Driver Version %d%d-%d%d-%d%d",
-		tc956x_drv_version.rel_dbg,
-		tc956x_drv_version.major, tc956x_drv_version.minor,
-		tc956x_drv_version.sub_minor,
-		tc956x_drv_version.patch_rel_major, tc956x_drv_version.patch_rel_minor);
+		stm_drv_version.rel_dbg,
+		stm_drv_version.major, stm_drv_version.minor,
+		stm_drv_version.sub_minor,
+		stm_drv_version.patch_rel_major, stm_drv_version.patch_rel_minor);
 #endif
 	NMSGPR_INFO(&pdev->dev, "%s\n", version_str);
 
@@ -3970,15 +3970,15 @@ static int tc956x_pcie_pm_enable_pci(struct pci_dev *pdev)
  */
 static int tc956x_pcie_pm_pci(struct pci_dev *pdev, enum TC956X_PORT_PM_STATE state)
 {
-	static struct pci_dev *tc956x_pd = NULL, *tc956x_dsp_ep = NULL, *tc956x_port_pdev[2] = {NULL};
+	static struct pci_dev *tc956x_pd = NULL, *stm_dsp_ep = NULL, *tc956x_port_pdev[2] = {NULL};
 	struct pci_bus *bus = NULL;
 	int ret = 0, i = 0, p = 0;
 	struct net_device *ndev = dev_get_drvdata(&pdev->dev);
 	struct stmmac_priv *priv = netdev_priv(ndev);
 
 	if (tx956x_pci_shrd_mem[priv->pci_bd].pci_dev_active_cnt == TC956X_ALL_MAC_PORT_SUSPENDED) {
-		tc956x_dsp_ep = pci_upstream_bridge(pdev);
-		bus = tc956x_dsp_ep->subordinate;
+		stm_dsp_ep = pci_upstream_bridge(pdev);
+		bus = stm_dsp_ep->subordinate;
 
 		if (bus)
 			list_for_each_entry(tc956x_pd, &bus->devices, bus_list)

@@ -954,7 +954,7 @@ static void tc956x_set_dma_ch(struct stmmac_priv *priv, struct mac_device_info *
 
 }
 
-static void tc956x_del_dma_ch(struct stmmac_priv *priv, struct mac_device_info *hw,
+static void stm_del_dma_ch(struct stmmac_priv *priv, struct mac_device_info *hw,
 				int index, int vf)
 {
 	u32 data = 0, reg_data = 0;
@@ -1029,7 +1029,7 @@ static void tc956x_set_mac_addr(struct stmmac_priv *priv, struct mac_device_info
 #endif
 }
 
-static void tc956x_del_mac_addr(struct stmmac_priv *priv, struct mac_device_info *hw,
+static void stm_del_mac_addr(struct stmmac_priv *priv, struct mac_device_info *hw,
 				int index, int vf)
 {
 	void __iomem *ioaddr = hw->pcsr;
@@ -1051,7 +1051,7 @@ static void tc956x_del_mac_addr(struct stmmac_priv *priv, struct mac_device_info
 
 }
 
-static void tc956x_del_sw_mac_helper(struct stm_mac_addr *mac_table, int vf)
+static void stm_del_sw_mac_helper(struct stm_mac_addr *mac_table, int vf)
 {
 	int vf_number;
 
@@ -1066,7 +1066,7 @@ static void tc956x_del_sw_mac_helper(struct stm_mac_addr *mac_table, int vf)
 	}
 }
 
-static void tc956x_del_sw_mac_table(struct net_device *dev,
+static void stm_del_sw_mac_table(struct net_device *dev,
 						const u8 *mac, int vf)
 {
 	int i;
@@ -1084,7 +1084,7 @@ static void tc956x_del_sw_mac_table(struct net_device *dev,
 	     i++, mac_table++) {
 		if (mac_table->status == TC956X_MAC_STATE_OCCUPIED) {
 			if (ether_addr_equal(mac, mac_table->mac_address)) {
-				tc956x_del_sw_mac_helper(mac_table, vf);
+				stm_del_sw_mac_helper(mac_table, vf);
 				flag = 1;
 				break;
 			}
@@ -1114,10 +1114,10 @@ static void tc956x_del_sw_mac_table(struct net_device *dev,
 				writel(data1, ioaddr + XGMAC_HASH_TAB_0_31);
 				writel(data2, ioaddr + XGMAC_HASH_TAB_32_63);
 			}
-			tc956x_del_mac_addr(priv, hw, i, vf);
+			stm_del_mac_addr(priv, hw, i, vf);
 #ifdef TC956X_SRIOV_PF
 		} else {
-			tc956x_del_dma_ch(priv, hw, i, vf);
+			stm_del_dma_ch(priv, hw, i, vf);
 #endif
 		}
 	}
@@ -1310,7 +1310,7 @@ int tc956x_pf_set_mac_filter(struct net_device *dev,
 void tc956x_pf_del_mac_filter(struct net_device *dev,
 	int vf, const u8 *mac)
 {
-	tc956x_del_sw_mac_table(dev, mac, vf);
+	stm_del_sw_mac_table(dev, mac, vf);
 }
 
 void tc956x_pf_del_umac_addr(struct stmmac_priv *priv,
@@ -1318,8 +1318,8 @@ void tc956x_pf_del_umac_addr(struct stmmac_priv *priv,
 {
 	struct mac_device_info *hw = priv->hw;
 
-	tc956x_del_mac_addr(priv, hw, index, vf);
-	tc956x_del_dma_ch(priv, hw, 0, vf);
+	stm_del_mac_addr(priv, hw, index, vf);
+	stm_del_dma_ch(priv, hw, 0, vf);
 }
 #endif
 
@@ -1345,7 +1345,7 @@ static int stm_add_mac_addr(struct net_device *dev, const unsigned char *mac)
 	return ret_value;
 }
 
-static int tc956x_delete_mac_addr(struct net_device *dev,
+static int stm_delete_mac_addr(struct net_device *dev,
 	const unsigned char *mac)
 {
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
@@ -1355,7 +1355,7 @@ static int tc956x_delete_mac_addr(struct net_device *dev,
 	spin_lock_irqsave(&priv->spn_lock.mac_filter, flags);
 #endif
 
-	tc956x_del_sw_mac_table(dev, mac, PF_DRIVER);
+	stm_del_sw_mac_table(dev, mac, PF_DRIVER);
 
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 	spin_unlock_irqrestore(&priv->spn_lock.mac_filter, flags);
@@ -1397,9 +1397,9 @@ static void dwxgmac2_set_filter(struct stmmac_priv *priv, struct mac_device_info
 		for (i = 0; i < XGMAC_MAX_HASH_TABLE; i++)
 			writel(~0x0, ioaddr + XGMAC_HASH_TABLE(i));
 	} else {
-		__dev_uc_sync(dev, stm_add_mac_addr, tc956x_delete_mac_addr);
+		__dev_uc_sync(dev, stm_add_mac_addr, stm_delete_mac_addr);
 
-		__dev_mc_sync(dev, stm_add_mac_addr, tc956x_delete_mac_addr);
+		__dev_mc_sync(dev, stm_add_mac_addr, stm_delete_mac_addr);
 	}
 #ifdef TC956X
 	if (dev->features & NETIF_F_HW_VLAN_CTAG_FILTER)
@@ -1479,7 +1479,7 @@ static int dwxgmac2_rss_configure(struct stmmac_priv *priv,
 	return 0;
 }
 #endif /* TC956X_UNSUPPORTED_UNTESTED_FEATURE */
-static void tc956x_del_vlan_addr(struct stmmac_priv *priv, struct mac_device_info *hw, int count)
+static void stm_del_vlan_addr(struct stmmac_priv *priv, struct mac_device_info *hw, int count)
 {
 	void __iomem *ioaddr = hw->pcsr;
 	unsigned long data = 0;
@@ -1560,7 +1560,7 @@ static void tc956x_vlan_addr_reg(struct stmmac_priv *priv, struct mac_device_inf
 
 }
 
-static void tc956x_del_sw_vlan_helper(struct stm_vlan_id *vlan_table,
+static void stm_del_sw_vlan_helper(struct stm_vlan_id *vlan_table,
 	u16 vid, u16 vf)
 {
 	int vf_number;
@@ -1583,7 +1583,7 @@ static void tc956x_del_sw_vlan_helper(struct stm_vlan_id *vlan_table,
 	}
 }
 
-static void tc956x_del_sw_vlan_table(struct stmmac_priv *priv, struct net_device *dev, u16 vid, u16 vf)
+static void stm_del_sw_vlan_table(struct stmmac_priv *priv, struct net_device *dev, u16 vid, u16 vf)
 {
 	int i;
 	struct mac_device_info *hw = priv->hw;
@@ -1598,7 +1598,7 @@ static void tc956x_del_sw_vlan_table(struct stmmac_priv *priv, struct net_device
 		if (vlan_table->status == TC956X_MAC_STATE_OCCUPIED) {
 			if (vlan_table->vid == vid) {
 				flag = 1;
-				tc956x_del_sw_vlan_helper
+				stm_del_sw_vlan_helper
 					(vlan_table, vid, vf);
 				break;
 			}
@@ -1640,7 +1640,7 @@ static void tc956x_del_sw_vlan_table(struct stmmac_priv *priv, struct net_device
 				writel(old_index, priv->ioaddr +
 				XGMAC_VLAN_HASH_TABLE);
 			}
-			tc956x_del_vlan_addr(priv, hw, i);
+			stm_del_vlan_addr(priv, hw, i);
 		}
 	} else {
 		KPRINT_INFO("Passed id is not present\n");
@@ -1831,7 +1831,7 @@ void tc956x_pf_del_vlan_filter(struct net_device *dev, u16 vf, u16 vid)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 
-	tc956x_del_sw_vlan_table(priv, dev, vid, vf);
+	stm_del_sw_vlan_table(priv, dev, vid, vf);
 }
 #endif
 
@@ -3233,7 +3233,7 @@ const struct stmmac_ops dwxgmac210_ops = {
 	.rss_configure = dwxgmac2_rss_configure,
 #endif /* TC956X_UNSUPPORTED_UNTESTED_FEATURE */
 	.update_vlan_hash = dwxgmac2_update_vlan_hash,
-	.delete_vlan = tc956x_del_sw_vlan_table,
+	.delete_vlan = stm_del_sw_vlan_table,
 	.rx_parser_init = dwxgmac2_rx_parser_init,
 	.rxp_config = dwxgmac3_rxp_config,
 	.get_mac_tx_timestamp = dwxgmac2_get_mac_tx_timestamp,

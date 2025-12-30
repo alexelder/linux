@@ -511,7 +511,7 @@ static int dwxgmac2_rx_parser_read_entry(struct stmmac_priv *priv,
 }
 
 
-int tc956x_dump_regs(struct net_device *net_device, struct tc956x_regs *regs)
+int stm_dump_regs(struct net_device *net_device, struct tc956x_regs *regs)
 {
 	struct stmmac_priv *priv = netdev_priv(net_device);
 	u32 rx_queues_cnt = priv->plat->rx_queues_to_use;
@@ -791,7 +791,7 @@ int tc956x_dump_regs(struct net_device *net_device, struct tc956x_regs *regs)
 
 	return 0;
 }
-EXPORT_SYMBOL_GPL(tc956x_dump_regs);
+EXPORT_SYMBOL_GPL(stm_dump_regs);
 #endif
 
 int tc956x_print_debug_regs(struct net_device *net_device, struct tc956x_regs *regs)
@@ -1282,14 +1282,14 @@ static const struct file_operations fops_mtl_stats = {
 };
 
 /**
- * read_tc956x_dma_status() - Debugfs read command for dma status info
+ * read_stm_dma_status() - Debugfs read command for dma status info
  *
  * @file: "dma_stats" debugfs file
  * @user_buf: user-space target buffer pointer
  * @count: number of bytes to read
  * @ppos: address of the file position field
  */
-static ssize_t read_tc956x_dma_status(struct file *file,
+static ssize_t read_stm_dma_status(struct file *file,
 	char __user *user_buf, size_t count, loff_t *ppos)
 {
 	struct stmmac_priv *priv = file->private_data;
@@ -1370,7 +1370,7 @@ static ssize_t read_tc956x_dma_status(struct file *file,
 }
 
 static const struct file_operations fops_dma_stats = {
-	.read = read_tc956x_dma_status,
+	.read = read_stm_dma_status,
 	.open = simple_open,
 	.owner = THIS_MODULE,
 	.llseek = default_llseek,
@@ -15295,7 +15295,7 @@ static bool lookfor_macid(char *file_buf, uint8_t port_id, uint8_t dev_id)
 {
 	char *string = NULL, *token_n = NULL, *token_s = NULL, *token_m = NULL;
 	bool status = false;
-	int tc956x_device_no = 0;
+	int stm_device_no = 0;
 	int total_valid_addr = 0;
 
 	string = file_buf;
@@ -15311,7 +15311,7 @@ static bool lookfor_macid(char *file_buf, uint8_t port_id, uint8_t dev_id)
 				if (strncmp(token_s, config_param_list[0].mdio_key, 9) == 0) {
 					token_s = strsep(&token_n, " ");
 					token_m = strsep(&token_s, ":");
-					sscanf(token_m, "%d", &tc956x_device_no);
+					sscanf(token_m, "%d", &stm_device_no);
 #if (!defined(TC956X_AUTOMOTIVE_CONFIG) && !defined(TC956X_ENABLE_MAC2MAC_BRIDGE) && !defined(TC956X_CPE_CONFIG))
 #ifdef TC956X_SRIOV_VF
 
@@ -15319,17 +15319,17 @@ static bool lookfor_macid(char *file_buf, uint8_t port_id, uint8_t dev_id)
 					char *dev_no = &token_n[6];
 					char *port_no = &token_n[7];
 
-					if (((tc956x_device_no != mdio_bus_id) &&
+					if (((stm_device_no != mdio_bus_id) &&
 						(*port_no != (char)(port_id + 49))) ||
 						(*dev_no != (char)(dev_id + 49)))
 #else
-					if (((tc956x_device_no != mdio_bus_id) &&
+					if (((stm_device_no != mdio_bus_id) &&
 						(*port_no != (char)(port_id + 49))) ||
 						(*dev_no != (char)(dev_id + 48)))
 #endif
 					}
 #else
-					if (tc956x_device_no != mdio_bus_id)
+					if (stm_device_no != mdio_bus_id)
 #endif
 					{
 						token_n = strsep(&string, "\n");

@@ -1227,7 +1227,7 @@ struct tc956x_regs {
 
 };
 
-int tc956x_dump_regs(struct net_device *net_device, struct tc956x_regs *regs);
+int stm_dump_regs(struct net_device *net_device, struct tc956x_regs *regs);
 int tc956x_print_debug_regs(struct net_device *net_device, struct tc956x_regs *regs);
 int tc956xmac_mdio_unregister(struct net_device *ndev);
 int tc956xmac_mdio_register(struct net_device *ndev);
@@ -1282,7 +1282,7 @@ static inline int tc956xmac_selftest_get_count(struct stmmac_priv *priv)
 s32 tc956x_load_firmware(struct device *dev, struct tc956xmac_resources *res);
 #endif
 extern int tc956xmac_pm_usage_counter;
-extern int tc956x_dsp_count;
+extern int stm_dsp_count;
 #if defined(TC956X_SRIOV_PF) && !defined(TC956X_AUTOMOTIVE_CONFIG) && !defined(TC956X_ENABLE_MAC2MAC_BRIDGE) && !defined(TC956X_CPE_CONFIG)
 int tc956x_pf_get_fn_idx_from_int_sts(struct stmmac_priv *priv,
 					     struct fn_id *fn_id_info);
