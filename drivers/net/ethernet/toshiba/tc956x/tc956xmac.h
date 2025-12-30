@@ -1279,7 +1279,7 @@ static inline int tc956xmac_selftest_get_count(struct stmmac_priv *priv)
 /* Function Prototypes */
 
 #ifndef TC956X_SRIOV_VF
-s32 tc956x_load_firmware(struct device *dev, struct tc956xmac_resources *res);
+s32 stm_load_firmware(struct device *dev, struct tc956xmac_resources *res);
 #endif
 extern int tc956xmac_pm_usage_counter;
 extern int stm_dsp_count;

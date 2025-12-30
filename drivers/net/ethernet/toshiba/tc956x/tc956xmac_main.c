@@ -16704,7 +16704,7 @@ int tc956xmac_vf_resume(struct device *dev)
 		res.addr = priv->ioaddr;
 		res.stm_SRAM_pci_base_addr = priv->stm_SRAM_pci_base_addr;
 		res.irq = priv->dev->irq;
-		fw_load_status = tc956x_load_firmware(dev, &res);
+		fw_load_status = stm_load_firmware(dev, &res);
 		if (fw_load_status < 0) {
 			KPRINT_ERR("Firmware load failed\n");
 			return -EINVAL;

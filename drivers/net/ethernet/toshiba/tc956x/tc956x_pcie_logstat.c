@@ -182,13 +182,13 @@ int tc956x_pcie_ioctl_state_log_summary(const struct stmmac_priv *priv, void __u
 		ret = -EFAULT;
 
 	if (ret == 0)
-		ret = tc956x_logstat_state_log_summary(priv->ioaddr, ioctl_data.port);
+		ret = stm_logstat_state_log_summary(priv->ioaddr, ioctl_data.port);
 
 	return ret;
 }
 
 /**
- * tc956x_logstat_state_log_summary()
+ * stm_logstat_state_log_summary()
  *
  * @pbase_addr: user space target buffer for IOCTL
  * @nport: PCIe port number
@@ -210,7 +210,7 @@ int tc956x_pcie_ioctl_state_log_summary(const struct stmmac_priv *priv, void __u
  *
  * \return -EFAULT in case of copy failure, otherwise 0
  */
-int tc956x_logstat_state_log_summary(void __iomem *pbase_addr, enum ports nport)
+int stm_logstat_state_log_summary(void __iomem *pbase_addr, enum ports nport)
 {
 	int ret = 0;
 	uint8_t state = 0, dll = 0, speed = 0, width = 0, status = 0;
@@ -228,12 +228,12 @@ int tc956x_logstat_state_log_summary(void __iomem *pbase_addr, enum ports nport)
 	if (ret == 0) {
 		KPRINT_INFO("State Transition Log Summary : %s\n", pcie_port[nport]);
 		/* Get PCIe LTSSM, DLL, Speed, Width, State Log Status & Disable Stop State Logging */
-		if ((tc956x_logstat_get_pcie_cur_ltssm(pbase_addr, nport, &state) < 0)
-		|| (tc956x_logstat_get_pcie_cur_dll(pbase_addr, nport, &dll) < 0)
-		|| (tc956x_logstat_get_pcie_cur_speed(pbase_addr, nport, &speed) < 0)
-		|| (tc956x_logstat_get_pcie_cur_width(pbase_addr, nport, &width) < 0)
-		|| (tc956x_logstat_set_state_log_enable(pbase_addr, nport, STATE_LOG_DISABLE) < 0)
-		|| (tc956x_logstat_get_state_log_stop_status(pbase_addr, nport, &status) < 0)) {
+		if ((stm_logstat_get_pcie_cur_ltssm(pbase_addr, nport, &state) < 0)
+		|| (stm_logstat_get_pcie_cur_dll(pbase_addr, nport, &dll) < 0)
+		|| (stm_logstat_get_pcie_cur_speed(pbase_addr, nport, &speed) < 0)
+		|| (stm_logstat_get_pcie_cur_width(pbase_addr, nport, &width) < 0)
+		|| (stm_logstat_set_state_log_enable(pbase_addr, nport, STATE_LOG_DISABLE) < 0)
+		|| (stm_logstat_get_state_log_stop_status(pbase_addr, nport, &status) < 0)) {
 			ret = -1;
 			goto end;
 		}
@@ -242,8 +242,8 @@ int tc956x_logstat_state_log_summary(void __iomem *pbase_addr, enum ports nport)
 		/* State Logging Should Stop after Disabling State Log */
 		/* Read State Log Data for each fifo pointer */
 		for (fptr = 0; fptr <= MAX_FIFO_READ_POINTER; fptr++) {
-			if ((tc956x_logstat_set_state_log_fifo_ptr(pbase_addr, nport, fptr) < 0)
-			|| (tc956x_logstat_get_state_log_data(pbase_addr, nport, &val) < 0)) {
+			if ((stm_logstat_set_state_log_fifo_ptr(pbase_addr, nport, fptr) < 0)
+			|| (stm_logstat_get_state_log_data(pbase_addr, nport, &val) < 0)) {
 				ret = -1;
 				goto end;
 			}
@@ -262,7 +262,7 @@ int tc956x_logstat_state_log_summary(void __iomem *pbase_addr, enum ports nport)
 			if (fifo_array[fptr] != INVALID_STATE_LOG) {
 				cur_state = fifo_array[fptr];
 				/* Start analyzing only after prev_state is set */
-				ret = tc956x_logstat_state_log_analyze(cur_state);
+				ret = stm_logstat_state_log_analyze(cur_state);
 				if (ret < 0)
 					goto end;
 
@@ -286,7 +286,7 @@ end:
 }
 
 /**
- * tc956x_logstat_get_state_log_stop_status()
+ * stm_logstat_get_state_log_stop_status()
  *
  * @pbase_addr: pointer to Bar4 base address.
  * @nport: log start/stop for port passed.
@@ -304,7 +304,7 @@ end:
  *
  * \return -EFAULT in case of copy failure, otherwise 0
  */
-int tc956x_logstat_get_state_log_stop_status(void __iomem *pbase_addr, enum ports nport, uint8_t *pstop_status)
+int stm_logstat_get_state_log_stop_status(void __iomem *pbase_addr, enum ports nport, uint8_t *pstop_status)
 {
 	int ret = 0;
 	uint32_t regval = 0;
@@ -327,7 +327,7 @@ int tc956x_logstat_get_state_log_stop_status(void __iomem *pbase_addr, enum port
 
 
 /**
- * tc956x_logstat_set_state_log_fifo_ptr()
+ * stm_logstat_set_state_log_fifo_ptr()
  *
  * @pbase_addr: pointer to Bar4 base address.
  * @nport: log start/stop for port passed.
@@ -344,7 +344,7 @@ int tc956x_logstat_get_state_log_stop_status(void __iomem *pbase_addr, enum port
  *
  * \return -EFAULT in case of copy failure, otherwise 0
  */
-int tc956x_logstat_set_state_log_fifo_ptr(void __iomem *pbase_addr, enum ports nport, uint8_t fifo_pointer)
+int stm_logstat_set_state_log_fifo_ptr(void __iomem *pbase_addr, enum ports nport, uint8_t fifo_pointer)
 {
 	int ret = 0;
 	uint32_t regval = 0;
@@ -368,7 +368,7 @@ int tc956x_logstat_set_state_log_fifo_ptr(void __iomem *pbase_addr, enum ports n
 }
 
 /**
- * tc956x_logstat_get_state_log_data()
+ * stm_logstat_get_state_log_data()
  *
  * @pbase_addr: pointer to Bar4 base address.
  * @nport: log start/stop for port passed.
@@ -384,7 +384,7 @@ int tc956x_logstat_set_state_log_fifo_ptr(void __iomem *pbase_addr, enum ports n
  *
  * \return -EFAULT in case of copy failure, otherwise 0
  */
-int tc956x_logstat_get_state_log_data(void __iomem *pbase_addr, enum ports nport, uint32_t *pstate_log_data)
+int stm_logstat_get_state_log_data(void __iomem *pbase_addr, enum ports nport, uint32_t *pstate_log_data)
 {
 	int ret = 0;
 	uint32_t port_offset; /* Port Address Register Offset */
@@ -404,7 +404,7 @@ int tc956x_logstat_get_state_log_data(void __iomem *pbase_addr, enum ports nport
 }
 
 /**
- * tc956x_logstat_state_log_analyze()
+ * stm_logstat_state_log_analyze()
  *
  * @cur_state: FIFO register data containing current state of pcie.
  *
@@ -416,9 +416,9 @@ int tc956x_logstat_get_state_log_data(void __iomem *pbase_addr, enum ports nport
  *
  * \return always 0.
  */
-int tc956x_logstat_state_log_analyze(uint32_t cur_state)
+int stm_logstat_state_log_analyze(uint32_t cur_state)
 {
-	union tc956x_logstat_State_Log_Data curr_state_log_data;
+	union stm_logstat_State_Log_Data curr_state_log_data;
 	uint8_t timeout = 0, activelane = 0, l1_substate = 0, tx_l0s = 0, rx_l0s = 0, eqphase = 0, ltssm = 0;
 	uint8_t l1ss[20], txl0s_dec[20], rxl0s_dec[20], ltssm_dec[30];
 	uint8_t append_str[150];
@@ -553,10 +553,10 @@ int tc956x_pcie_ioctl_get_pcie_link_params(const struct stmmac_priv *priv, void 
 		ret = -EFAULT;
 
 	if (ret == 0) {
-		if ((tc956x_logstat_get_pcie_cur_ltssm(priv->ioaddr, ioctl_data.port, &(link_param.ltssm)) < 0)
-		|| (tc956x_logstat_get_pcie_cur_dll(priv->ioaddr, ioctl_data.port, &(link_param.dll)) < 0)
-		|| (tc956x_logstat_get_pcie_cur_speed(priv->ioaddr, ioctl_data.port, &(link_param.speed)) < 0)
-		|| (tc956x_logstat_get_pcie_cur_width(priv->ioaddr, ioctl_data.port, &(link_param.width)) < 0)) {
+		if ((stm_logstat_get_pcie_cur_ltssm(priv->ioaddr, ioctl_data.port, &(link_param.ltssm)) < 0)
+		|| (stm_logstat_get_pcie_cur_dll(priv->ioaddr, ioctl_data.port, &(link_param.dll)) < 0)
+		|| (stm_logstat_get_pcie_cur_speed(priv->ioaddr, ioctl_data.port, &(link_param.speed)) < 0)
+		|| (stm_logstat_get_pcie_cur_width(priv->ioaddr, ioctl_data.port, &(link_param.width)) < 0)) {
 			ret = -EFAULT;
 		}
 	}
@@ -571,7 +571,7 @@ int tc956x_pcie_ioctl_get_pcie_link_params(const struct stmmac_priv *priv, void 
 }
 
 /**
- * tc956x_logstat_get_pcie_cur_ltssm()
+ * stm_logstat_get_pcie_cur_ltssm()
  *
  * @pbase_addr: pointer to BAR4 base address.
  * @nport: port for which to get current ltssm value.
@@ -588,7 +588,7 @@ int tc956x_pcie_ioctl_get_pcie_link_params(const struct stmmac_priv *priv, void 
  *
  * \return -EFAULT in case of bad address, otherwise 0
  */
-int tc956x_logstat_get_pcie_cur_ltssm(void __iomem *pbase_addr, enum ports nport, uint8_t *pltssm)
+int stm_logstat_get_pcie_cur_ltssm(void __iomem *pbase_addr, enum ports nport, uint8_t *pltssm)
 {
 	int ret = 0;
 	uint32_t regval;
@@ -612,7 +612,7 @@ int tc956x_logstat_get_pcie_cur_ltssm(void __iomem *pbase_addr, enum ports nport
 }
 
 /**
- * tc956x_logstat_get_pcie_cur_dll()
+ * stm_logstat_get_pcie_cur_dll()
  *
  * @pbase_addr: pointer to BAR4 base address.
  * @nport: port for which to get current ltssm value.
@@ -628,7 +628,7 @@ int tc956x_logstat_get_pcie_cur_ltssm(void __iomem *pbase_addr, enum ports nport
  *
  * \return -EFAULT in case of bad address, otherwise 0
  */
-int tc956x_logstat_get_pcie_cur_dll(void __iomem *pbase_addr, enum ports nport, uint8_t *pdll)
+int stm_logstat_get_pcie_cur_dll(void __iomem *pbase_addr, enum ports nport, uint8_t *pdll)
 {
 	int ret = 0;
 	uint32_t regval;
@@ -650,7 +650,7 @@ int tc956x_logstat_get_pcie_cur_dll(void __iomem *pbase_addr, enum ports nport, 
 }
 
 /**
- * tc956x_logstat_get_pcie_cur_speed()
+ * stm_logstat_get_pcie_cur_speed()
  *
  * @pbase_addr: pointer to BAR4 base address.
  * @nport: port for which to get current ltssm value.
@@ -666,7 +666,7 @@ int tc956x_logstat_get_pcie_cur_dll(void __iomem *pbase_addr, enum ports nport, 
  *
  * \return -EFAULT in case of bad address, otherwise 0
  */
-int tc956x_logstat_get_pcie_cur_speed(void __iomem *pbase_addr, enum ports nport, uint8_t *pspeed_val)
+int stm_logstat_get_pcie_cur_speed(void __iomem *pbase_addr, enum ports nport, uint8_t *pspeed_val)
 {
 	int ret = 0;
 	uint32_t regval;
@@ -686,7 +686,7 @@ int tc956x_logstat_get_pcie_cur_speed(void __iomem *pbase_addr, enum ports nport
 }
 
 /**
- * tc956x_logstat_get_pcie_cur_width()
+ * stm_logstat_get_pcie_cur_width()
  *
  * @pbase_addr: pointer to BAR4 base address.
  * @nport: port for which to get current ltssm value.
@@ -702,7 +702,7 @@ int tc956x_logstat_get_pcie_cur_speed(void __iomem *pbase_addr, enum ports nport
  *
  * \return -EFAULT in case of bad address, otherwise 0
  */
-int tc956x_logstat_get_pcie_cur_width(void __iomem *pbase_addr, enum ports nport, uint8_t *plane_width_val)
+int stm_logstat_get_pcie_cur_width(void __iomem *pbase_addr, enum ports nport, uint8_t *plane_width_val)
 {
 	int ret = 0;
 	uint32_t regval;
@@ -752,7 +752,7 @@ int tc956x_pcie_ioctl_state_log_enable(const struct stmmac_priv *priv, void __us
 		ret = -EFAULT;
 
 	if (ret == 0)
-		ret = tc956x_logstat_set_state_log_enable(priv->ioaddr, ioctl_data.port, ioctl_data.enable);
+		ret = stm_logstat_set_state_log_enable(priv->ioaddr, ioctl_data.port, ioctl_data.enable);
 
 	DBGPR_FUNC(priv->device, "<-- %s\n", __func__);
 
@@ -760,7 +760,7 @@ int tc956x_pcie_ioctl_state_log_enable(const struct stmmac_priv *priv, void __us
 }
 
 /**
- * tc956x_logstat_set_state_log_enable()
+ * stm_logstat_set_state_log_enable()
  *
  * @pbase_addr: pointer to BAR4 base address
  * @nport: log start/stop for port passed
@@ -776,7 +776,7 @@ int tc956x_pcie_ioctl_state_log_enable(const struct stmmac_priv *priv, void __us
  *
  * \return -EFAULT in case of bad address, otherwise 0
  */
-int tc956x_logstat_set_state_log_enable(void __iomem *pbase_addr, enum ports nport, enum state_log_enable enable)
+int stm_logstat_set_state_log_enable(void __iomem *pbase_addr, enum ports nport, enum state_log_enable enable)
 {
 	int ret = 0;
 	uint32_t port_offset; /* Port Address Register Offset */

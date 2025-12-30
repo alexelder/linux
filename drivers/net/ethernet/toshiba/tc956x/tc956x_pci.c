@@ -2187,7 +2187,7 @@ static void tc956x_reset_SRAM(struct device *dev, struct tc956xmac_resources *re
  * \retval 0 on success & -ve number on failure.
  */
 
-s32 tc956x_load_firmware(struct device *dev, struct tc956xmac_resources *res)
+s32 stm_load_firmware(struct device *dev, struct tc956xmac_resources *res)
 {
 	u32 adrs = 0, val = 0;
 	u32 fw_init_sync;
@@ -3031,20 +3031,20 @@ static int tc956xmac_pci_probe(struct pci_dev *pdev,
 #ifdef TC956X_PCIE_LOGSTAT
 	if (res.port_num == RM_PF0_ID) {
 #ifdef TC956X_PCIE_LOGSTAT_SUMMARY_ENABLE
-		if ((tc956x_logstat_state_log_summary((void __iomem *)res.addr, UPSTREAM_PORT) < 0)
-		|| (tc956x_logstat_state_log_summary((void __iomem *)res.addr, DOWNSTREAM_PORT1) < 0)
-		|| (tc956x_logstat_state_log_summary((void __iomem *)res.addr, DOWNSTREAM_PORT2) < 0)
-		|| (tc956x_logstat_state_log_summary((void __iomem *)res.addr, INTERNAL_ENDPOINT) < 0)) {
+		if ((stm_logstat_state_log_summary((void __iomem *)res.addr, UPSTREAM_PORT) < 0)
+		|| (stm_logstat_state_log_summary((void __iomem *)res.addr, DOWNSTREAM_PORT1) < 0)
+		|| (stm_logstat_state_log_summary((void __iomem *)res.addr, DOWNSTREAM_PORT2) < 0)
+		|| (stm_logstat_state_log_summary((void __iomem *)res.addr, INTERNAL_ENDPOINT) < 0)) {
 			ret = -EFAULT; /* The returns returned by above functions are -EFAULT only */
 			DBGPR_FUNC(&(pdev->dev), "<--%s : Error ret: %d\n", __func__, ret);
 			goto err_dvr_logstat;
 		}
 #endif /* #ifdef TC956X_PCIE_LOGSTAT_SUMMARY_ENABLE */
 
-		if ((tc956x_logstat_set_state_log_enable((void __iomem *)res.addr, UPSTREAM_PORT, STATE_LOG_ENABLE) < 0)
-		|| (tc956x_logstat_set_state_log_enable((void __iomem *)res.addr, DOWNSTREAM_PORT1, STATE_LOG_ENABLE) < 0)
-		|| (tc956x_logstat_set_state_log_enable((void __iomem *)res.addr, DOWNSTREAM_PORT2, STATE_LOG_ENABLE) < 0)
-		|| (tc956x_logstat_set_state_log_enable((void __iomem *)res.addr, INTERNAL_ENDPOINT, STATE_LOG_ENABLE) < 0)) {
+		if ((stm_logstat_set_state_log_enable((void __iomem *)res.addr, UPSTREAM_PORT, STATE_LOG_ENABLE) < 0)
+		|| (stm_logstat_set_state_log_enable((void __iomem *)res.addr, DOWNSTREAM_PORT1, STATE_LOG_ENABLE) < 0)
+		|| (stm_logstat_set_state_log_enable((void __iomem *)res.addr, DOWNSTREAM_PORT2, STATE_LOG_ENABLE) < 0)
+		|| (stm_logstat_set_state_log_enable((void __iomem *)res.addr, INTERNAL_ENDPOINT, STATE_LOG_ENABLE) < 0)) {
 			ret = -EFAULT; /* The returns returned by above functions are -EFAULT only */
 			DBGPR_FUNC(&(pdev->dev), "<--%s : Error ret: %d\n", __func__, ret);
 			goto err_dvr_logstat;
@@ -3518,7 +3518,7 @@ static int tc956xmac_pci_probe(struct pci_dev *pdev,
 
 #ifdef TC956X
 	if (res.port_num == RM_PF0_ID) {
-		ret = tc956x_load_firmware(&pdev->dev, &res);
+		ret = stm_load_firmware(&pdev->dev, &res);
 		if (ret)
 			NMSGPR_ERR(&(pdev->dev), "Firmware load failed\n");
 	}
@@ -4446,24 +4446,24 @@ static int tc956x_pcie_resume(struct device *dev)
 #ifdef TC956X_PCIE_LOGSTAT
 	if (priv->port_num == RM_PF0_ID) {
 #ifdef TC956X_PCIE_LOGSTAT_SUMMARY_ENABLE
-		if ((tc956x_logstat_state_log_summary((void __iomem *)priv->ioaddr, UPSTREAM_PORT) < 0)
-		|| (tc956x_logstat_state_log_summary((void __iomem *)priv->ioaddr, DOWNSTREAM_PORT1) < 0)
-		|| (tc956x_logstat_state_log_summary((void __iomem *)priv->ioaddr, DOWNSTREAM_PORT2) < 0)
-		|| (tc956x_logstat_state_log_summary((void __iomem *)priv->ioaddr, INTERNAL_ENDPOINT) < 0)) {
+		if ((stm_logstat_state_log_summary((void __iomem *)priv->ioaddr, UPSTREAM_PORT) < 0)
+		|| (stm_logstat_state_log_summary((void __iomem *)priv->ioaddr, DOWNSTREAM_PORT1) < 0)
+		|| (stm_logstat_state_log_summary((void __iomem *)priv->ioaddr, DOWNSTREAM_PORT2) < 0)
+		|| (stm_logstat_state_log_summary((void __iomem *)priv->ioaddr, INTERNAL_ENDPOINT) < 0)) {
 			ret = -EFAULT; /* The returns returned by above function are -EFAULT only */
 			NMSGPR_ERR(&(pdev->dev),
-			"%s: error in calling tc956x_logstat_state_log_summary", pci_name(pdev));
+			"%s: error in calling stm_logstat_state_log_summary", pci_name(pdev));
 			DBGPR_FUNC(&(pdev->dev), "<--%s : Error ret: %d\n", __func__, ret);
 			goto err_resume_logstat;
 		}
 #endif /* #ifdef TC956X_PCIE_LOGSTAT_SUMMARY_ENABLE */
-		if ((tc956x_logstat_set_state_log_enable((void __iomem *)priv->ioaddr, UPSTREAM_PORT, STATE_LOG_ENABLE) < 0)
-			|| (tc956x_logstat_set_state_log_enable((void __iomem *)priv->ioaddr, DOWNSTREAM_PORT1, STATE_LOG_ENABLE) < 0)
-			|| (tc956x_logstat_set_state_log_enable((void __iomem *)priv->ioaddr, DOWNSTREAM_PORT2, STATE_LOG_ENABLE) < 0)
-			|| (tc956x_logstat_set_state_log_enable((void __iomem *)priv->ioaddr, INTERNAL_ENDPOINT, STATE_LOG_ENABLE) < 0)) {
+		if ((stm_logstat_set_state_log_enable((void __iomem *)priv->ioaddr, UPSTREAM_PORT, STATE_LOG_ENABLE) < 0)
+			|| (stm_logstat_set_state_log_enable((void __iomem *)priv->ioaddr, DOWNSTREAM_PORT1, STATE_LOG_ENABLE) < 0)
+			|| (stm_logstat_set_state_log_enable((void __iomem *)priv->ioaddr, DOWNSTREAM_PORT2, STATE_LOG_ENABLE) < 0)
+			|| (stm_logstat_set_state_log_enable((void __iomem *)priv->ioaddr, INTERNAL_ENDPOINT, STATE_LOG_ENABLE) < 0)) {
 			ret = -EFAULT; /* The returns returned by above function are -EFAULT only */
 			NMSGPR_ERR(&(pdev->dev),
-			"%s: error in calling tc956x_logstat_set_state_log_enable", pci_name(pdev));
+			"%s: error in calling stm_logstat_set_state_log_enable", pci_name(pdev));
 			DBGPR_FUNC(&(pdev->dev), "<--%s : Error ret: %d\n", __func__, ret);
 			goto err_resume_logstat;
 		}

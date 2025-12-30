@@ -152,7 +152,7 @@
  * Structure/Union
  * ===================================
  */
-union tc956x_logstat_State_Log_Data {
+union stm_logstat_State_Log_Data {
 	struct {
 		unsigned char fifo_read_value0 :5;
 		unsigned char reserved1 :3;
@@ -179,15 +179,15 @@ union tc956x_logstat_State_Log_Data {
 int tc956x_pcie_ioctl_state_log_summary(const struct stmmac_priv *priv, void __user *data);
 int tc956x_pcie_ioctl_get_pcie_link_params(const struct stmmac_priv *priv, void __user *data);
 int tc956x_pcie_ioctl_state_log_enable(const struct stmmac_priv *priv, void __user *data);
-int tc956x_logstat_state_log_summary(void __iomem *pbase_addr, enum ports nport);
-int tc956x_logstat_get_state_log_stop_status(void __iomem *pbase_addr, enum ports nport, uint8_t *pstop_status);
-int tc956x_logstat_set_state_log_fifo_ptr(void __iomem *pbase_addr, enum ports nport, uint8_t fifo_pointer);
-int tc956x_logstat_get_state_log_data(void __iomem *pbase_addr, enum ports nport, uint32_t *pstate_log_data);
-int tc956x_logstat_state_log_analyze(unsigned int cur_state);
-int tc956x_logstat_get_pcie_cur_ltssm(void __iomem *pbase_addr, enum ports nport, uint8_t *pltssm);
-int tc956x_logstat_get_pcie_cur_dll(void __iomem *pbase_addr, enum ports nport, uint8_t *pdll);
-int tc956x_logstat_get_pcie_cur_speed(void __iomem *pbase_addr, enum ports nport, uint8_t *pspeed_val);
-int tc956x_logstat_get_pcie_cur_width(void __iomem *pbase_addr, enum ports nport, uint8_t *plane_width_val);
-int tc956x_logstat_set_state_log_enable(void __iomem *pbase_addr, enum ports nport, enum state_log_enable enable);
+int stm_logstat_state_log_summary(void __iomem *pbase_addr, enum ports nport);
+int stm_logstat_get_state_log_stop_status(void __iomem *pbase_addr, enum ports nport, uint8_t *pstop_status);
+int stm_logstat_set_state_log_fifo_ptr(void __iomem *pbase_addr, enum ports nport, uint8_t fifo_pointer);
+int stm_logstat_get_state_log_data(void __iomem *pbase_addr, enum ports nport, uint32_t *pstate_log_data);
+int stm_logstat_state_log_analyze(unsigned int cur_state);
+int stm_logstat_get_pcie_cur_ltssm(void __iomem *pbase_addr, enum ports nport, uint8_t *pltssm);
+int stm_logstat_get_pcie_cur_dll(void __iomem *pbase_addr, enum ports nport, uint8_t *pdll);
+int stm_logstat_get_pcie_cur_speed(void __iomem *pbase_addr, enum ports nport, uint8_t *pspeed_val);
+int stm_logstat_get_pcie_cur_width(void __iomem *pbase_addr, enum ports nport, uint8_t *plane_width_val);
+int stm_logstat_set_state_log_enable(void __iomem *pbase_addr, enum ports nport, enum state_log_enable enable);
 #endif /* #ifdef TC956X_PCIE_LOGSTAT */
 #endif /* __TC956X_PCIE_LOGSTAT_H__ */
