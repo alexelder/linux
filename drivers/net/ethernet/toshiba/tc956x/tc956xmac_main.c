@@ -1105,14 +1105,14 @@ static void dump_all_reg(struct stmmac_priv *priv)
 #ifdef TC956X_SRIOV_PF
 #ifdef CONFIG_DEBUG_FS
 /**
- * read_tc956x_m3_status() - Debugfs read command for m3 status info
+ * read_stm_m3_status() - Debugfs read command for m3 status info
  *
  * @file: "m3_stats" debugfs file
  * @user_buf: user-space target buffer pointer
  * @count: number of bytes to read
  * @ppos: address of the file position field
  */
-static ssize_t read_tc956x_m3_status(struct file *file,
+static ssize_t read_stm_m3_status(struct file *file,
 	char __user *user_buf, size_t count, loff_t *ppos)
 {
 	struct stmmac_priv *priv = file->private_data;
@@ -1185,21 +1185,21 @@ static ssize_t read_tc956x_m3_status(struct file *file,
 }
 
 static const struct file_operations fops_m3_stats = {
-	.read = read_tc956x_m3_status,
+	.read = read_stm_m3_status,
 	.open = simple_open,
 	.owner = THIS_MODULE,
 	.llseek = default_llseek,
 };
 
 /**
- * read_tc956x_mac_status() - Debugfs read command for mac info
+ * read_stm_mac_status() - Debugfs read command for mac info
  *
  * @file: "mac_stats" debugfs file
  * @user_buf: user-space target buffer pointer
  * @count: number of bytes to read
  * @ppos: address of the file position field
  */
-static ssize_t read_tc956x_mac_status(struct file *file,
+static ssize_t read_stm_mac_status(struct file *file,
 	char __user *user_buf, size_t count, loff_t *ppos)
 {
 	struct stmmac_priv *priv = file->private_data;
@@ -1224,21 +1224,21 @@ static ssize_t read_tc956x_mac_status(struct file *file,
 }
 
 static const struct file_operations fops_mac_stats = {
-	.read = read_tc956x_mac_status,
+	.read = read_stm_mac_status,
 	.open = simple_open,
 	.owner = THIS_MODULE,
 	.llseek = default_llseek,
 };
 
 /**
- * read_tc956x_mtl_status() - Debugfs read command for mtl status info
+ * read_stm_mtl_status() - Debugfs read command for mtl status info
  *
  * @file: "mtl_stats" debugfs file
  * @user_buf: user-space target buffer pointer
  * @count: number of bytes to read
  * @ppos: address of the file position field
  */
-static ssize_t read_tc956x_mtl_status(struct file *file,
+static ssize_t read_stm_mtl_status(struct file *file,
 	char __user *user_buf, size_t count, loff_t *ppos)
 {
 	struct stmmac_priv *priv = file->private_data;
@@ -1275,7 +1275,7 @@ static ssize_t read_tc956x_mtl_status(struct file *file,
 }
 
 static const struct file_operations fops_mtl_stats = {
-	.read = read_tc956x_mtl_status,
+	.read = read_stm_mtl_status,
 	.open = simple_open,
 	.owner = THIS_MODULE,
 	.llseek = default_llseek,
@@ -1475,14 +1475,14 @@ static const struct file_operations fops_cnfg_stats = {
 };
 
 /**
- * read_tc956x_other_status() - Debugfs read command for other status info like TAMP, FRP Table, MMC counters, Version Info
+ * read_stm_other_status() - Debugfs read command for other status info like TAMP, FRP Table, MMC counters, Version Info
  *
  * @file: "other_stats" debugfs file
  * @user_buf: user-space target buffer pointer
  * @count: number of bytes to read
  * @ppos: address of the file position field
  */
-static ssize_t read_tc956x_other_status(struct file *file,
+static ssize_t read_stm_other_status(struct file *file,
 	char __user *user_buf, size_t count, loff_t *ppos)
 {
 	struct stmmac_priv *priv = file->private_data;
@@ -1594,7 +1594,7 @@ static ssize_t read_tc956x_other_status(struct file *file,
 }
 
 static const struct file_operations fops_other_stats = {
-	.read = read_tc956x_other_status,
+	.read = read_stm_other_status,
 	.open = simple_open,
 	.owner = THIS_MODULE,
 	.llseek = default_llseek,
@@ -3962,7 +3962,7 @@ static inline bool tc956x_phy_check_valid(int speed, int duplex,
 #endif
 }
 
-static void tc956x_mmd_eee_adv_to_linkmode_5G_2_5G(unsigned long *advertising, u16 eee_adv)
+static void stm_mmd_eee_adv_to_linkmode_5G_2_5G(unsigned long *advertising, u16 eee_adv)
 {
 	linkmode_zero(advertising);
 
@@ -4026,8 +4026,8 @@ static int tc956x_phy_init_eee(struct phy_device *phydev, bool clk_stop_enable)
 			goto eee_exit_err;
 		}
 
-		tc956x_mmd_eee_adv_to_linkmode_5G_2_5G(adv, eee_adv);
-		tc956x_mmd_eee_adv_to_linkmode_5G_2_5G(lp, eee_lp);
+		stm_mmd_eee_adv_to_linkmode_5G_2_5G(adv, eee_adv);
+		stm_mmd_eee_adv_to_linkmode_5G_2_5G(lp, eee_lp);
 		linkmode_and(common, adv, lp);
 
 		if (!tc956x_phy_check_valid(phydev->speed, phydev->duplex, common)) {
@@ -4500,7 +4500,7 @@ static void tc956xmac_mac_link_up(struct phylink_config *config,
 	}
 	prev_speed = priv->speed;
 #endif
-	tc956x_mbx_wrap_phy_link(priv);
+	stm_mbx_wrap_phy_link(priv);
 #endif
 #ifdef TC956X_PM_DEBUG
 	pm_generic_resume(priv->device);
@@ -7745,11 +7745,11 @@ static int tc956xmac_open(struct net_device *dev)
 	writel(rd_val, priv->ioaddr + NCLKCTRL0_OFFSET);
 #endif
 	/* Initialize MSIGEN */
-	tc956x_msi_init(priv, dev);
+	stm_msi_init(priv, dev);
 
 #elif defined TC956X_SRIOV_VF
 	/* Initialize MSIGEN */
-	tc956x_msi_init(priv, dev, &priv->fn_id_info);
+	stm_msi_init(priv, dev, &priv->fn_id_info);
 
 #endif
 #endif /* TC956X */
@@ -7834,11 +7834,11 @@ static int tc956xmac_open(struct net_device *dev)
 
 #ifdef TC956X_SRIOV_PF
 	/* Enable MSIGEN interrupt */
-	tc956x_msi_intr_en(priv, dev, TC956X_ENABLE);
+	stm_msi_intr_en(priv, dev, TC956X_ENABLE);
 
 #elif defined TC956X_SRIOV_VF
 	/* Enable MSIGEN interrupt */
-	tc956x_msi_intr_en(priv, dev, TC956X_ENABLE, &priv->fn_id_info);
+	stm_msi_intr_en(priv, dev, TC956X_ENABLE, &priv->fn_id_info);
 #endif
 	tc956xmac_enable_all_queues(priv);
 
@@ -7854,9 +7854,9 @@ static int tc956xmac_open(struct net_device *dev)
 	}
 
 	/* MSI_MASK_CLR: unmask vector 0 & 1*/
-	tc956x_msi_intr_clr(priv, dev, TC956X_MSI_VECTOR_0);
+	stm_msi_intr_clr(priv, dev, TC956X_MSI_VECTOR_0);
 #if !defined(TC956X_AUTOMOTIVE_CONFIG) && !defined(TC956X_CPE_CONFIG)
-	tc956x_msi_intr_clr(priv, dev, TC956X_MSI_VECTOR_1);
+	stm_msi_intr_clr(priv, dev, TC956X_MSI_VECTOR_1);
 #endif
 
 #ifdef TX_COMPLETION_WITHOUT_TIMERS
@@ -8010,7 +8010,7 @@ static int tc956xmac_release(struct net_device *dev)
 
 #ifdef TC956X_SRIOV_PF
 	/* Disable all interrupt sources */
-	tc956x_msi_intr_en(priv, dev, TC956X_DISABLE);
+	stm_msi_intr_en(priv, dev, TC956X_DISABLE);
 
 #if defined(TC956X_ENABLE_MAC2MAC_BRIDGE)
 	mutex_lock(&tc956x_port_bridge_lock);
@@ -8024,7 +8024,7 @@ static int tc956xmac_release(struct net_device *dev)
 
 #elif defined TC956X_SRIOV_VF
 	/* Disable all interrupt sources */
-	tc956x_msi_intr_en(priv, dev, 0, &priv->fn_id_info);
+	stm_msi_intr_en(priv, dev, 0, &priv->fn_id_info);
 #endif
 
 #ifndef TC956X_SRIOV_VF
@@ -9656,7 +9656,7 @@ static int tc956xmac_set_features(struct net_device *netdev,
 			priv->hw->rx_csum = priv->plat->rx_coe;
 			priv->rx_csum_state = priv->hw->rx_csum;
 #ifdef TC956X_SRIOV_PF
-			tc956x_mbx_wrap_set_rx_csum(priv);
+			stm_mbx_wrap_set_rx_csum(priv);
 #endif
 		}
 	} else {
@@ -9664,7 +9664,7 @@ static int tc956xmac_set_features(struct net_device *netdev,
 			priv->hw->rx_csum = 0;
 			priv->rx_csum_state = priv->hw->rx_csum;
 #ifdef TC956X_SRIOV_PF
-			tc956x_mbx_wrap_set_rx_csum(priv);
+			stm_mbx_wrap_set_rx_csum(priv);
 #endif
 		}
 	}
@@ -9686,12 +9686,12 @@ static int tc956xmac_set_features(struct net_device *netdev,
 	if (features & NETIF_F_RXFCS) {
 		if (priv->rx_crc_pad_state != (priv->rx_crc_pad_state & (~TC956X_RX_CRC_DEFAULT))) {
 			priv->rx_crc_pad_state &= (~TC956X_RX_CRC_DEFAULT);
-			tc956x_mbx_wrap_set_rx_crc(priv);
+			stm_mbx_wrap_set_rx_crc(priv);
 		}
 	} else {
 		if (priv->rx_crc_pad_state != TC956X_RX_CRC_DEFAULT) {
 			priv->rx_crc_pad_state = TC956X_RX_CRC_DEFAULT;
-			tc956x_mbx_wrap_set_rx_crc(priv);
+			stm_mbx_wrap_set_rx_crc(priv);
 		}
 	}
 
@@ -9990,7 +9990,7 @@ static irqreturn_t tc956xmac_interrupt_v0(int irq, void *dev_id)
 #endif
 
 	/* unmask MSI vector 0 */
-	tc956x_msi_intr_clr(priv, dev, TC956X_MSI_VECTOR_0);
+	stm_msi_intr_clr(priv, dev, TC956X_MSI_VECTOR_0);
 	return IRQ_HANDLED;
 }
 #else
@@ -10089,7 +10089,7 @@ static irqreturn_t tc956xmac_interrupt_v0(int irq, void *dev_id)
 	tc956xmac_interrupt_v1(irq, dev_id);
 
 	/* unmask MSI vector 0 */
-	tc956x_msi_intr_clr(priv, dev, TC956X_MSI_VECTOR_0);
+	stm_msi_intr_clr(priv, dev, TC956X_MSI_VECTOR_0);
 #elif defined TC956X_SRIOV_VF
 		/* Run the through the loop PF and MCU */
 
@@ -10107,7 +10107,7 @@ static irqreturn_t tc956xmac_interrupt_v0(int irq, void *dev_id)
 	}
 
 	/* unmask MSI vector 0 */
-	tc956x_msi_intr_clr(priv, dev, TC956X_MSI_VECTOR_0, &priv->fn_id_info);
+	stm_msi_intr_clr(priv, dev, TC956X_MSI_VECTOR_0, &priv->fn_id_info);
 #endif
 	return IRQ_HANDLED;
 }
@@ -10311,7 +10311,7 @@ static irqreturn_t tc956xmac_interrupt_v1(int irq, void *dev_id)
 #ifdef TC956X
 #if defined(TC956X_SRIOV_PF) && !defined(TC956X_AUTOMOTIVE_CONFIG) && !defined(TC956X_ENABLE_MAC2MAC_BRIDGE)
 	/* unmask MSI vector 1 */
-	tc956x_msi_intr_clr(priv, dev, TC956X_MSI_VECTOR_1);
+	stm_msi_intr_clr(priv, dev, TC956X_MSI_VECTOR_1);
 #endif
 #endif
 
@@ -14967,7 +14967,7 @@ static void tc956xmac_service_mbx_task(struct work_struct *work)
 	} else if (priv->mbx_wq_param.fn_id == SCH_WQ_RX_DMA_ERR) {
 		for (vf = 0; vf < MAX_NO_OF_VFS; vf++) {
 			while (ret == -EBUSY)
-				ret = tc956x_mbx_wrap_rx_dma_err(priv, vf);
+				ret = stm_mbx_wrap_rx_dma_err(priv, vf);
 
 			if (ret == -1) {
 				priv->clear_to_send[vf] = VF_DOWN;
@@ -15001,14 +15001,14 @@ static void tc956xmac_service_mbx_task(struct work_struct *work)
 			for (dma_ch = 0; dma_ch < 3; dma_ch++) {
 				vf = priv->dma_vf_map[dma_ch];
 				while (ret == -EBUSY)
-					ret = tc956x_mbx_wrap_rx_dma_ch_tlptr(priv, dma_ch, vf);
+					ret = stm_mbx_wrap_rx_dma_ch_tlptr(priv, dma_ch, vf);
 				ret = -EBUSY;  //to continue with next vf
 			}
 		} else {
 			dma_ch = priv->plat->rx_queues_cfg[priv->mbx_wq_param.queue_no].chan;
 			vf = priv->dma_vf_map[dma_ch];
 			while (ret == -EBUSY)
-				ret = tc956x_mbx_wrap_rx_dma_ch_tlptr(priv, dma_ch, vf);
+				ret = stm_mbx_wrap_rx_dma_ch_tlptr(priv, dma_ch, vf);
 		}
 	}
 	clear_bit(TC956XMAC_SERVICE_SCHED, &priv->state);

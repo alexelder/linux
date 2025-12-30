@@ -81,7 +81,7 @@
 #include "dwxgmac2.h"
 
 #define REG_SPACE_SIZE	11512/*Total Reg Len*/
-#define MAC100_ETHTOOL_NAME	"tc956x_mac100"
+#define MAC100_ETHTOOL_NAME	"stm_mac100"
 #define GMAC_ETHTOOL_NAME	"stm_gmac"
 #ifdef TC956X_SRIOV_PF
 #define XGMAC_ETHTOOL_NAME	TC956X_RESOURCE_NAME

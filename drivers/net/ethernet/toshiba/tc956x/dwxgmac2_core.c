@@ -814,7 +814,7 @@ static void dwxgmac2_set_mchash(struct stmmac_priv *priv, void __iomem *ioaddr, 
 }
 
 #ifdef TC956X_SRIOV_PF
-static s32 tc956x_mac_ind_acc_wr_rd(struct stmmac_priv *priv, u8 wr_rd, u32 msel, u32 offset, u32 *val)
+static s32 stm_mac_ind_acc_wr_rd(struct stmmac_priv *priv, u8 wr_rd, u32 msel, u32 offset, u32 *val)
 {
 	u32 reg_data, limit;
 	void __iomem *ioaddr = priv->ioaddr;
@@ -904,7 +904,7 @@ void stm_filter_debug(struct stmmac_priv *priv)
 	void __iomem *ioaddr = priv->ioaddr;
 
 	for (offset = 0; offset < 32; offset++) {
-		if (tc956x_mac_ind_acc_wr_rd(priv, XGMAC_COM_READ, XGMAC_MSEL_DCHSEL, offset, &reg_data)) {
+		if (stm_mac_ind_acc_wr_rd(priv, XGMAC_COM_READ, XGMAC_MSEL_DCHSEL, offset, &reg_data)) {
 			netdev_err(priv->dev, "Setting XDCS Failed\n");
 			return;
 		}
@@ -922,7 +922,7 @@ static void tc956x_set_dma_ch(struct stmmac_priv *priv, struct mac_device_info *
 
 	reg_data = 0;
 
-	if (tc956x_mac_ind_acc_wr_rd(priv, XGMAC_COM_READ, XGMAC_MSEL_DCHSEL, index, &reg_data)) {
+	if (stm_mac_ind_acc_wr_rd(priv, XGMAC_COM_READ, XGMAC_MSEL_DCHSEL, index, &reg_data)) {
 		netdev_err(priv->dev, "Setting XDCS Failed\n");
 		return;
 	}
@@ -947,7 +947,7 @@ static void tc956x_set_dma_ch(struct stmmac_priv *priv, struct mac_device_info *
 
 	reg_data |= data;
 
-	if (tc956x_mac_ind_acc_wr_rd(priv, XGMAC_COM_WRITE, XGMAC_MSEL_DCHSEL, index, &reg_data)) {
+	if (stm_mac_ind_acc_wr_rd(priv, XGMAC_COM_WRITE, XGMAC_MSEL_DCHSEL, index, &reg_data)) {
 		netdev_err(priv->dev, "Setting XDCS Failed\n");
 		return;
 	}
@@ -960,7 +960,7 @@ static void stm_del_dma_ch(struct stmmac_priv *priv, struct mac_device_info *hw,
 	u32 data = 0, reg_data = 0;
 
 
-	if (tc956x_mac_ind_acc_wr_rd(priv, XGMAC_COM_READ, XGMAC_MSEL_DCHSEL, index, &reg_data)) {
+	if (stm_mac_ind_acc_wr_rd(priv, XGMAC_COM_READ, XGMAC_MSEL_DCHSEL, index, &reg_data)) {
 		netdev_err(priv->dev, "Setting XDCS Failed\n");
 		return;
 	}
@@ -979,7 +979,7 @@ static void stm_del_dma_ch(struct stmmac_priv *priv, struct mac_device_info *hw,
 	reg_data &= ~data;
 
 
-	if (tc956x_mac_ind_acc_wr_rd(priv, XGMAC_COM_WRITE, XGMAC_MSEL_DCHSEL, index, &reg_data)) {
+	if (stm_mac_ind_acc_wr_rd(priv, XGMAC_COM_WRITE, XGMAC_MSEL_DCHSEL, index, &reg_data)) {
 		netdev_err(priv->dev, "Setting XDCS Failed\n");
 		return;
 	}
@@ -1043,7 +1043,7 @@ static void stm_del_mac_addr(struct stmmac_priv *priv, struct mac_device_info *h
 	 * when the mac address is completely deleted from the sw table
 	 */
 
-	if (tc956x_mac_ind_acc_wr_rd(priv, XGMAC_COM_WRITE, XGMAC_MSEL_DCHSEL, index, (u32 *)&data)) {
+	if (stm_mac_ind_acc_wr_rd(priv, XGMAC_COM_WRITE, XGMAC_MSEL_DCHSEL, index, (u32 *)&data)) {
 		netdev_err(priv->dev, "Setting XDCS Failed\n");
 		return;
 	}
@@ -1177,7 +1177,7 @@ static int stm_add_actual_mac_table(struct net_device *dev,
 }
 
 
-static int tc956x_mac_duplication(struct stmmac_priv *priv,
+static int stm_mac_duplication(struct stmmac_priv *priv,
 					    struct mac_device_info *hw,
 					    struct stm_mac_addr *mac_table,
 					    const u8 *mac, int vf)
@@ -1245,7 +1245,7 @@ static int stm_check_mac_duplication(struct net_device *dev, const u8 *mac, int 
 		;
 	} else {
 		ret_value =
-			tc956x_mac_duplication(priv, hw,
+			stm_mac_duplication(priv, hw,
 							mac_table, mac, vf);
 	}
 	return ret_value;

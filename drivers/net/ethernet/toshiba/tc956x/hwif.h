@@ -545,7 +545,7 @@ struct stmmac_ops {
 	tc956xmac_do_callback(__priv, mbx_wrapper, rx_dma_err, __args)
 #define tc956x_rx_csum(__priv, __args...) \
 	tc956xmac_do_callback(__priv, mbx_wrapper, rx_csum, __args)
-#define tc956x_mbx_flr(__priv, __args...) \
+#define stm_mbx_flr(__priv, __args...) \
 	tc956xmac_do_callback(__priv, mbx_wrapper, pf_flr, __args)
 #endif
 
@@ -938,21 +938,21 @@ struct mac_mbx_ops {
 
 #ifdef TC956X_SRIOV_PF
 
-struct tc956x_msi_ops {
+struct stm_msi_ops {
 	void (*init)(struct stmmac_priv *priv, struct net_device *dev);
 	void (*interrupt_en)(struct stmmac_priv *priv, struct net_device *dev, u32 en);
 	void (*interrupt_clr)(struct stmmac_priv *priv, struct net_device *dev, u32 vector);
 };
 
-#define tc956x_msi_init(__priv, __args...) \
+#define stm_msi_init(__priv, __args...) \
 	tc956xmac_do_void_callback(__priv, msi, init, __args)
-#define tc956x_msi_intr_en(__priv, __args...) \
+#define stm_msi_intr_en(__priv, __args...) \
 	tc956xmac_do_void_callback(__priv, msi, interrupt_en, __args)
-#define tc956x_msi_intr_clr(__priv, __args...) \
+#define stm_msi_intr_clr(__priv, __args...) \
 	tc956xmac_do_void_callback(__priv, msi, interrupt_clr, __args)
 
 /* Specific mailbox helpers */
-struct tc956x_mbx_wrapper_ops {
+struct stm_mbx_wrapper_ops {
 	void (*phy_link)(struct stmmac_priv *priv);
 	int (*set_dma_tx_mode)(struct stmmac_priv *priv, u8 *mbx_buff, u8 *ack_buff);
 	int (*set_mtl_tx_queue_weight)(struct stmmac_priv *priv, u8 *mbx_buff, u8 *ack_buff);
@@ -979,41 +979,41 @@ struct tc956x_mbx_wrapper_ops {
 	int (*rx_dma_err)(struct stmmac_priv *priv, u8 vf_no);
 };
 
-#define tc956x_mbx_wrap_phy_link(__priv) \
+#define stm_mbx_wrap_phy_link(__priv) \
 	tc956xmac_do_void_no_param_callback(__priv, mbx_wrapper, phy_link)
-#define tc956x_mbx_wrap_set_dma_tx_mode(__priv, __args...) \
+#define stm_mbx_wrap_set_dma_tx_mode(__priv, __args...) \
 	tc956xmac_do_callback(__priv, mbx_wrapper, set_dma_tx_mode, __args)
-#define tc956x_mbx_wrap_set_mtl_tx_queue_weight(__priv, __args...) \
+#define stm_mbx_wrap_set_mtl_tx_queue_weight(__priv, __args...) \
 	tc956xmac_do_callback(__priv, mbx_wrapper, set_mtl_tx_queue_weight, __args)
-#define tc956x_mbx_wrap_config_cbs(__priv, __args...) \
+#define stm_mbx_wrap_config_cbs(__priv, __args...) \
 	tc956xmac_do_callback(__priv, mbx_wrapper, config_cbs, __args)
-#define tc956x_mbx_wrap_setup_cbs(__priv, __args...) \
+#define stm_mbx_wrap_setup_cbs(__priv, __args...) \
 	tc956xmac_do_callback(__priv, mbx_wrapper, setup_cbs, __args)
-#define tc956x_mbx_wrap_setup_etf(__priv, __args...) \
+#define stm_mbx_wrap_setup_etf(__priv, __args...) \
 	tc956xmac_do_callback(__priv, mbx_wrapper, setup_mbx_etf, __args)
-#define tc956x_mbx_wrap_tx_queue_prior(__priv, __args...) \
+#define stm_mbx_wrap_tx_queue_prior(__priv, __args...) \
 	tc956xmac_do_callback(__priv, mbx_wrapper, tx_queue_prio, __args)
-#define tc956x_mbx_wrap_get_link_status(__priv, __args...) \
+#define stm_mbx_wrap_get_link_status(__priv, __args...) \
 	tc956xmac_do_callback(__priv, mbx_wrapper, vf_get_link_status, __args)
-#define tc956x_mbx_wrap_set_rx_crc(__priv, __args...) \
+#define stm_mbx_wrap_set_rx_crc(__priv, __args...) \
 	tc956xmac_do_void_no_param_callback(__priv, mbx_wrapper, rx_crc)
-#define tc956x_mbx_wrap_set_rx_csum(__priv, __args...) \
+#define stm_mbx_wrap_set_rx_csum(__priv, __args...) \
 	tc956xmac_do_void_no_param_callback(__priv, mbx_wrapper, rx_csum)
-#define tc956x_mbx_wrap_pf_flr(__priv, __args...) \
+#define stm_mbx_wrap_pf_flr(__priv, __args...) \
 	tc956xmac_do_void_no_param_callback(__priv, mbx_wrapper, pf_flr)
-#define tc956x_mbx_wrap_rx_dma_ch_tlptr(__priv, __args...) \
+#define stm_mbx_wrap_rx_dma_ch_tlptr(__priv, __args...) \
 	tc956xmac_do_callback(__priv, mbx_wrapper, rx_dma_ch_tlptr, __args)
-#define tc956x_mbx_wrap_rx_dma_err(__priv, __args...) \
+#define stm_mbx_wrap_rx_dma_err(__priv, __args...) \
 	tc956xmac_do_callback(__priv, mbx_wrapper, rx_dma_err, __args)
-#define tc956x_mbx_wrap_reset_eee_mode(__priv, __args...) \
+#define stm_mbx_wrap_reset_eee_mode(__priv, __args...) \
 	tc956xmac_do_callback(__priv, mbx_wrapper, reset_eee_mode, __args)
-#define tc956x_mbx_wrap_get_umac_addr(__priv, __args...) \
+#define stm_mbx_wrap_get_umac_addr(__priv, __args...) \
 	tc956xmac_do_callback(__priv, mbx_wrapper, get_umac_addr, __args)
-#define tc956x_mbx_wrap_set_umac_addr(__priv, __args...) \
+#define stm_mbx_wrap_set_umac_addr(__priv, __args...) \
 	tc956xmac_do_callback(__priv, mbx_wrapper, set_umac_addr, __args)
-#define tc956x_mbx_wrap_get_drv_cap(__priv, __args...) \
+#define stm_mbx_wrap_get_drv_cap(__priv, __args...) \
 	tc956xmac_do_callback(__priv, mbx_wrapper, get_drv_cap, __args)
-#define tc956x_mbx_wrap_vf_reset(__priv, __args...) \
+#define stm_mbx_wrap_vf_reset(__priv, __args...) \
 	tc956xmac_do_callback(__priv, mbx_wrapper, vf_reset, __args)
 #define tc956xmac_mbx_ioctl_interface(__priv, __args...) \
 	tc956xmac_do_callback(__priv, mbx_wrapper, vf_ioctl, __args)
@@ -1052,17 +1052,17 @@ struct stmmac_regs_off {
 };
 
 #ifdef TC956X_SRIOV_VF
-struct tc956x_msi_ops {
+struct stm_msi_ops {
 	void (*init)(struct stmmac_priv *priv, struct net_device *dev, struct fn_id *fn_id_info);
 	void (*interrupt_en)(struct stmmac_priv *priv, struct net_device *dev, u32 en, struct fn_id *fn_id_info);
 	void (*interrupt_clr)(struct stmmac_priv *priv, struct net_device *dev, u32 vector, struct fn_id *fn_id_info);
 };
 
-#define tc956x_msi_init(__priv, __args...) \
+#define stm_msi_init(__priv, __args...) \
 	tc956xmac_do_void_callback(__priv, msi, init, __args)
-#define tc956x_msi_intr_en(__priv, __args...) \
+#define stm_msi_intr_en(__priv, __args...) \
 	tc956xmac_do_void_callback(__priv, msi, interrupt_en, __args)
-#define tc956x_msi_intr_clr(__priv, __args...) \
+#define stm_msi_intr_clr(__priv, __args...) \
 	tc956xmac_do_void_callback(__priv, msi, interrupt_clr, __args)
 #endif
 
@@ -1085,13 +1085,13 @@ extern const struct stmmac_mmc_ops dwxgmac_mmc_ops;
 extern const struct tc956xmac_pma_ops tc956x_pma_ops;
 #endif
 #if defined(TC956X_SRIOV_PF) | defined(TC956X_SRIOV_VF)
-extern const struct tc956x_msi_ops tc956x_msigen_ops;
+extern const struct stm_msi_ops stm_msigen_ops;
 extern const struct mac_rsc_mng_ops tc956xmac_rsc_mng_ops;
 extern const struct mac_mbx_ops tc956xmac_mbx_ops;
 #endif
 
 #ifdef TC956X_SRIOV_PF
-extern const struct tc956x_mbx_wrapper_ops tc956xmac_mbx_wrapper_ops;
+extern const struct stm_mbx_wrapper_ops tc956xmac_mbx_wrapper_ops;
 #elif defined TC956X_SRIOV_VF
 extern const struct tc956xmac_mbx_wrapper_ops tc956xmac_mbx_wrapper_ops;
 #endif

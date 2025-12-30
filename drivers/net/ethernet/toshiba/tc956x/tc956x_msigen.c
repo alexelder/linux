@@ -1,7 +1,7 @@
 /*
  * TC956X ethernet driver.
  *
- * tc956x_msigen.c
+ * stm_msigen.c
  *
  * Copyright (C) 2024 Toshiba Electronic Devices & Storage Corporation
  *
@@ -42,7 +42,7 @@
 
 #ifdef TC956X_SRIOV_PF
 /**
- * tc956x_msigen_init
+ * stm_msigen_init
  *
  * @priv: pointer to the stmmac private structure
  * @dev: pointer to the net device structure
@@ -56,7 +56,7 @@
  *
  * \return None
  */
-static void tc956x_msigen_init(struct stmmac_priv *priv, struct net_device *dev)
+static void stm_msigen_init(struct stmmac_priv *priv, struct net_device *dev)
 {
 	u32 rd_val;
 
@@ -184,7 +184,7 @@ static void stm_interrupt_clr(struct stmmac_priv *priv, struct net_device *dev, 
 }
 #elif defined TC956X_SRIOV_VF
 /**
- * tc956x_msigen_init
+ * stm_msigen_init
  *
  * @priv: pointer to the stmmac private structure
  * @dev: pointer to the net device structure
@@ -199,7 +199,7 @@ static void stm_interrupt_clr(struct stmmac_priv *priv, struct net_device *dev, 
  *
  * \return None
  */
-static void tc956x_msigen_init(struct stmmac_priv *priv, struct net_device *dev,
+static void stm_msigen_init(struct stmmac_priv *priv, struct net_device *dev,
 					struct fn_id *fn_id_info)
 {
 	//struct stmmac_priv *priv = netdev_priv(dev);
@@ -310,8 +310,8 @@ static void stm_interrupt_clr(struct stmmac_priv *priv, struct net_device *dev, 
 
 }
 #endif
-const struct tc956x_msi_ops tc956x_msigen_ops = {
-	.init = tc956x_msigen_init,
+const struct stm_msi_ops stm_msigen_ops = {
+	.init = stm_msigen_init,
 	.interrupt_en = stm_interrupt_en,
 	.interrupt_clr = stm_interrupt_clr,
 };

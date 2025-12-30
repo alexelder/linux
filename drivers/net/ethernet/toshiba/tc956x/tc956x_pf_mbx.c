@@ -517,26 +517,26 @@ static int tc956x_pf_mbx_read(struct stmmac_priv *priv, u8 *msg_buff,
 		/* Call specific function for the type and get the return
 		 * as ACK,NACK and associated data
 		 */
-		ret_val =  tc956x_mbx_wrap_set_umac_addr(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0], vf_no);
+		ret_val =  stm_mbx_wrap_set_umac_addr(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0], vf_no);
 		break;
 
 	case OPCODE_MBX_SET_TX_Q_WEIGHT: /* set mtl tx queue weight */
-		ret_val = tc956x_mbx_wrap_set_mtl_tx_queue_weight(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0]);
+		ret_val = stm_mbx_wrap_set_mtl_tx_queue_weight(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0]);
 		break;
 	case OPCODE_MBX_CFG_CBS: /* config cbs */
-		ret_val = tc956x_mbx_wrap_config_cbs(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0]);
+		ret_val = stm_mbx_wrap_config_cbs(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0]);
 		break;
 	case OPCODE_MBX_SETUP_CBS: /* setup cbs */
-		ret_val = tc956x_mbx_wrap_setup_cbs(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0]);
+		ret_val = stm_mbx_wrap_setup_cbs(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0]);
 		break;
 	case OPCODE_MBX_SET_TX_Q_PRIOR: /* tx queue prior */
-		ret_val = tc956x_mbx_wrap_tx_queue_prior(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0]);
+		ret_val = stm_mbx_wrap_tx_queue_prior(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0]);
 		break;
 	case OPCODE_MBX_SET_DMA_TX_MODE: /* set dma tx mode */
-		ret_val = tc956x_mbx_wrap_set_dma_tx_mode(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0]);
+		ret_val = stm_mbx_wrap_set_dma_tx_mode(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0]);
 		break;
 	case OPCODE_MBX_VF_GET_LINK_STATUS: /* vf get link status */
-		ret_val = tc956x_mbx_wrap_get_link_status(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0]);
+		ret_val = stm_mbx_wrap_get_link_status(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0]);
 		break;
 	case OPCODE_MBX_VF_IOCTL:
 		ret_val = tc956xmac_mbx_ioctl_interface(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0], vf_no);
@@ -557,16 +557,16 @@ static int tc956x_pf_mbx_read(struct stmmac_priv *priv, u8 *msg_buff,
 		ret_val = tc956xmac_mbx_delete_vlan(priv, priv->dev, &msg_buff[MBX_MSG_OFST], &ack_msg[0], vf_no);
 		break;
 	case OPCODE_MBX_DRV_CAP:
-		ret_val = tc956x_mbx_wrap_get_drv_cap(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0]);
+		ret_val = stm_mbx_wrap_get_drv_cap(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0]);
 		break;
 	case OPCODE_MBX_GET_UMAC_ADDR:
-	    ret_val = tc956x_mbx_wrap_get_umac_addr(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0]);
+	    ret_val = stm_mbx_wrap_get_umac_addr(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0]);
 		break;
 	case OPCODE_MBX_RESET_EEE_MODE:
-	    ret_val = tc956x_mbx_wrap_reset_eee_mode(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0]);
+	    ret_val = stm_mbx_wrap_reset_eee_mode(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0]);
 		break;
 	case OPCODE_VF_RESET:
-	    ret_val = tc956x_mbx_wrap_vf_reset(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0], vf_no);
+	    ret_val = stm_mbx_wrap_vf_reset(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0], vf_no);
 		break;
 	case OPCODE_MBX_ACK_MSG:
 		/* ACK message */

@@ -498,7 +498,7 @@ static int tc956x_vf_mbx_read(struct stmmac_priv *priv, u8 *msg_buff,
 		ret_val = tc956x_setup_mbx_etf(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0]);
 		break;
 	case OPCODE_MBX_FLR:
-		ret_val = tc956x_mbx_flr(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0]);
+		ret_val = stm_mbx_flr(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0]);
 		break;
 	case OPCODE_MBX_DMA_ERR:
 		ret_val = tc956x_rx_dma_err(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0]);

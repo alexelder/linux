@@ -1333,7 +1333,7 @@ static int tc_setup_etf(struct stmmac_priv *priv,
 
 #ifndef TC956X_SRIOV_VF
 	if (is_pf_ch == false && priv->fn_id_info.vf_no == 0)
-		tc956x_mbx_wrap_setup_etf(priv, qopt->queue, vf);
+		stm_mbx_wrap_setup_etf(priv, qopt->queue, vf);
 #endif
 
 	netdev_info(priv->dev, "%s ETF for Queue %d\n",

@@ -270,7 +270,7 @@ static const struct stmmac_hwif_entry {
 #endif
 #endif
 #if defined(TC956X_SRIOV_PF) | defined(TC956X_SRIOV_VF)
-		.msi = &tc956x_msigen_ops,
+		.msi = &stm_msigen_ops,
 		.rsc = &tc956xmac_rsc_mng_ops,
 #endif
 

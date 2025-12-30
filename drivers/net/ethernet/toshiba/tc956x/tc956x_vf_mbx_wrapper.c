@@ -1,7 +1,7 @@
 /*
  * TC956X ethernet driver.
  *
- * tc956x_mbx_wrapper.c
+ * stm_mbx_wrapper.c
  *
  * Copyright (C) 2022 Toshiba Electronic Devices & Storage Corporation
  *
@@ -1491,7 +1491,7 @@ static void tc956xmac_vf_delete_vlan(struct stmmac_priv *priv, u16 vid)
 }
 
 /**
- * tc956x_mbx_get_drv_cap
+ * stm_mbx_get_drv_cap
  *
  * \brief API to receive EMAC features state from PF
  *
@@ -1502,7 +1502,7 @@ static void tc956xmac_vf_delete_vlan(struct stmmac_priv *priv, u16 vid)
  *
  * \return None
  */
-static void tc956x_mbx_get_drv_cap(struct stmmac_priv *priv, struct stmmac_priv *priv1)
+static void stm_mbx_get_drv_cap(struct stmmac_priv *priv, struct stmmac_priv *priv1)
 {
 	/* Prepare mailbox message and call mailbox API for posting
 	 * and getting the ACK
@@ -1616,7 +1616,7 @@ static void tc956xmac_vf_mbx_reset(struct stmmac_priv *priv, u8 vf_status)
 }
 
 /**
- * tc956x_mbx_setup_cbs
+ * stm_mbx_setup_cbs
  *
  * \brief API to setup cbs param for queue using TC command
  *
@@ -1628,7 +1628,7 @@ static void tc956xmac_vf_mbx_reset(struct stmmac_priv *priv, u8 vf_status)
  *
  * \return success/error
  */
-static int tc956x_mbx_setup_cbs(struct stmmac_priv *priv, struct tc_cbs_qopt_offload *qopt)
+static int stm_mbx_setup_cbs(struct stmmac_priv *priv, struct tc_cbs_qopt_offload *qopt)
 {
 	u8 mbx[MBX_TOT_SIZE];
 	int ret;
@@ -1666,7 +1666,7 @@ static int tc956x_mbx_setup_cbs(struct stmmac_priv *priv, struct tc_cbs_qopt_off
 
 /* Parsing PF->VF Message */
 /**
- * tc956x_mbx_phy_link
+ * stm_mbx_phy_link
  *
  * \brief API to receive link state and params from PF
  *
@@ -1679,7 +1679,7 @@ static int tc956x_mbx_setup_cbs(struct stmmac_priv *priv, struct tc_cbs_qopt_off
  *
  * \return ACK/NACK
  */
-static int tc956x_mbx_phy_link(struct stmmac_priv *priv, u8 *msg_buf, u8 *ack_msg)
+static int stm_mbx_phy_link(struct stmmac_priv *priv, u8 *msg_buf, u8 *ack_msg)
 {
 	u32 datal = 0, datah = 0;
 	u8 vf_mac_addr[6];
@@ -1737,7 +1737,7 @@ static int tc956x_mbx_phy_link(struct stmmac_priv *priv, u8 *msg_buf, u8 *ack_ms
 }
 
 /**
- * tc956x_mbx_rx_crc
+ * stm_mbx_rx_crc
  *
  * \brief API to receive Rx CRC state from PF
  *
@@ -1750,7 +1750,7 @@ static int tc956x_mbx_phy_link(struct stmmac_priv *priv, u8 *msg_buf, u8 *ack_ms
  *
  * \return ACK/NACK
  */
-static int tc956x_mbx_rx_crc(struct stmmac_priv *priv, u8 *msg_buf, u8 *ack_msg)
+static int stm_mbx_rx_crc(struct stmmac_priv *priv, u8 *msg_buf, u8 *ack_msg)
 {
 	unsigned long flags;
 
@@ -1782,7 +1782,7 @@ static int tc956x_mbx_rx_crc(struct stmmac_priv *priv, u8 *msg_buf, u8 *ack_msg)
 }
 
 /**
- * tc956x_mbx_rx_csum
+ * stm_mbx_rx_csum
  *
  * \brief API to receive Rx Checksum state from PF
  *
@@ -1795,7 +1795,7 @@ static int tc956x_mbx_rx_crc(struct stmmac_priv *priv, u8 *msg_buf, u8 *ack_msg)
  *
  * \return ACK/NACK
  */
-static int tc956x_mbx_rx_csum(struct stmmac_priv *priv, u8 *msg_buf, u8 *ack_msg)
+static int stm_mbx_rx_csum(struct stmmac_priv *priv, u8 *msg_buf, u8 *ack_msg)
 {
 	unsigned long flags;
 
@@ -1827,7 +1827,7 @@ static int tc956x_mbx_rx_csum(struct stmmac_priv *priv, u8 *msg_buf, u8 *ack_msg
 }
 
 /**
- * tc956x_mbx_rx_dma_ch_tlptr
+ * stm_mbx_rx_dma_ch_tlptr
  *
  * \brief API to receive dma ch no from PF to update tail pointer
  *
@@ -1840,7 +1840,7 @@ static int tc956x_mbx_rx_csum(struct stmmac_priv *priv, u8 *msg_buf, u8 *ack_msg
  *
  * \return ACK/NACK
  */
-static int tc956x_mbx_rx_dma_ch_tlptr(struct stmmac_priv *priv, u8 *msg_buf, u8 *ack_msg)
+static int stm_mbx_rx_dma_ch_tlptr(struct stmmac_priv *priv, u8 *msg_buf, u8 *ack_msg)
 {
 	u32 ch;
 	struct tc956xmac_rx_queue *rx_q;
@@ -1871,7 +1871,7 @@ static int tc956x_mbx_rx_dma_ch_tlptr(struct stmmac_priv *priv, u8 *msg_buf, u8 
 }
 
 /**
- * tc956x_mbx_setup_etf
+ * stm_mbx_setup_etf
  *
  * \brief API to receive tbs status from PF to update tail pointer
  *
@@ -1884,7 +1884,7 @@ static int tc956x_mbx_rx_dma_ch_tlptr(struct stmmac_priv *priv, u8 *msg_buf, u8 
  *
  * \return ACK/NACK
  */
-static int tc956x_mbx_setup_etf(struct stmmac_priv *priv, u8 *msg_buf, u8 *ack_msg)
+static int stm_mbx_setup_etf(struct stmmac_priv *priv, u8 *msg_buf, u8 *ack_msg)
 {
 	u32 ch;
 	u8 tbs_status;
@@ -1919,7 +1919,7 @@ static int tc956x_mbx_setup_etf(struct stmmac_priv *priv, u8 *msg_buf, u8 *ack_m
 }
 
 /**
- * tc956x_mbx_pf_flr
+ * stm_mbx_pf_flr
  *
  * \brief API to receive PF FLR trigger from PF
  *
@@ -1932,7 +1932,7 @@ static int tc956x_mbx_setup_etf(struct stmmac_priv *priv, u8 *msg_buf, u8 *ack_m
  *
  * \return ACK/NACK
  */
-static int tc956x_mbx_pf_flr(struct stmmac_priv *priv, u8 *msg_buf, u8 *ack_msg)
+static int stm_mbx_pf_flr(struct stmmac_priv *priv, u8 *msg_buf, u8 *ack_msg)
 {
 	unsigned long flags;
 
@@ -1959,7 +1959,7 @@ static int tc956x_mbx_pf_flr(struct stmmac_priv *priv, u8 *msg_buf, u8 *ack_msg)
 }
 
 /**
- * tc956x_mbx_rx_dma_err
+ * stm_mbx_rx_dma_err
  *
  * \brief API to receive DMA err state from PF
  *
@@ -1972,7 +1972,7 @@ static int tc956x_mbx_pf_flr(struct stmmac_priv *priv, u8 *msg_buf, u8 *ack_msg)
  *
  * \return ACK/NACK
  */
-static int tc956x_mbx_rx_dma_err(struct stmmac_priv *priv, u8 *msg_buf, u8 *ack_msg)
+static int stm_mbx_rx_dma_err(struct stmmac_priv *priv, u8 *msg_buf, u8 *ack_msg)
 {
 	unsigned long flags;
 
@@ -2006,10 +2006,10 @@ const struct tc956xmac_mbx_wrapper_ops tc956xmac_mbx_wrapper_ops = {
 	.config_cbs = tc956xmac_mbx_config_cbs,
 	.tx_queue_prio = tc956xmac_mbx_tx_queue_prio,
 	.get_link_status = tc956xmac_mbx_get_link_status,
-	.phy_link = tc956x_mbx_phy_link,
-	.get_drv_cap = tc956x_mbx_get_drv_cap,
-	.rx_crc = tc956x_mbx_rx_crc,
-	.rx_csum = tc956x_mbx_rx_csum,
+	.phy_link = stm_mbx_phy_link,
+	.get_drv_cap = stm_mbx_get_drv_cap,
+	.rx_crc = stm_mbx_rx_crc,
+	.rx_csum = stm_mbx_rx_csum,
 	.get_cbs = tc956xmac_vf_ioctl_get_cbs,
 	.set_cbs = tc956xmac_vf_ioctl_set_cbs,
 	.set_est = tc956xmac_vf_ioctl_set_est,
@@ -2028,11 +2028,11 @@ const struct tc956xmac_mbx_wrapper_ops tc956xmac_mbx_wrapper_ops = {
 	.delete_vlan = tc956xmac_vf_delete_vlan,
 	.reset_eee_mode = tc956xmac_vf_mbx_reset_eee_mode,
 	.vf_reset = tc956xmac_vf_mbx_reset,
-	.rx_dma_ch_tlptr = tc956x_mbx_rx_dma_ch_tlptr,
-	.setup_cbs = tc956x_mbx_setup_cbs,
-	.setup_mbx_etf = tc956x_mbx_setup_etf,
-	.pf_flr = tc956x_mbx_pf_flr,
-	.rx_dma_err = tc956x_mbx_rx_dma_err,
+	.rx_dma_ch_tlptr = stm_mbx_rx_dma_ch_tlptr,
+	.setup_cbs = stm_mbx_setup_cbs,
+	.setup_mbx_etf = stm_mbx_setup_etf,
+	.pf_flr = stm_mbx_pf_flr,
+	.rx_dma_err = stm_mbx_rx_dma_err,
 };
 
 #endif

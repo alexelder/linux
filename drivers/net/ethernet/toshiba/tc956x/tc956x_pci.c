@@ -269,7 +269,7 @@ uint16_t stm_get_shared_mem_offset(struct pci_dev *pdev, uint16_t pci_bd)
 }
 #ifndef TC956X_SRIOV_VF
 #ifdef CONFIG_PCI_IOV
-static int tc956x_no_of_vf;
+static int stm_no_of_vf;
 #endif
 #ifdef CONFIG_TC956X_PCIE_GEN3_SETTING
 static unsigned int pcie_link_speed = 3;
@@ -2892,8 +2892,8 @@ static int tc956xmac_pci_probe(struct pci_dev *pdev,
 	}
 	memset(&res, 0, sizeof(res));
 #if defined(TC956X_SRIOV_PF) && (defined(TC956X_AUTOMOTIVE_CONFIG) || defined(TC956X_ENABLE_MAC2MAC_BRIDGE) || defined(TC956X_CPE_CONFIG))
-	if (tc956x_no_of_vf > 0) {
-		tc956x_no_of_vf = 0;
+	if (stm_no_of_vf > 0) {
+		stm_no_of_vf = 0;
 		NMSGPR_INFO(&(pdev->dev),
 		"Enabling SRIOV not allowed in Automotive configuration\n");
 	}
@@ -2905,7 +2905,7 @@ static int tc956xmac_pci_probe(struct pci_dev *pdev,
 
 
 	/* Enable SRIOV with the requested no of VFs */
-	if ((tc956x_no_of_vf != 0) && (pdev->is_physfn)) {
+	if ((stm_no_of_vf != 0) && (pdev->is_physfn)) {
 
 		s32 pos = 0;
 
@@ -2914,9 +2914,9 @@ static int tc956xmac_pci_probe(struct pci_dev *pdev,
 			NDBGPR_L1(&(pdev->dev), "SR-IOV capability found\n");
 
 			/* Validate and Enable the requested No. of VFs value */
-			if (tc956x_no_of_vf <= TC956X_TOTAL_VFS) {
+			if (stm_no_of_vf <= TC956X_TOTAL_VFS) {
 
-				ret = pci_enable_sriov(pdev, tc956x_no_of_vf);
+				ret = pci_enable_sriov(pdev, stm_no_of_vf);
 				if (ret) {
 
 					NMSGPR_ERR(&(pdev->dev),
@@ -2931,7 +2931,7 @@ static int tc956xmac_pci_probe(struct pci_dev *pdev,
 
 				NMSGPR_INFO(&(pdev->dev),
 				"Total SR-IOV VFs Enabled: %d\n",
-					tc956x_no_of_vf);
+					stm_no_of_vf);
 			} else {
 				NMSGPR_ALERT(&(pdev->dev),
 				"%s : VFs Value Out of Range.\n",
@@ -4624,7 +4624,7 @@ static void tc956x_pcie_reset_prepare(struct pci_dev *pdev)
 	}
 
 #ifdef TC956X_SRIOV_PF
-	tc956x_mbx_wrap_pf_flr(priv);
+	stm_mbx_wrap_pf_flr(priv);
 #endif
 }
 
@@ -4809,9 +4809,9 @@ module_exit(stm_exit_module);
 #ifndef TC956X_SRIOV_VF
 #ifdef CONFIG_PCI_IOV
 /* Input parameter for No of virtural functions to Enable per VF.
- * tc956x_no_of_vf - Valid vlaues are 0 to 3.
+ * stm_no_of_vf - Valid vlaues are 0 to 3.
  */
-module_param(tc956x_no_of_vf, int, MOD_PARAM_ACCESS);
+module_param(stm_no_of_vf, int, MOD_PARAM_ACCESS);
 #endif
 
 #ifdef CONFIG_TC956X_PCIE_GEN3_SETTING

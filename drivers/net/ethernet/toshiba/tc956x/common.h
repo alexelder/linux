@@ -2918,11 +2918,11 @@ struct mac_device_info {
 	const struct stmmac_mode_ops *mode;
 	const struct stmmac_hwtimestamp *ptp;
 	const struct stmmac_tc_ops *tc;
-	const struct tc956x_msi_ops *msi;
+	const struct stm_msi_ops *msi;
 #ifdef TC956X_SRIOV_PF
 	const struct mac_rsc_mng_ops *rsc;
 	const struct mac_mbx_ops *mbx;
-	const struct tc956x_mbx_wrapper_ops *mbx_wrapper;
+	const struct stm_mbx_wrapper_ops *mbx_wrapper;
 #endif
 #ifdef TC956X_SRIOV_VF
 	const struct mac_rsc_mng_ops *rsc;
