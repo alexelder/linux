@@ -236,6 +236,9 @@
 #ifndef TC956X_SRIOV_VF
 //#define CONFIG_TC956X_LOAD_FW_HEADER
 #endif
+
+struct tc956xmac_cm3_tamap;
+
 #define PF_DRIVER 4
 
 /* Uncomment EEE_MAC_CONTROLLED_MODE macro for MAC controlled EEE Mode & comment for PHY controlled EEE mode */
