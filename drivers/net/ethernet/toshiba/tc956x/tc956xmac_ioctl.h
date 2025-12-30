@@ -266,7 +266,7 @@ enum ethtool_command {
 
 #define TC956X_AUX_SNAPSHOT_0				1
 
-struct tc956x_ioctl_aux_snapshot {
+struct stm_ioctl_aux_snapshot {
 	__u32 cmd;
 	__u32 aux_snapshot_ctrl;
 };
@@ -483,7 +483,7 @@ struct tc956xmac_ioctl_pcie_reg_rd_wr {
 	void *ptr;
 };
 
-struct tc956x_ioctl_fwstatus {
+struct stm_ioctl_fwstatus {
 	__u32 cmd;
 	__u32 wdt_count;
 	__u32 systick_count;
@@ -544,12 +544,12 @@ struct tc956x_pcie_link_params {
 };
 #endif /* #ifdef TC956X_PCIE_LOGSTAT */
 /**
- * struct tc956x_ioctl_pcie_lane_change - IOCTL arguments for
+ * struct stm_ioctl_pcie_lane_change - IOCTL arguments for
  * PCIe USP and DSPs lane change for power reduction
  * dst_lane - Lane number which has to be switched from current configuration
  * port - this lane switch to be operated on which port
  */
-struct tc956x_ioctl_pcie_lane_change {
+struct stm_ioctl_pcie_lane_change {
 	__u32 cmd;
 	enum lane_width target_lane_width; /* 1, 2, 4 */
 	enum ports port; /* USP, DSP1, others return error*/
@@ -557,26 +557,26 @@ struct tc956x_ioctl_pcie_lane_change {
 
 
 /**
- * struct tc956x_ioctl_pcie_set_tx_margin - IOCTL arguments for
+ * struct stm_ioctl_pcie_set_tx_margin - IOCTL arguments for
  * PCIe USP and DSPs tx margin change for power reduction
  * txmargin - target tx margin value.
  * port - USP/DSP1/DSP2 on which Tx margin setting to be done
  */
-struct tc956x_ioctl_pcie_set_tx_margin {
+struct stm_ioctl_pcie_set_tx_margin {
 	__u32 cmd;
 	__u16 txmargin; /* Set Only LSB 0:8 bits valid*/
 	enum ports port; /* USP, DSP1, DSP2*/
 };
 
 /**
- * struct tc956x_ioctl_pcie_set_tx_deemphasis - IOCTL arguments for
+ * struct stm_ioctl_pcie_set_tx_deemphasis - IOCTL arguments for
  * PCIe USP and DSPs tx de-emphasis change for power reduction
  * enable - enable or disable tx demphasis setting value.
  * txpreset - Gen3 Tx preset value as defined by PCIe Base Specifications
  * port - USP/DSP1/DSP2 on which Tx Deemphasis setting to be done
  * Note: Gen1, Gen2 txpreset configuration not supported
  */
-struct tc956x_ioctl_pcie_set_tx_deemphasis {
+struct stm_ioctl_pcie_set_tx_deemphasis {
 	__u32 cmd;
 	__u8 enable; /* 1: enable, 0: disable*/
 	__u8 txpreset; /* Gen3 tx preset, valid values are from 0 to 10; dont care in case of 'disable' selection */
@@ -585,19 +585,19 @@ struct tc956x_ioctl_pcie_set_tx_deemphasis {
 
 
 /**
- * struct tc956x_ioctl_pcie_set_dfe - IOCTL arguments for
+ * struct stm_ioctl_pcie_set_dfe - IOCTL arguments for
  * PCIe USP and DSPs DFE disable/enable for power reduction
  * enable - enable or disable DFE
  * port - USP/DSP1/DSP2 on which DFE should be enabled/disabled
  */
-struct tc956x_ioctl_pcie_set_dfe {
+struct stm_ioctl_pcie_set_dfe {
 	__u32 cmd;
 	__u8 enable; /* 1: enable, 0: disable*/
 	enum ports port; /* USP, DSP1, DSP2*/
 };
 
 /**
- * struct tc956x_ioctl_pcie_set_ctle_fixed_mode - IOCTL arguments for
+ * struct stm_ioctl_pcie_set_ctle_fixed_mode - IOCTL arguments for
  * PCIe USP and DSPs CTLE configuration
  * eqc_force - CTLE C value
  * eq_res - CTLE R value
@@ -605,7 +605,7 @@ struct tc956x_ioctl_pcie_set_dfe {
  * port - USP/DSP1/DSP2 on which CTLE fixed mode setting to be done
  */
 
-struct tc956x_ioctl_pcie_set_ctle_fixed_mode {
+struct stm_ioctl_pcie_set_ctle_fixed_mode {
 	__u32 cmd;
 	__u8 eqc_force;
 	__u8 eq_res;
@@ -614,50 +614,50 @@ struct tc956x_ioctl_pcie_set_ctle_fixed_mode {
 };
 
 /**
- * struct tc956x_ioctl_pcie_set_speed - IOCTL arguments for
+ * struct stm_ioctl_pcie_set_speed - IOCTL arguments for
  * PCIe USP and DSPs speed change
  * speed - target pcie gen speed
  */
-struct tc956x_ioctl_pcie_set_speed {
+struct stm_ioctl_pcie_set_speed {
 	__u32 cmd;
 	enum pcie_speed speed; /*1 or 2 or 3*/
 };
 #ifdef TC956X_PCIE_LOGSTAT
 
 /**
- * struct tc956x_ioctl_state_log_summary - IOCTL arguments for
+ * struct stm_ioctl_state_log_summary - IOCTL arguments for
  * State Logging Summary.
  *
  * cmd - TC956X_PCIE_STATE_LOG_SUMMARY IOCTL.
  * port - USP/DSP1/DSP2/EP for which state logging enable/disbale to be done.
  */
-struct tc956x_ioctl_state_log_summary {
+struct stm_ioctl_state_log_summary {
 	__u32 cmd;
 	enum ports port; /* USP, DSP1, DSP2, EP*/
 };
 
 /**
- * struct tc956x_ioctl_state_log_enable - IOCTL arguments for
+ * struct stm_ioctl_state_log_enable - IOCTL arguments for
  * Enabling/Disabling State Logging.
  *
  * cmd - TC956X_PCIE_STATE_LOG_ENABLE IOCTL.
  * enable - enable/disable state log.
  * port - USP/DSP1/DSP2/EP for which state logging enable/disbale to be done.
  */
-struct tc956x_ioctl_state_log_enable {
+struct stm_ioctl_state_log_enable {
 	__u32 cmd;
 	enum state_log_enable enable; /* Enable/Disable */
 	enum ports port; /* USP, DSP1, DSP2, EP*/
 };
 
 /**
- * struct tc956x_ioctl_pcie_link_params - IOCTL arguments for State log data
+ * struct stm_ioctl_pcie_link_params - IOCTL arguments for State log data
  *
  * cmd - TC956X_PCIE_GET_PCIE_LINK_PARAMS IOCTL.
  * link_param - structure for pcie link parameters to read.
  * port - USP/DSP1/DSP2/EP for which state link parameters to be read.
  */
-struct tc956x_ioctl_pcie_link_params {
+struct stm_ioctl_pcie_link_params {
 	__u32 cmd;
 	struct tc956x_pcie_link_params *link_param;
 	enum ports port;

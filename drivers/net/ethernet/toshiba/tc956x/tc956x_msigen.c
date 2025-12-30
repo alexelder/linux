@@ -95,7 +95,7 @@ static void tc956x_msigen_init(struct stmmac_priv *priv, struct net_device *dev)
 }
 
 /**
- * tc956x_interrupt_en
+ * stm_interrupt_en
  *
  * @priv: pointer to the stmmac private structure
  * @dev: pointer to the net device structure
@@ -110,7 +110,7 @@ static void tc956x_msigen_init(struct stmmac_priv *priv, struct net_device *dev)
  * 0 - Disable interrupts
  * \return None
  */
-static void tc956x_interrupt_en(struct stmmac_priv *priv, struct net_device *dev, u32 en)
+static void stm_interrupt_en(struct stmmac_priv *priv, struct net_device *dev, u32 en)
 {
 	u32 chan, mask_val = 0;
 
@@ -160,7 +160,7 @@ static void tc956x_interrupt_en(struct stmmac_priv *priv, struct net_device *dev
 }
 
 /**
- * tc956x_interrupt_clr
+ * stm_interrupt_clr
  *
  * @priv: pointer to the stmmac private structure
  * @dev: pointer to the net device structure
@@ -176,7 +176,7 @@ static void tc956x_interrupt_en(struct stmmac_priv *priv, struct net_device *dev
  *
  * \return None
  */
-static void tc956x_interrupt_clr(struct stmmac_priv *priv, struct net_device *dev, u32 vector)
+static void stm_interrupt_clr(struct stmmac_priv *priv, struct net_device *dev, u32 vector)
 {
 	writel((1<<vector), priv->ioaddr + TC956X_MSI_MASK_CLR_OFFSET(priv->fn_id_info.pf_no, priv->fn_id_info.vf_no));
 
@@ -233,7 +233,7 @@ static void tc956x_msigen_init(struct stmmac_priv *priv, struct net_device *dev,
 }
 
 /**
- * tc956x_interrupt_en
+ * stm_interrupt_en
  *
  * @priv: pointer to the stmmac private structure
  * @dev: pointer to the net device structure
@@ -249,7 +249,7 @@ static void tc956x_msigen_init(struct stmmac_priv *priv, struct net_device *dev,
  * 0 - Disable interrupts
  * \return None
  */
-static void tc956x_interrupt_en(struct stmmac_priv *priv, struct net_device *dev, u32 en,
+static void stm_interrupt_en(struct stmmac_priv *priv, struct net_device *dev, u32 en,
 						struct fn_id *fn_id_info)
 {
 	//struct stmmac_priv *priv = netdev_priv(dev);
@@ -283,7 +283,7 @@ static void tc956x_interrupt_en(struct stmmac_priv *priv, struct net_device *dev
 }
 
 /**
- * tc956x_interrupt_clr
+ * stm_interrupt_clr
  *
  * @priv: pointer to the stmmac private structure
  * @dev: pointer to the net device structure
@@ -300,7 +300,7 @@ static void tc956x_interrupt_en(struct stmmac_priv *priv, struct net_device *dev
  *
  * \return None
  */
-static void tc956x_interrupt_clr(struct stmmac_priv *priv, struct net_device *dev, u32 vector,
+static void stm_interrupt_clr(struct stmmac_priv *priv, struct net_device *dev, u32 vector,
 						struct fn_id *fn_id_info)
 {
 	u8 pf_id = fn_id_info->pf_no;
@@ -312,6 +312,6 @@ static void tc956x_interrupt_clr(struct stmmac_priv *priv, struct net_device *de
 #endif
 const struct tc956x_msi_ops tc956x_msigen_ops = {
 	.init = tc956x_msigen_init,
-	.interrupt_en = tc956x_interrupt_en,
-	.interrupt_clr = tc956x_interrupt_clr,
+	.interrupt_en = stm_interrupt_en,
+	.interrupt_clr = stm_interrupt_clr,
 };

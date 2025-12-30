@@ -1,7 +1,7 @@
 /*
  * TC956x IPA I/F layer
  *
- * tc956x_ipa_intf.h
+ * stm_ipa_intf.h
  *
  * Copyright (C) 2021 Toshiba Electronic Devices & Storage Corporation
  *
@@ -57,7 +57,7 @@ enum channel_dir {
 	CH_DIR_TX,
 };
 
-struct tc956x_ipa_version {
+struct stm_ipa_version {
 	unsigned char major;  /* IPA I/F major version */
 	unsigned char minor;  /* IPA I/F minor version */
 };
@@ -172,7 +172,7 @@ struct mac_addr_list {
  *	     Major Number = Minor Number = 0xFF incase ndev is NULL or
  *	     stmmac_priv extracted from ndev is NULL
  */
-struct tc956x_ipa_version get_ipa_intf_version(struct net_device *ndev);
+struct stm_ipa_version get_ipa_intf_version(struct net_device *ndev);
 
 
 /*!

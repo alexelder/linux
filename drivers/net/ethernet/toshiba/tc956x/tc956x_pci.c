@@ -2780,7 +2780,7 @@ int tc956x_set_pci_speed(struct pci_dev *pdev, u32 speed)
 //#endif /*#ifdef CONFIG_TC956X_PCIE_GEN3_SETTING*/
 #endif /*#ifdef TC956X*/
 
-uint8_t get_tc956x_index(struct pci_dev *pdev)
+uint8_t get_stm_index(struct pci_dev *pdev)
 {
 	uint8_t index;
 	uint32_t pci_bdf = pci_dev_id(pdev); /* [15:8] Bus number, [7:3] Slot number and [2:0] Function number */
@@ -3072,7 +3072,7 @@ static int tc956xmac_pci_probe(struct pci_dev *pdev,
 #endif /*#ifdef TC956X_SRIOV_VF*/
 
 	/* Get the device index by comparing the user passed BDF (module param) with actual BDF */
-	res.device_num = get_tc956x_index(pdev);
+	res.device_num = get_stm_index(pdev);
 	dev_info(&(pdev->dev), "stm_eth_ports_bdf matched device index for this device is: %d and Port number: %d\n", res.device_num, res.port_num);
 
 	if (res.device_num == 0xFF) {
@@ -4753,7 +4753,7 @@ static struct pci_driver tc956xmac_pci_driver = {
  *
  * \return void.
  */
-static s32 __init tc956x_init_module(void)
+static s32 __init stm_init_module(void)
 {
 	s32 ret = 0;
 
@@ -4795,7 +4795,7 @@ static void __exit stm_exit_module(void)
  * entry function returns and the module does nothing until the kernel wants
  * to do something with the code that the module provides.
  */
-module_init(tc956x_init_module);
+module_init(stm_init_module);
 
 /*!
  * \brief Macro to register the driver un-registration function.

@@ -1321,7 +1321,7 @@ void stm_config_CM3_tamap(struct device *dev,
 				struct tc956xmac_cm3_tamap *tamap,
 				u8 table_entry);
 int tc956x_set_pci_speed(struct pci_dev *pdev, u32 speed);
-uint8_t get_tc956x_index(struct pci_dev *pdev);
+uint8_t get_stm_index(struct pci_dev *pdev);
 void tc956xmac_link_change_set_power(struct stmmac_priv *priv, enum TC956X_PORT_LINK_CHANGE_STATE state);
 uint16_t stm_get_shared_mem_offset(struct pci_dev *pdev, uint16_t pci_bd);
 

@@ -1,7 +1,7 @@
 /*
  * TC956x IPA I/F layer
  *
- * tc956x_ipa_intf.c
+ * stm_ipa_intf.c
  *
  * Copyright (C) 2022 Toshiba Electronic Devices & Storage Corporation
  *
@@ -58,7 +58,7 @@
 #ifdef TC956X
 #include "dwxgmac2.h"
 #endif
-#include "tc956x_ipa_intf.h"
+#include "stm_ipa_intf.h"
 
 #define IPA_INTF_MAJOR_VERSION 0
 #define IPA_INTF_MINOR_VERSION 1
@@ -94,9 +94,9 @@ extern int tc956xmac_rx_parser_configuration(struct stmmac_priv *priv);
  *	     stmmac_priv extracted from ndev is NULL
  */
 
-struct tc956x_ipa_version get_ipa_intf_version(struct net_device *ndev)
+struct stm_ipa_version get_ipa_intf_version(struct net_device *ndev)
 {
-	struct tc956x_ipa_version version;
+	struct stm_ipa_version version;
 
 	version.major = 0xFF;
 	version.minor = 0xFF;

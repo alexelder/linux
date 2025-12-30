@@ -1377,14 +1377,14 @@ static const struct file_operations fops_dma_stats = {
 };
 
 /**
- * read_tc956x_intr_status() - Debugfs read command for interrupt status info
+ * read_stm_intr_status() - Debugfs read command for interrupt status info
  *
  * @file: "interrupt_stats" debugfs file
  * @user_buf: user-space target buffer pointer
  * @count: number of bytes to read
  * @ppos: address of the file position field
  */
-static ssize_t read_tc956x_intr_status(struct file *file,
+static ssize_t read_stm_intr_status(struct file *file,
 	char __user *user_buf, size_t count, loff_t *ppos)
 {
 	struct stmmac_priv *priv = file->private_data;
@@ -1423,7 +1423,7 @@ static ssize_t read_tc956x_intr_status(struct file *file,
 }
 
 static const struct file_operations fops_intr_stats = {
-	.read = read_tc956x_intr_status,
+	.read = read_stm_intr_status,
 	.open = simple_open,
 	.owner = THIS_MODULE,
 	.llseek = default_llseek,
@@ -11353,7 +11353,7 @@ static int tc956xmac_config_vlan_filter(struct stmmac_priv *priv, void __user *d
 static int tc956x_xgmac_get_fw_status(struct stmmac_priv *priv,
 					void __user *data)
 {
-	struct tc956x_ioctl_fwstatus ioctl_data;
+	struct stm_ioctl_fwstatus ioctl_data;
 	u32 wdt_count1, wdt_count2;
 	u32 systick_count1, systick_count2;
 	u32 fw_status;
@@ -11818,7 +11818,7 @@ static int tc956xmac_config_ptpoffload(struct stmmac_priv *priv, void __user *da
  */
 static int tc956xmac_aux_timestamp_enable(struct stmmac_priv *priv, void __user *data)
 {
-	struct tc956x_ioctl_aux_snapshot ioctl_data;
+	struct stm_ioctl_aux_snapshot ioctl_data;
 	u32 aux_cntrl_en, val, msi_out_val;
 
 	DBGPR_FUNC(priv->device, "--> %s\n", __func__);
@@ -12630,7 +12630,7 @@ static int tc956xmac_mode2_dsp1_lane_change_1_to_2(struct stmmac_priv *priv, voi
 
 static int tc956xmac_pcie_lane_change(struct stmmac_priv *priv, void __user *data)
 {
-	struct tc956x_ioctl_pcie_lane_change ioctl_data;
+	struct stm_ioctl_pcie_lane_change ioctl_data;
 	u32 reg_data;
 	u32 pcie_mode;
 	enum lane_width usp_curr_lane_width, dsp1_curr_lane_width;
@@ -12737,7 +12737,7 @@ static int tc956xmac_pcie_lane_change(struct stmmac_priv *priv, void __user *dat
 
 static int tc956xmac_pcie_set_tx_margin(struct stmmac_priv *priv, void __user *data)
 {
-	struct tc956x_ioctl_pcie_set_tx_margin ioctl_data;
+	struct stm_ioctl_pcie_set_tx_margin ioctl_data;
 	u32 reg_data;
 	u32 pcie_mode;
 	void __iomem *ioaddr;
@@ -12985,7 +12985,7 @@ static int tc956xmac_dfe_pll_reset_settings(struct stmmac_priv *priv, void __iom
 
 static int tc956xmac_pcie_set_tx_deemphasis(struct stmmac_priv *priv, void __user *data)
 {
-	struct tc956x_ioctl_pcie_set_tx_deemphasis ioctl_data;
+	struct stm_ioctl_pcie_set_tx_deemphasis ioctl_data;
 	u32 reg_data;
 	u32 pcie_mode;
 	void __iomem *ioaddr;
@@ -13116,7 +13116,7 @@ static int tc956xmac_pcie_set_tx_deemphasis(struct stmmac_priv *priv, void __use
 
 static int tc956xmac_pcie_set_dfe(struct stmmac_priv *priv, void __user *data)
 {
-	struct tc956x_ioctl_pcie_set_dfe ioctl_data;
+	struct stm_ioctl_pcie_set_dfe ioctl_data;
 	u32 reg_data;
 	u32 pcie_mode;
 	void __iomem *ioaddr;
@@ -13556,7 +13556,7 @@ static int tc956xmac_pcie_set_dfe(struct stmmac_priv *priv, void __user *data)
 
 static int tc956xmac_pcie_set_ctle_fixed(struct stmmac_priv *priv, void __user *data)
 {
-	struct tc956x_ioctl_pcie_set_ctle_fixed_mode ioctl_data;
+	struct stm_ioctl_pcie_set_ctle_fixed_mode ioctl_data;
 	u32 reg_data;
 	u32 pcie_mode;
 	void __iomem *ioaddr;
@@ -13863,7 +13863,7 @@ static int tc956xmac_pcie_set_ctle_fixed(struct stmmac_priv *priv, void __user *
 static int tc956xmac_pcie_speed_change(struct stmmac_priv *priv, void __user *data)
 {
 	struct pci_dev *pdev = to_pci_dev(priv->device);
-	struct tc956x_ioctl_pcie_set_speed ioctl_data;
+	struct stm_ioctl_pcie_set_speed ioctl_data;
 
 	DBGPR_FUNC(priv->device, "-->%s\n", __func__);
 
