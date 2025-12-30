@@ -85,7 +85,7 @@
 #include "dwxgmac2.h"
 
 #ifdef TC956X_SRIOV_DEBUG
-void tc956x_filter_debug(struct stmmac_priv *priv);
+void stm_filter_debug(struct stmmac_priv *priv);
 #endif
 #ifdef TC956X_SRIOV_PF
 int tc956x_pf_set_mac_filter(struct net_device *dev, int vf, const u8 *mac);
@@ -898,7 +898,7 @@ static s32 tc956x_mac_ind_acc_wr_rd(struct stmmac_priv *priv, u8 wr_rd, u32 msel
 }
 
 #ifdef TC956X_SRIOV_DEBUG
-void tc956x_filter_debug(struct stmmac_priv *priv)
+void stm_filter_debug(struct stmmac_priv *priv)
 {
 	u32 reg_data = 0, offset;
 	void __iomem *ioaddr = priv->ioaddr;
@@ -3149,13 +3149,13 @@ static void dwxgmac3_set_ptp_offload(struct stmmac_priv *priv,
 #endif /* TC956X_UNSUPPORTED_UNTESTED_FEATURE */
 
 /**
- * tc956x_enable_jumbo_frm - Enable jumbo frame support for Tx and Rx in EMAC.
+ * stm_enable_jumbo_frm - Enable jumbo frame support for Tx and Rx in EMAC.
  *
  * @priv: pointer to the stmmac private structure
  * @dev: pointer to net_device structure
  * @en: Enable/Disable
  */
-static void tc956x_enable_jumbo_frm(struct stmmac_priv *priv,
+static void stm_enable_jumbo_frm(struct stmmac_priv *priv,
 					struct net_device *dev, u32 en)
 {
 	u32 value_tx = readl(priv->ioaddr + XGMAC_TX_CONFIG);
@@ -3259,7 +3259,7 @@ const struct stmmac_ops dwxgmac210_ops = {
 	.fpe_configure = dwxgmac3_fpe_configure,
 	.set_ptp_offload = dwxgmac3_set_ptp_offload,
 #endif /* TC956X_UNSUPPORTED_UNTESTED_FEATURE */
-	.jumbo_en = tc956x_enable_jumbo_frm,
+	.jumbo_en = stm_enable_jumbo_frm,
 };
 
 int dwxgmac2_setup(struct stmmac_priv *priv)

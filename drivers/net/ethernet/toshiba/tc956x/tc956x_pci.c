@@ -251,7 +251,7 @@ static DEFINE_MUTEX(tc956x_pm_suspend_lock);
 
 struct tx956x_shrd_mem tx956x_pci_shrd_mem[TC956X_TOT_CASCADE_DEV];
 
-uint16_t tc956x_get_shared_mem_offset(struct pci_dev *pdev, uint16_t pci_bd)
+uint16_t stm_get_shared_mem_offset(struct pci_dev *pdev, uint16_t pci_bd)
 {
 	uint16_t offset;
 
@@ -317,7 +317,7 @@ unsigned int macX_force_config_speed[(TC956X_TOT_CASCADE_DEV*2) + 1] = {
 #endif
 
 /* Set initial values for Array Module parameters; Need to increase this when total cascade is increased */
-unsigned int tc956x_eth_ports_bdf[TC956X_TOT_CASCADE_DEV*2] = {
+unsigned int stm_eth_ports_bdf[TC956X_TOT_CASCADE_DEV*2] = {
 	0x0000, 0x0000, /* Change this to 0xFFFF, if other module parameters to be taken from array instead of user passed */
 	0x0000, 0x0000,
 	0x0000, 0x0000,
@@ -2687,7 +2687,7 @@ static int tc956x_set_speed(struct pci_dev *pdev, u32 speed)
 	return ret;
 }
 
-static int tc956x_get_speed(struct pci_dev *pdev, u32 *speed)
+static int stm_get_speed(struct pci_dev *pdev, u32 *speed)
 {
 	int ret;
 	u16 lnksta;
@@ -2719,7 +2719,7 @@ int tc956x_set_pci_speed(struct pci_dev *pdev, u32 speed)
 	usp = pci_upstream_bridge(dsp[2]);
 	root = pci_upstream_bridge(usp);
 
-	ret = tc956x_get_speed(root, &cur_speed);
+	ret = stm_get_speed(root, &cur_speed);
 	if ((ret == 0) && (cur_speed == speed))
 		return 0;
 
@@ -2785,12 +2785,12 @@ uint8_t get_tc956x_index(struct pci_dev *pdev)
 	uint8_t index;
 	uint32_t pci_bdf = pci_dev_id(pdev); /* [15:8] Bus number, [7:3] Slot number and [2:0] Function number */
 
-	if (tc956x_eth_ports_bdf[tc956xmac_pm_usage_counter] == 0xFFFF) /* This is required when module parameters cannot be used. Other module parameters should hard coded as per device probe order */
+	if (stm_eth_ports_bdf[tc956xmac_pm_usage_counter] == 0xFFFF) /* This is required when module parameters cannot be used. Other module parameters should hard coded as per device probe order */
 		return tc956xmac_pm_usage_counter;
 
 
 	for (index = 0; index < (TC956X_TOT_CASCADE_DEV*2); index++) {
-		if (pci_bdf  == tc956x_eth_ports_bdf[index]) /* Compare Bus number, Device number and Function number */
+		if (pci_bdf  == stm_eth_ports_bdf[index]) /* Compare Bus number, Device number and Function number */
 			return (index);
 	}
 	return 0xFF; /* no match found */
@@ -3073,12 +3073,12 @@ static int tc956xmac_pci_probe(struct pci_dev *pdev,
 
 	/* Get the device index by comparing the user passed BDF (module param) with actual BDF */
 	res.device_num = get_tc956x_index(pdev);
-	dev_info(&(pdev->dev), "tc956x_eth_ports_bdf matched device index for this device is: %d and Port number: %d\n", res.device_num, res.port_num);
+	dev_info(&(pdev->dev), "stm_eth_ports_bdf matched device index for this device is: %d and Port number: %d\n", res.device_num, res.port_num);
 
 	if (res.device_num == 0xFF) {
 		res.device_num = (TC956X_TOT_CASCADE_DEV*2); /* Use the slot at the end of array for non-matching devices */
 
-		dev_info(&(pdev->dev), "Error: Module parameter tc956x_eth_ports_bdf not provided or\
+		dev_info(&(pdev->dev), "Error: Module parameter stm_eth_ports_bdf not provided or\
 			value provided in module param not matching with the device BDF.\
 			Use the device number as %d and set other associated module parameter values to default\n", res.device_num);
 
@@ -3290,7 +3290,7 @@ static int tc956xmac_pci_probe(struct pci_dev *pdev,
 #endif
 
 	for (offset = 0; offset < TC956X_TOT_CASCADE_DEV*2; offset++)
-		NMSGPR_INFO(&pdev->dev, "tc956x_eth_ports_bdf[%d] = 0x%x\n", offset, tc956x_eth_ports_bdf[offset]);
+		NMSGPR_INFO(&pdev->dev, "stm_eth_ports_bdf[%d] = 0x%x\n", offset, stm_eth_ports_bdf[offset]);
 #endif
 
 #if defined(TC956X_SRIOV_PF)
@@ -3639,7 +3639,7 @@ static int tc956xmac_pci_probe(struct pci_dev *pdev,
 
 	dev_info(&(pdev->dev), "Port%d Bus%x BDF is 0x%x\n", res.port_num, pdev->bus->number, res.pci_bdf);
 
-	sh_mem_offset = tc956x_get_shared_mem_offset(pdev, pci_dev_id(pdev) & TC956X_PCI_BD_MASK);
+	sh_mem_offset = stm_get_shared_mem_offset(pdev, pci_dev_id(pdev) & TC956X_PCI_BD_MASK);
 	if (sh_mem_offset < TC956X_TOT_CASCADE_DEV)
 		res.pci_bd  = sh_mem_offset;
 	else {
@@ -4354,7 +4354,7 @@ static int tc956x_pcie_resume(struct device *dev)
 	tc956xmac_pm_set_power(priv, RESUME);
 
 	/* Restore the GPIO settings which was saved during GPIO configuration */
-	ret = tc956x_gpio_restore_configuration(priv);
+	ret = stm_gpio_restore_configuration(priv);
 	if (ret < 0)
 		KPRINT_INFO("GPIO configuration restoration failed\n");
 
@@ -4680,7 +4680,7 @@ static void tc956x_pcie_io_resume(struct pci_dev *pdev)
 }
 
 /* PCI AER Error handlers */
-static struct pci_error_handlers tc956x_err_handler = {
+static struct pci_error_handlers stm_err_handler = {
 	.error_detected = tc956x_pcie_error_detected,
 	.slot_reset = tc956x_pcie_slot_reset,
 	.resume = tc956x_pcie_io_resume,
@@ -4741,7 +4741,7 @@ static struct pci_driver tc956xmac_pci_driver = {
 		.owner		= THIS_MODULE,
 		.pm		= &tc956xmac_pm_ops,
 	},
-	.err_handler = &tc956x_err_handler
+	.err_handler = &stm_err_handler
 };
 
 
@@ -4777,7 +4777,7 @@ static s32 __init tc956x_init_module(void)
  *
  * \return void.
  */
-static void __exit tc956x_exit_module(void)
+static void __exit stm_exit_module(void)
 {
 	KPRINT_INFO("%s", __func__);
 	pci_unregister_driver(&tc956xmac_pci_driver);
@@ -4805,7 +4805,7 @@ module_init(tc956x_init_module);
  * it undoes whatever entry function did. It unregisters the functionality
  * that the entry function registered.
  */
-module_exit(tc956x_exit_module);
+module_exit(stm_exit_module);
 #ifndef TC956X_SRIOV_VF
 #ifdef CONFIG_PCI_IOV
 /* Input parameter for No of virtural functions to Enable per VF.
@@ -4870,8 +4870,8 @@ MODULE_PARM_DESC(mac1_axi_blen,
 		Supported values: 4,8,16,32,64,128,256");
 
 /* From here Module params are supported in array format */
-module_param_array(tc956x_eth_ports_bdf, uint, NULL, 0444);
-MODULE_PARM_DESC(tc956x_eth_ports_bdf,
+module_param_array(stm_eth_ports_bdf, uint, NULL, 0444);
+MODULE_PARM_DESC(stm_eth_ports_bdf,
 		"Array of BDFs (Bus number, Device number and Function number) for which interface configuration is required, default is 0 (None)\
 		which means other associated array module parameters will assign their default values to the TC956x devices in cascade setup\
 		Supported format: 0xBBDF, 'BB': one byte of Bus number, 'DF': one byte of Slot/Device number and Function number encoded as\
@@ -4881,7 +4881,7 @@ MODULE_PARM_DESC(tc956x_eth_ports_bdf,
 
 module_param_array(macX_interface, uint, NULL, 0444);
 MODULE_PARM_DESC(macX_interface,
-		"Array of MAC Interface arranged in order according to the BDFs provided in module parameter 'tc956x_eth_ports_bdf'\
+		"Array of MAC Interface arranged in order according to the BDFs provided in module parameter 'stm_eth_ports_bdf'\
 		Following are supported values according to the port.\
 		PORTX interface supported values, default is 1 (XFI) for Port0 and 4 (SGMII) for Port1\
 		[0: USXGMII, 1: XFI, 2: RGMII*, 3: RGMII_ID*, 4: SGMII, 5: 2500Base-X, 6: USXGMII_10G, 7: USXGMII_5G, 8: USXGMII_2.5G]\
@@ -4890,7 +4890,7 @@ MODULE_PARM_DESC(macX_interface,
 
 module_param_array(portX_mdc, uint, NULL, 0444);
 MODULE_PARM_DESC(portX_mdc,
-		"Array of MDC values arranged in order according to the BDFs provided in module parameter 'tc956x_eth_ports_bdf'\
+		"Array of MDC values arranged in order according to the BDFs provided in module parameter 'stm_eth_ports_bdf'\
 		PORTX MDC clock setting supported values - default is 0x4 (clk_csr_i/12) for all Port0 and 0x8 (clk_csr_i/62) for all Port1,\
 		[0x0 - clk_csr_i/4,\
 		0x1 - clk_csr_i/6,\
@@ -4912,7 +4912,7 @@ MODULE_PARM_DESC(portX_mdc,
 
 module_param_array(portX_c45_state, uint, NULL, 0444);
 MODULE_PARM_DESC(portX_c45_state,
-		"Array of C45 state values arranged in order according to the BDFs provided in module parameter 'tc956x_eth_ports_bdf'\
+		"Array of C45 state values arranged in order according to the BDFs provided in module parameter 'stm_eth_ports_bdf'\
 		PORTX phy driver clause setting - default is 1 (true) for all Port0 and 0 (false) for all Port1,\
 		Supported values: [1 - true, 0 - false]\
 		This is array module parameter in which maximum of 14 C45 state can be provided in comma seperated format");
@@ -4920,21 +4920,21 @@ MODULE_PARM_DESC(portX_c45_state,
 
 module_param_array(portX_phyaddr, uint, NULL, 0444);
 MODULE_PARM_DESC(portX_phyaddr,
-		"Array of Phy device addr arranged in order according to the BDFs provided in module parameter 'tc956x_eth_ports_bdf'\
+		"Array of Phy device addr arranged in order according to the BDFs provided in module parameter 'stm_eth_ports_bdf'\
 		PORT0 Phy device addr for phy detection, default is 0 for both Port0 and Port1,\
 		Supported values are [0 to 31]\
 		This is array module parameter in which maximum of 14 Phy device addresses can be provided in comma seperated format");
 
 module_param_array(macX_link_down_macrst, uint, NULL, 0444);
 MODULE_PARM_DESC(macX_link_down_macrst,
-		"Array of MAC Link down reset setting in order according to the BDFs provided in module parameter 'tc956x_eth_ports_bdf'\
+		"Array of MAC Link down reset setting in order according to the BDFs provided in module parameter 'stm_eth_ports_bdf'\
 		MAC reset for PHY Clock loss during Link Down - default is 1 (ENABLE) for all Port0 and 0 (DISABLE) for all Port1,\
 		Supported values [0: DISABLE, 1: ENABLE]\
 		This is array module parameter in which maximum of 14 MAC link down reset state can be provided in comma seperated format");
 
 module_param_array(macX_no_mdio_no_phy, uint, NULL, 0444);
 MODULE_PARM_DESC(macX_no_mdio_no_phy,
-	"Array of PHY and MDIO configuration in order according to the BDFs provided in module parameter 'tc956x_eth_ports_bdf'\
+	"Array of PHY and MDIO configuration in order according to the BDFs provided in module parameter 'stm_eth_ports_bdf'\
 	PHY and MDIO configuration - default is 0 (PHY ON and MDIO ON) for both Port0 and Port1,\
 	Supported values [0: PHY ON and MDIO ON, 1: PHY ON and MDIO OFF*, 2: PHY OFF and MDIO ON*, 3: PHY OFF and MDIO OFF]\
 	* - These modes are not supported in current version\
@@ -4942,25 +4942,25 @@ MODULE_PARM_DESC(macX_no_mdio_no_phy,
 
 module_param_array(macX_rxq0_size, uint, NULL, 0444);
 MODULE_PARM_DESC(macX_rxq0_size,
-		"Array of Rx Queue-0 arranged in order according to the BDFs provided in module parameter 'tc956x_eth_ports_bdf'\
+		"Array of Rx Queue-0 arranged in order according to the BDFs provided in module parameter 'stm_eth_ports_bdf'\
 		 Rx Queue-0 size of BDfs provided - default is 18432 (bytes),\
 		 [Range Supported : 3072..44032 (bytes)]");
 
 module_param_array(macX_txq0_size, uint, NULL, 0444);
 MODULE_PARM_DESC(macX_txq0_size,
-		"Array of Tx Queue-0 arranged in order according to the BDFs provided in module parameter 'tc956x_eth_ports_bdf'\
+		"Array of Tx Queue-0 arranged in order according to the BDFs provided in module parameter 'stm_eth_ports_bdf'\
 		 Tx Queue-0 size of BDfs provided - default is 18432 (bytes),\
 		 [Range Supported : 3072..44032 (bytes)]");
 
 module_param_array(macX_rxq1_size, uint, NULL, 0444);
 #ifdef TC956X_CPE_CONFIG
 MODULE_PARM_DESC(macX_rxq1_size,
-		"Array of Rx Queue-1 arranged in order according to the BDFs provided in module parameter 'tc956x_eth_ports_bdf'\
+		"Array of Rx Queue-1 arranged in order according to the BDFs provided in module parameter 'stm_eth_ports_bdf'\
 		 Rx Queue-1 size of BDfs provided - default is 18432 (bytes),\
 		 [Range Supported : 3072..44032 (bytes)]");
 #else
 MODULE_PARM_DESC(macX_rxq1_size,
-		"Array of Rx Queue-1 arranged in order according to the BDFs provided in module parameter 'tc956x_eth_ports_bdf'\
+		"Array of Rx Queue-1 arranged in order according to the BDFs provided in module parameter 'stm_eth_ports_bdf'\
 		 Rx Queue-1 size of BDfs provided - default is 4096 (bytes),\
 		 [Range Supported : 3072..44032 (bytes)]");
 #endif
@@ -4968,84 +4968,84 @@ MODULE_PARM_DESC(macX_rxq1_size,
 module_param_array(macX_txq1_size, uint, NULL, 0444);
 #ifdef TC956X_CPE_CONFIG
 MODULE_PARM_DESC(macX_txq1_size,
-		"Array of Tx Queue-1 arranged in order according to the BDFs provided in module parameter 'tc956x_eth_ports_bdf'\
+		"Array of Tx Queue-1 arranged in order according to the BDFs provided in module parameter 'stm_eth_ports_bdf'\
 		 Tx Queue-1 size of BDfs provided - default is 18432 (bytes),\
 		 [Range Supported : 3072..44032 (bytes)]");
 #else
 MODULE_PARM_DESC(macX_txq1_size,
-		"Array of Tx Queue-1 arranged in order according to the BDFs provided in module parameter 'tc956x_eth_ports_bdf'\
+		"Array of Tx Queue-1 arranged in order according to the BDFs provided in module parameter 'stm_eth_ports_bdf'\
 		 Tx Queue-1 size of BDfs provided - default is 14336 (bytes),\
 		 [Range Supported : 3072..44032 (bytes)]");
 #endif
 
 module_param_array(macX_rxq0_rfd, uint, NULL, 0444);
 MODULE_PARM_DESC(macX_rxq0_rfd,
-		"Array of Flow control thresholds for Rx Queue-0 arranged in order according to the BDFs provided in module parameter 'tc956x_eth_ports_bdf'\
+		"Array of Flow control thresholds for Rx Queue-0 arranged in order according to the BDFs provided in module parameter 'stm_eth_ports_bdf'\
 		 Flow control thresholds for Rx Queue-0 of BDfs provided\
 		 for disable - default is 24 (13KB)\
 		 [Range Supported : 0..84]");
 
 module_param_array(macX_rxq1_rfd, uint, NULL, 0444);
 MODULE_PARM_DESC(macX_rxq1_rfd,
-		"Array of Flow control thresholds for Rx Queue-1 arranged in order according to the BDFs provided in module parameter 'tc956x_eth_ports_bdf'\
+		"Array of Flow control thresholds for Rx Queue-1 arranged in order according to the BDFs provided in module parameter 'stm_eth_ports_bdf'\
 		 Flow control thresholds for Rx Queue-1 of BDfs provided\
 		 for disable - default is 24 (13KB)\
 		 [Range Supported : 0..84]");
 
 module_param_array(macX_rxq0_rfa, uint, NULL, 0444);
 MODULE_PARM_DESC(macX_rxq0_rfa,
-		"Array of Flow control thresholds for Rx Queue-0 arranged in order according to the BDFs provided in module parameter 'tc956x_eth_ports_bdf'\
+		"Array of Flow control thresholds for Rx Queue-0 arranged in order according to the BDFs provided in module parameter 'stm_eth_ports_bdf'\
 		 Flow control thresholds for Rx Queue-0 of BDfs provided\
 		 for enable - default is 24 (13KB)\
 		 [Range Supported : 0..84]");
 
 module_param_array(macX_rxq1_rfa, uint, NULL, 0444);
 MODULE_PARM_DESC(macX_rxq1_rfa,
-		"Array of Flow control thresholds for Rx Queue-1 arranged in order according to the BDFs provided in module parameter 'tc956x_eth_ports_bdf'\
+		"Array of Flow control thresholds for Rx Queue-1 arranged in order according to the BDFs provided in module parameter 'stm_eth_ports_bdf'\
 		 Flow control thresholds for Rx Queue-1 of BDfs provided\
 		 for enable - default is 24 (13KB)\
 		 [Range Supported : 0..84]");
 
 module_param_array(macX_eee_enable, uint, NULL, 0444);
 MODULE_PARM_DESC(macX_eee_enable,
-		"Array of Enable/Disable EEE arranged in order according to the BDFs provided in module parameter 'tc956x_eth_ports_bdf'\
+		"Array of Enable/Disable EEE arranged in order according to the BDFs provided in module parameter 'stm_eth_ports_bdf'\
 		 Enable/Disable EEE for BDfs provided - default is 0,\
 		 [0: DISABLE, 1: ENABLE]");
 
 module_param_array(macX_lpi_timer, uint, NULL, 0444);
 MODULE_PARM_DESC(macX_lpi_timer,
-		"Array of LPI Automatic Entry Timer arranged in order according to the BDFs provided in module parameter 'tc956x_eth_ports_bdf'\
+		"Array of LPI Automatic Entry Timer arranged in order according to the BDFs provided in module parameter 'stm_eth_ports_bdf'\
 		 LPI Automatic Entry Timer for BDfs provided - default is 600 (us),\
 		 [Range Supported : 0..1048568 (us)]");
 
 module_param_array(macX_filter_phy_pause, uint, NULL, 0444);
 MODULE_PARM_DESC(macX_filter_phy_pause,
-		"Array of Filter PHY pause frames arranged in order according to the BDFs provided in module parameter 'tc956x_eth_ports_bdf'\
+		"Array of Filter PHY pause frames arranged in order according to the BDFs provided in module parameter 'stm_eth_ports_bdf'\
 		 Filter PHY pause frames alone and pass Link partner pause frames\
 		 to application for BDfs provided - default is 0,\
 		 [0: DISABLE, 1: ENABLE]");
 
 module_param_array(macX_en_lp_pause_frame_cnt, uint, NULL, 0444);
 MODULE_PARM_DESC(macX_en_lp_pause_frame_cnt,
-		"Array of Enable counter to count Link Partner pause frames arranged in order according to the BDFs provided in module parameter 'tc956x_eth_ports_bdf'\
+		"Array of Enable counter to count Link Partner pause frames arranged in order according to the BDFs provided in module parameter 'stm_eth_ports_bdf'\
 		 Enable counter to count Link Partner pause frames for BDfs provided - default is 0,\
 		 [0: DISABLE, 1: ENABLE]");
 
 module_param_array(macX_force_speed_mode, uint, NULL, 0444);
 MODULE_PARM_DESC(mac0_force_speed_mode,
-		"Array of Enable force speed mode arranged in order according to the BDFs provided in module parameter 'tc956x_eth_ports_bdf'\
+		"Array of Enable force speed mode arranged in order according to the BDFs provided in module parameter 'stm_eth_ports_bdf'\
 		 Enable force speed mode for BDfs provided - default is 0,\
 		 [0: DISABLE, 1: ENABLE]");
 
 module_param_array(macX_force_config_speed, uint, NULL, 0444);
 MODULE_PARM_DESC(macX_force_config_speed,
-		"Array of Configure force speed arranged in order according to the BDFs provided in module parameter 'tc956x_eth_ports_bdf'\
+		"Array of Configure force speed arranged in order according to the BDFs provided in module parameter 'stm_eth_ports_bdf'\
 		 Configure force speed for BDfs provided - default is 3,\
 		 [0: 10G, 1: 5G, 2: 2.5G, 3: 1G, 4: 100M, 5: 10M]");
 
 module_param_array(macX_power_save_at_link_down, uint, NULL, 0444);
 MODULE_PARM_DESC(macX_power_save_at_link_down,
-		"Array of Enable Power saving during Link down arranged in order according to the BDFs provided in module parameter 'tc956x_eth_ports_bdf'\
+		"Array of Enable Power saving during Link down arranged in order according to the BDFs provided in module parameter 'stm_eth_ports_bdf'\
 		 Same value to be assigned for Port-0 and Port-1 of a TC956x device - default is 0\
 		 Note: If Port-0 and Port-1 have different values, power saving is not gauranteed\
 		 [0: DISABLE, 1: ENABLE]");
@@ -5054,28 +5054,28 @@ MODULE_PARM_DESC(macX_power_save_at_link_down,
 
 module_param_array(epX_l0s_delay, uint, NULL, 0444);
 MODULE_PARM_DESC(epX_l0s_delay,
-		"Array of L0s Link state change delay arranged in order according to the BDFs provided in module parameter 'tc956x_eth_ports_bdf'\
+		"Array of L0s Link state change delay arranged in order according to the BDFs provided in module parameter 'stm_eth_ports_bdf'\
 		L0s Link state change delay configuration for\
 		Internal Endpoint, Same value to be assigned for Port-0 and Port-1 - default is 31\
 		Range: 1-31");
 
 module_param_array(epX_l1_delay, uint, NULL, 0444);
 MODULE_PARM_DESC(epX_l1_delay,
-		"Array of L1 Link state change delay arranged in order according to the BDFs provided in module parameter 'tc956x_eth_ports_bdf'\
+		"Array of L1 Link state change delay arranged in order according to the BDFs provided in module parameter 'stm_eth_ports_bdf'\
 		L1 Link state change delay configuration for\
 		Internal Endpoint, Same value to be assigned for Port-0 and Port-1- default is 1023\
 		Range: 1-1023");
 
 module_param_array(uspX_l0s_delay, uint, NULL, 0444);
 MODULE_PARM_DESC(uspX_l0s_delay,
-		"Array of L0s Link state change delay arranged in order according to the BDFs provided in module parameter 'tc956x_eth_ports_bdf'\
+		"Array of L0s Link state change delay arranged in order according to the BDFs provided in module parameter 'stm_eth_ports_bdf'\
 		L0s Link state change delay configuration for\
 		Upstream Port, Same value to be assigned for Port-0 and Port-1 - default is 31\
 		Range: 1-31");
 
 module_param_array(uspX_l1_delay, uint, NULL, 0444);
 MODULE_PARM_DESC(uspX_l1_delay,
-		"Array of L1 Link state change delay arranged in order according to the BDFs provided in module parameter 'tc956x_eth_ports_bdf'\
+		"Array of L1 Link state change delay arranged in order according to the BDFs provided in module parameter 'stm_eth_ports_bdf'\
 		L1 Link state change delay configuration for\
 		Upstream Port, Same value to be assigned for Port-0 and Port-1 - default is 1023\
 		Range: 1-1023");

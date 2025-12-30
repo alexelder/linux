@@ -82,7 +82,7 @@
 
 #define REG_SPACE_SIZE	11512/*Total Reg Len*/
 #define MAC100_ETHTOOL_NAME	"tc956x_mac100"
-#define GMAC_ETHTOOL_NAME	"tc956x_gmac"
+#define GMAC_ETHTOOL_NAME	"stm_gmac"
 #ifdef TC956X_SRIOV_PF
 #define XGMAC_ETHTOOL_NAME	TC956X_RESOURCE_NAME
 #elif defined TC956X_SRIOV_VF
@@ -90,7 +90,7 @@
 #endif
 #define ETHTOOL_DMA_OFFSET	55
 #ifdef TC956X_SRIOV_DEBUG
-extern void tc956x_filter_debug(struct stmmac_priv *priv);
+extern void stm_filter_debug(struct stmmac_priv *priv);
 #endif
 #ifndef TC956X_SRIOV_VF
 void tc956xmac_get_pauseparam(struct net_device *netdev, struct ethtool_pauseparam *pause);
@@ -1208,7 +1208,7 @@ static void tc956xmac_ethtool_gregs(struct net_device *dev,
 #ifdef TC956X_SRIOV_PF
 #ifdef TC956X_SRIOV_DEBUG
 	tc956x_read_frp_stats(priv);
-	tc956x_filter_debug(priv);
+	stm_filter_debug(priv);
 #endif
 #endif
 #ifndef TC956X
@@ -1982,7 +1982,7 @@ int phy_ethtool_set_eee_local(struct phy_device *phydev, struct ethtool_eee *dat
 #ifdef TC956X_5_G_2_5_G_EEE_SUPPORT
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6,9,0)
-static inline u16 tc956x_ethtool_adv_to_mmd_eee_adv2_t(unsigned long *adv)
+static inline u16 stm_ethtool_adv_to_mmd_eee_adv2_t(unsigned long *adv)
 {
 	u16 reg = 0;
 	if (linkmode_test_bit(TC956X_ADVERTISED_2500baseT_Full, adv))
@@ -1993,7 +1993,7 @@ static inline u16 tc956x_ethtool_adv_to_mmd_eee_adv2_t(unsigned long *adv)
 	return reg;
 }
 #else
-static inline u16 tc956x_ethtool_adv_to_mmd_eee_adv2_t(u32 adv)
+static inline u16 stm_ethtool_adv_to_mmd_eee_adv2_t(u32 adv)
 {
 	u16 reg = 0;
 
@@ -2031,10 +2031,10 @@ int phy_ethtool_set_eee_2p5(struct phy_device *phydev, struct ethtool_eee *data)
 	if (data->eee_enabled) {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6,9,0)
 		adv_2p5 = linkmode_empty(data->advertised) ? cap2p5 :
-		      tc956x_ethtool_adv_to_mmd_eee_adv2_t(data->advertised) & cap2p5;
+		      stm_ethtool_adv_to_mmd_eee_adv2_t(data->advertised) & cap2p5;
 #else
 		adv_2p5 = !data->advertised ? cap2p5 :
-		      tc956x_ethtool_adv_to_mmd_eee_adv2_t(data->advertised) & cap2p5;
+		      stm_ethtool_adv_to_mmd_eee_adv2_t(data->advertised) & cap2p5;
 #endif
 		/* Mask prohibited EEE modes */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6,15,0)
@@ -2605,7 +2605,7 @@ static int tc956x_set_priv_flag(struct net_device *dev, u32 priv_flag)
 	return 0;
 }
 
-static u32 tc956x_get_priv_flag(struct net_device *dev)
+static u32 stm_get_priv_flag(struct net_device *dev)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 	u32 ret;
@@ -2619,7 +2619,7 @@ static u32 tc956x_get_priv_flag(struct net_device *dev)
 }
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
-static int tc956x_get_mm(struct net_device *ndev, struct ethtool_mm_state *state)
+static int stm_get_mm(struct net_device *ndev, struct ethtool_mm_state *state)
 {
 	struct stmmac_priv *priv = netdev_priv(ndev);
 	u32 reg;
@@ -2682,9 +2682,9 @@ static const struct ethtool_ops tc956xmac_ethtool_ops = {
 #endif  /* TC956X_SRIOV_VF */
 #ifdef TC956X
 	.set_priv_flags = tc956x_set_priv_flag,
-	.get_priv_flags = tc956x_get_priv_flag,
+	.get_priv_flags = stm_get_priv_flag,
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
-	.get_mm = tc956x_get_mm,
+	.get_mm = stm_get_mm,
 #endif
 #endif
 };

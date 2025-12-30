@@ -664,7 +664,7 @@ struct stm_cbs_params {
 	u32 percentage;
 };
 
-struct tc956x_gpio_config {
+struct stm_gpio_config {
 	u8 config; /* 1: configured, 0: not configured*/
 	u8 out_val; /* 0 or 1 */
 };
@@ -939,7 +939,7 @@ struct stmmac_priv {
 						appropriate sequence of link down & up */
 
 #endif
-	struct tc956x_gpio_config saved_gpio_config[GPIO_13 + 1]; /* Only GPIO0- GPIO06, GPI010-GPIO13 are used */
+	struct stm_gpio_config saved_gpio_config[GPIO_13 + 1]; /* Only GPIO0- GPIO06, GPI010-GPIO13 are used */
 
 #ifdef TC956X_SRIOV_PF
 #ifdef CONFIG_DEBUG_FS
@@ -1305,7 +1305,7 @@ static inline int tc956x_platform_port_interface_overlay(struct device *dev, str
 #endif
 
 int stm_GPIO_OutputConfigPin(struct stmmac_priv *priv, u32 gpio_pin, u8 out_value);
-int tc956x_gpio_restore_configuration(struct stmmac_priv *priv);
+int stm_gpio_restore_configuration(struct stmmac_priv *priv);
 
 #ifdef TC956X_SRIOV_VF
 int tc956x_vf_get_fn_idx_from_int_sts(struct stmmac_priv *priv,
@@ -1323,7 +1323,7 @@ void stm_config_CM3_tamap(struct device *dev,
 int tc956x_set_pci_speed(struct pci_dev *pdev, u32 speed);
 uint8_t get_tc956x_index(struct pci_dev *pdev);
 void tc956xmac_link_change_set_power(struct stmmac_priv *priv, enum TC956X_PORT_LINK_CHANGE_STATE state);
-uint16_t tc956x_get_shared_mem_offset(struct pci_dev *pdev, uint16_t pci_bd);
+uint16_t stm_get_shared_mem_offset(struct pci_dev *pdev, uint16_t pci_bd);
 
 #ifdef TC956X_SRIOV_PF
 #ifdef CONFIG_DEBUG_FS

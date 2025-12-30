@@ -1895,11 +1895,11 @@ int stm_GPIO_OutputConfigPin(struct stmmac_priv *priv, u32 gpio_pin, u8 out_valu
 }
 
 /**
- *  tc956x_gpio_restore_configuration - to restore the saved configuration of GPIO
+ *  stm_gpio_restore_configuration - to restore the saved configuration of GPIO
  *  @priv: driver private structure
  *  @remarks : Only GPIO0- GPIO06, GPI010-GPIO12 are allowed
  */
-int tc956x_gpio_restore_configuration(struct stmmac_priv *priv)
+int stm_gpio_restore_configuration(struct stmmac_priv *priv)
 {
 	u32 config, val, gpio_pin, out_value;
 
@@ -15166,7 +15166,7 @@ static int tc956xmac_hw_init(struct stmmac_priv *priv)
  * retval -1 Failure
  */
 
-static unsigned char tc956x_get_tx_channel_count(struct tc956xmac_resources *res)
+static unsigned char stm_get_tx_channel_count(struct tc956xmac_resources *res)
 {
 	unsigned char count;
 	unsigned long varMAC_HFR2;
@@ -15188,7 +15188,7 @@ static unsigned char tc956x_get_tx_channel_count(struct tc956xmac_resources *res
  * retval -1 Failure
  */
 
-static unsigned char tc956x_get_rx_channel_count(struct tc956xmac_resources *res)
+static unsigned char stm_get_rx_channel_count(struct tc956xmac_resources *res)
 {
 	unsigned char count;
 	unsigned long varMAC_HFR2;
@@ -15538,8 +15538,8 @@ int tc956xmac_vf_dvr_probe(struct device *device,
 							XGMAC_HW_FEATURE3_BASE));
 
 
-	tx_ch_count = tc956x_get_tx_channel_count(res);
-	rx_ch_count = tc956x_get_rx_channel_count(res);
+	tx_ch_count = stm_get_tx_channel_count(res);
+	rx_ch_count = stm_get_rx_channel_count(res);
 
 	ndev = devm_alloc_etherdev_mqs(device, sizeof(struct stmmac_priv),
 				       tx_ch_count, rx_ch_count);
@@ -15558,7 +15558,7 @@ int tc956xmac_vf_dvr_probe(struct device *device,
 	priv->dev = ndev;
 	priv->ioaddr = res->addr;
 
-	memset(priv->saved_gpio_config, 0, sizeof(struct tc956x_gpio_config) * (GPIO_13 + 1));
+	memset(priv->saved_gpio_config, 0, sizeof(struct stm_gpio_config) * (GPIO_13 + 1));
 
 	ret = tc956x_platform_probe(priv, res);
 	if (ret) {
@@ -16029,7 +16029,7 @@ int tc956xmac_vf_dvr_probe(struct device *device,
 	tc956xmac_mbx_init(priv, NULL);
 
 	/* Get PF driver capabilities */
-	tc956x_get_drv_cap(priv, priv);
+	stm_get_drv_cap(priv, priv);
 	KPRINT_DEBUG1("priv->pf_drv_cap.jumbo_en = %d\n", priv->pf_drv_cap.jumbo_en);
 
 	/* These features will be modified based on PF configuration and mailbox

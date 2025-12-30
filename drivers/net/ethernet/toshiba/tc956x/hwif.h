@@ -535,7 +535,7 @@ struct stmmac_ops {
 	tc956xmac_do_callback(__priv, mbx_wrapper, phy_link, __args)
 #define tc956x_setup_mbx_etf(__priv, __args...) \
 	tc956xmac_do_callback(__priv, mbx_wrapper, setup_mbx_etf, __args)
-#define tc956x_get_drv_cap(__priv, __args...) \
+#define stm_get_drv_cap(__priv, __args...) \
 	tc956xmac_do_void_callback(__priv, mbx_wrapper, get_drv_cap, __args)
 #define tc956x_rx_crc(__priv, __args...) \
 	tc956xmac_do_callback(__priv, mbx_wrapper, rx_crc, __args)
