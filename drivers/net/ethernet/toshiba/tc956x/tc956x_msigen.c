@@ -38,7 +38,7 @@
 #include <linux/io.h>
 #include "hwif.h"
 #include "common.h"
-#include "tc956xmac.h"
+#include "stmmac.h"
 
 #ifdef TC956X_SRIOV_PF
 /**

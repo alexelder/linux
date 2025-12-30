@@ -32,8 +32,8 @@
  *  VERSION     : 03-00
  */
 
-#include "tc956x_pf_mbx.h"
-#include "tc956xmac.h"
+#include "stm_pf_mbx.h"
+#include "stmmac.h"
 #include "common.h"
 
 extern int stmmac_ioctl_get_cbs(struct stmmac_priv *priv, void *data);

@@ -29,7 +29,7 @@
  */
 
 #include "stm_vf_rsc_mng.h"
-#include "tc956xmac.h"
+#include "stmmac.h"
 
 
 /**

@@ -30,8 +30,8 @@
  */
 
 #include "common.h"
-#include "tc956xmac.h"
-#include "tc956x_pma.h"
+#include "stmmac.h"
+#include "stm_pma.h"
 #ifdef TC956X
 static int stm_pma_init(struct stmmac_priv *priv, void __iomem *pmaaddr)
 {

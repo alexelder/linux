@@ -219,8 +219,8 @@
 #endif
 #include <linux/udp.h>
 #include <net/pkt_cls.h>
-#include "tc956xmac_ptp.h"
-#include "tc956xmac.h"
+#include "stmmac_ptp.h"
+#include "stmmac.h"
 #include <linux/reset.h>
 #include <linux/of_mdio.h>
 #include <linux/version.h>
@@ -231,21 +231,21 @@
 #include "dwxgmac2.h"
 #include "hwif.h"
 #include "common.h"
-#include "tc956xmac_ioctl.h"
+#include "stmmac_ioctl.h"
 #ifdef TC956X_5_G_2_5_G_EEE_SUPPORT
 #include <linux/phy.h>
 #include <linux/linkmode.h>
 #endif
 #ifdef TC956X_SRIOV_PF
-#include "tc956x_pf_rsc_mng.h"
-#include "tc956x_pf_mbx.h"
+#include "stm_pf_rsc_mng.h"
+#include "stm_pf_mbx.h"
 #endif
 
 #ifdef TC956X_SRIOV_VF
 #include "stm_vf_mbx.h"
 #endif
 #ifdef TC956X_PCIE_LOGSTAT
-#include "tc956x_pcie_logstat.h"
+#include "stm_pcie_logstat.h"
 #endif /* #ifdef TC956X_PCIE_LOGSTAT */
 
 #define	TSO_MAX_BUFF_SIZE	(SZ_16K - 1)

@@ -50,7 +50,7 @@
 #define __TC956XMAC_HWIF_H__
 
 #include <linux/netdevice.h>
-#include "tc956xmac_inc.h"
+#include "stmmac_inc.h"
 #include <linux/version.h>
 
 #define stmmac_do_void_callback(__priv, __module, __cname,  __arg0, __args...) \

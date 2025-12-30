@@ -36,8 +36,8 @@
  *  VERSION     : 01-00-03
  */
 
-#include "tc956xmac_inc.h"
-#include "tc956xmac.h"
+#include "stmmac_inc.h"
+#include "stmmac.h"
 #include "common.h"
 #include "dwxgmac2.h"
 

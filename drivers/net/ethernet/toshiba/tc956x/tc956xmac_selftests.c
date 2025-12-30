@@ -50,7 +50,7 @@
 #include <net/tcp.h>
 #include <net/udp.h>
 #include <net/tc_act/tc_gact.h>
-#include "tc956xmac.h"
+#include "stmmac.h"
 
 struct stmmachdr {
 	__be32 version;

@@ -36,7 +36,7 @@
  * Include Files
  * ===================================
  */
-#include "tc956x_pcie_logstat.h"
+#include "stm_pcie_logstat.h"
 /* Ensure header file containing TC956X_PCIE_LOGSTAT is included in
  * tc956x_pcie_logstat.h
  */

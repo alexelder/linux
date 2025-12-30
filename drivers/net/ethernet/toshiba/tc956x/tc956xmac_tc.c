@@ -46,7 +46,7 @@
 #include <net/pkt_cls.h>
 #include <net/tc_act/tc_gact.h>
 #include "common.h"
-#include "tc956xmac.h"
+#include "stmmac.h"
 #include "dwxgmac2.h"
 
 #ifdef TC956X_SRIOV_PF

@@ -80,8 +80,8 @@
 #include <linux/bitrev.h>
 #include <linux/crc32.h>
 #include <linux/iopoll.h>
-#include "tc956xmac.h"
-#include "tc956xmac_ptp.h"
+#include "stmmac.h"
+#include "stmmac_ptp.h"
 #include "dwxgmac2.h"
 
 #ifdef TC956X_SRIOV_DEBUG

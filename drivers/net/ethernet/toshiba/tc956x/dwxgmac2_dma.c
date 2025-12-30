@@ -61,7 +61,7 @@
  */
 
 #include <linux/iopoll.h>
-#include "tc956xmac.h"
+#include "stmmac.h"
 #include "dwxgmac2.h"
 
 

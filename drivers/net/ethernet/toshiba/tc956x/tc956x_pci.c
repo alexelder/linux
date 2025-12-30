@@ -231,9 +231,9 @@
 #include <linux/aer.h>
 #include <linux/iopoll.h>
 #include "dwxgmac2.h"
-#include "tc956xmac.h"
-#include "tc956xmac_config.h"
-#include "tc956xmac_inc.h"
+#include "stmmac.h"
+#include "stmmac_config.h"
+#include "stmmac_inc.h"
 #include "common.h"
 
 #ifdef CONFIG_TC956X_LOAD_FW_HEADER
@@ -244,7 +244,7 @@
 #endif
 
 #ifdef TC956X_PCIE_LOGSTAT
-#include "tc956x_pcie_logstat.h"
+#include "stm_pcie_logstat.h"
 #endif /* #ifdef TC956X_PCIE_LOGSTAT */
 
 static DEFINE_MUTEX(stm_pm_suspend_lock);

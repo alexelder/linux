@@ -35,12 +35,12 @@
  */
 
 #include "common.h"
-#include "tc956xmac.h"
-#include "tc956xmac_ptp.h"
+#include "stmmac.h"
+#include "stmmac_ptp.h"
 #ifndef TC956X_SRIOV_VF
 #ifdef TC956X
-#include "tc956x_xpcs.h"
-#include "tc956x_pma.h"
+#include "stm_xpcs.h"
+#include "stm_pma.h"
 #endif
 #endif
 

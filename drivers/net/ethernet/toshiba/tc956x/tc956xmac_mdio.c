@@ -67,7 +67,7 @@
 #include <linux/slab.h>
 
 #include "dwxgmac2.h"
-#include "tc956xmac.h"
+#include "stmmac.h"
 
 #define MII_BUSY 0x00000001
 #define MII_WRITE 0x00000002

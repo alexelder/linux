@@ -46,8 +46,8 @@
  */
 
 #include "common.h"
-#include "tc956xmac.h"
-#include "tc956x_xpcs.h"
+#include "stmmac.h"
+#include "stm_xpcs.h"
 #ifdef TC956X
 u32 stm_xpcs_read(void __iomem *xpcsaddr, u32 pcs_reg_num)
 {

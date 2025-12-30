@@ -28,8 +28,8 @@
  *  VERSION      : 01-02
  */
 
-#include "tc956xmac.h"
-#include "tc956x_pf_rsc_mng.h"
+#include "stmmac.h"
+#include "stm_pf_rsc_mng.h"
 
 /**
  * stm_pf_rsc_mng_get_fn_id

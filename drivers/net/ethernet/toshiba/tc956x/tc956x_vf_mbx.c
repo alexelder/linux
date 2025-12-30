@@ -29,7 +29,7 @@
  */
 
 #include "stm_vf_mbx.h"
-#include "tc956xmac.h"
+#include "stmmac.h"
 #include "stm_vf_rsc_mng.h"
 
 #ifdef TC956X_SRIOV_VF

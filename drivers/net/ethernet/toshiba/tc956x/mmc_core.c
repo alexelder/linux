@@ -38,7 +38,7 @@
 #include <linux/io.h>
 #include "hwif.h"
 #include "mmc.h"
-#include "tc956xmac.h"
+#include "stmmac.h"
 
 /* MAC Management Counters register offset */
 

@@ -38,8 +38,8 @@
  *  VERSION     : 04-00
  */
 
-#include "tc956xmac.h"
-#include "tc956xmac_ptp.h"
+#include "stmmac.h"
+#include "stmmac_ptp.h"
 #include "dwxgmac2.h"
 #include "common.h"
 

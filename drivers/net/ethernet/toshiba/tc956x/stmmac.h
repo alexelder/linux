@@ -215,7 +215,7 @@
 
 #include <linux/clk.h>
 #include <linux/if_vlan.h>
-#include "tc956xmac_inc.h"
+#include "stmmac_inc.h"
 #ifndef TC956X_SRIOV_VF
 #include <linux/phylink.h>
 #endif
@@ -231,7 +231,7 @@
 #include <net/page_pool/helpers.h>
 #endif
 #ifdef TC956X_SRIOV_PF
-#include "tc956x_pf_rsc_mng.h"
+#include "stm_pf_rsc_mng.h"
 #endif
 #ifndef TC956X_SRIOV_VF
 //#define CONFIG_TC956X_LOAD_FW_HEADER

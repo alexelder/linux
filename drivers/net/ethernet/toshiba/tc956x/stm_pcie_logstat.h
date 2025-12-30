@@ -40,8 +40,8 @@
  * ===================================
  */
 #include "common.h"
-#include "tc956xmac.h"
-#include "tc956xmac_ioctl.h"
+#include "stmmac.h"
+#include "stmmac_ioctl.h"
 
 #ifdef TC956X_PCIE_LOGSTAT
 

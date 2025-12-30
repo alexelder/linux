@@ -65,7 +65,7 @@
 
 #include <linux/platform_device.h>
 #include <linux/phy.h>
-#include "tc956xmac_ioctl.h"
+#include "stmmac_ioctl.h"
 
 //#define TC956X
 //#define TC956X_IOCTL_REG_RD_WR_ENABLE

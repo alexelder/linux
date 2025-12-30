@@ -39,10 +39,10 @@
 #include <linux/io.h>
 #include <linux/delay.h>
 #include "common.h"
-#include "tc956xmac_ptp.h"
+#include "stmmac_ptp.h"
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 13, 0)
 #include <linux/ptp_clock_kernel.h>
-#include "tc956xmac.h"
+#include "stmmac.h"
 #include "dwxgmac2.h"
 #endif
 

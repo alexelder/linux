@@ -28,9 +28,9 @@
  *  VERSION     : 01-02
  */
 
-#include "tc956x_pf_mbx.h"
-#include "tc956xmac.h"
-#include "tc956x_pf_rsc_mng.h"
+#include "stm_pf_mbx.h"
+#include "stmmac.h"
+#include "stm_pf_rsc_mng.h"
 
 #ifdef TC956X_SRIOV_PF
 

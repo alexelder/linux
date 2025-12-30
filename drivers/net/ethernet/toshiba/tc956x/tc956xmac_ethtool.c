@@ -77,7 +77,7 @@
 #include <asm/io.h>
 #include <linux/iopoll.h>
 
-#include "tc956xmac.h"
+#include "stmmac.h"
 #include "dwxgmac2.h"
 
 #define REG_SPACE_SIZE	11512/*Total Reg Len*/

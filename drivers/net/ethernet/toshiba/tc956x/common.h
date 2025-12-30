@@ -101,7 +101,7 @@
 
 #include <linux/etherdevice.h>
 #include <linux/netdevice.h>
-#include "tc956xmac_inc.h"
+#include "stmmac_inc.h"
 #include <linux/phy.h>
 #include <linux/module.h>
 #include <net/pkt_sched.h>
@@ -116,9 +116,9 @@
 #include "mmc.h"
 #ifdef TC956X
 #ifndef TC956X_SRIOV_VF
-#include "tc956x_xpcs.h"
+#include "stm_xpcs.h"
 #endif
-#include "tc956x_pma.h"
+#include "stm_pma.h"
 #endif
 
 //#define TC956X_LPI_INTERRUPT

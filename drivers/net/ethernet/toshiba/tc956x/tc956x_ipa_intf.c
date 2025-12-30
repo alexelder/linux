@@ -53,8 +53,8 @@
 
 #include <linux/dma-mapping.h>
 #include "common.h"
-#include "tc956xmac.h"
-#include "tc956xmac_ioctl.h"
+#include "stmmac.h"
+#include "stmmac_ioctl.h"
 #ifdef TC956X
 #include "dwxgmac2.h"
 #endif

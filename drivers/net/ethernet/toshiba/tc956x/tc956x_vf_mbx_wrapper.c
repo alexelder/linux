@@ -32,7 +32,7 @@
  *  VERSION     : 03-00
  */
 
-#include "tc956xmac.h"
+#include "stmmac.h"
 #include "dwxgmac2.h"
 
 #ifdef TC956X_SRIOV_VF
