@@ -1051,7 +1051,7 @@ static void tc956x_del_mac_addr(struct stmmac_priv *priv, struct mac_device_info
 
 }
 
-static void tc956x_del_sw_mac_helper(struct tc956x_mac_addr *mac_table, int vf)
+static void tc956x_del_sw_mac_helper(struct stm_mac_addr *mac_table, int vf)
 {
 	int vf_number;
 
@@ -1072,7 +1072,7 @@ static void tc956x_del_sw_mac_table(struct net_device *dev,
 	int i;
 	struct stmmac_priv *priv = netdev_priv(dev);
 	struct mac_device_info *hw = priv->hw;
-	struct tc956x_mac_addr *mac_table = &priv->mac_table[0];
+	struct stm_mac_addr *mac_table = &priv->mac_table[0];
 	u32 mc_filter[2];
 	u32 nr;
 	u32 data1, data2;
@@ -1136,7 +1136,7 @@ static int tc956x_add_actual_mac_table(struct net_device *dev,
 	u32 nr, flag = 0;
 	u32 value;
 
-	struct tc956x_mac_addr *mac_table = &priv->mac_table[0];
+	struct stm_mac_addr *mac_table = &priv->mac_table[0];
 
 	for (i = XGMAC_ADDR_ADD_SKIP_OFST; i < (TC956X_MAX_PERFECT_ADDRESSES);
 	     i++, mac_table++) {
@@ -1179,7 +1179,7 @@ static int tc956x_add_actual_mac_table(struct net_device *dev,
 
 static int tc956x_mac_duplication(struct stmmac_priv *priv,
 					    struct mac_device_info *hw,
-					    struct tc956x_mac_addr *mac_table,
+					    struct stm_mac_addr *mac_table,
 					    const u8 *mac, int vf)
 {
 	int i, vf_no;
@@ -1237,7 +1237,7 @@ static int tc956x_mac_duplication(struct stmmac_priv *priv,
 static int tc956x_check_mac_duplication(struct net_device *dev, const u8 *mac, int vf)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
-	struct tc956x_mac_addr *mac_table = &priv->mac_table[0];
+	struct stm_mac_addr *mac_table = &priv->mac_table[0];
 	struct mac_device_info *hw = priv->hw;
 	int ret_value = -1;
 
@@ -1560,7 +1560,7 @@ static void tc956x_vlan_addr_reg(struct stmmac_priv *priv, struct mac_device_inf
 
 }
 
-static void tc956x_del_sw_vlan_helper(struct tc956x_vlan_id *vlan_table,
+static void tc956x_del_sw_vlan_helper(struct stm_vlan_id *vlan_table,
 	u16 vid, u16 vf)
 {
 	int vf_number;
@@ -1587,7 +1587,7 @@ static void tc956x_del_sw_vlan_table(struct stmmac_priv *priv, struct net_device
 {
 	int i;
 	struct mac_device_info *hw = priv->hw;
-	struct tc956x_vlan_id *vlan_table = &priv->vlan_table[0];
+	struct stm_vlan_id *vlan_table = &priv->vlan_table[0];
 	unsigned short new_index, old_index;
 	int crc32_val = 0;
 	unsigned int enb_12bit_vhash;
@@ -1657,7 +1657,7 @@ static int tc956x_add_actual_vlan_table(struct net_device *dev, u16 vid, int vf)
 	int crc32_val = 0;
 	unsigned int enb_12bit_vhash;
 	u32 flag = 0;
-	struct tc956x_vlan_id *vlan_table = &priv->vlan_table[0];
+	struct stm_vlan_id *vlan_table = &priv->vlan_table[0];
 
 	for (i = 0; i < (TC956X_MAX_PERFECT_VLAN);
 	     i++, vlan_table++) {
@@ -1708,7 +1708,7 @@ static int tc956x_add_actual_vlan_table(struct net_device *dev, u16 vid, int vf)
 }
 
 
-static int tc956x_vlan_duplication_helper(struct tc956x_vlan_id *vlan_table,
+static int tc956x_vlan_duplication_helper(struct stm_vlan_id *vlan_table,
 						u16 vid, int vf)
 {
 	int vf_no, vm_found = 0;
@@ -1746,7 +1746,7 @@ static int tc956x_vlan_duplication_helper(struct tc956x_vlan_id *vlan_table,
 static int tc956x_check_vlan_duplication(struct net_device *dev, u16 vid, int vf)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
-	struct tc956x_vlan_id *vlan_table = &priv->vlan_table[0];
+	struct stm_vlan_id *vlan_table = &priv->vlan_table[0];
 	int i;
 	int ret_value = -1;
 

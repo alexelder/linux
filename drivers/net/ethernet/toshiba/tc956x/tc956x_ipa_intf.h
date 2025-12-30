@@ -170,7 +170,7 @@ struct mac_addr_list {
  *
  * \return : Correct Major and Minor number of the IPA I/F version
  *	     Major Number = Minor Number = 0xFF incase ndev is NULL or
- *	     tc956xmac_priv extracted from ndev is NULL
+ *	     stmmac_priv extracted from ndev is NULL
  */
 struct tc956x_ipa_version get_ipa_intf_version(struct net_device *ndev);
 
@@ -183,7 +183,7 @@ struct tc956x_ipa_version get_ipa_intf_version(struct net_device *ndev);
  * \param[in]  client_priv : Client private data structure
  *
  * \return : 0 on success
- *	     -ENODEV if ndev is NULL, tc956xmac_priv extracted from ndev is NULL
+ *	     -ENODEV if ndev is NULL, stmmac_priv extracted from ndev is NULL
  */
 int set_client_priv_data(struct net_device *ndev, void *client_priv);
 
@@ -195,7 +195,7 @@ int set_client_priv_data(struct net_device *ndev, void *client_priv);
  * \param[in] ndev : TC956x netdev data structure
  *
  * \return : Pointer to the client private data structure
- *	     NULL if ndev or tc956xmac_priv extracted from ndev is NULL
+ *	     NULL if ndev or stmmac_priv extracted from ndev is NULL
  */
 void* get_client_priv_data(struct net_device *ndev);
 
@@ -231,7 +231,7 @@ struct channel_info* request_channel(struct request_channel_input *channel_input
  *
  * \return : Return 0 on success, -ve value on error
  *	     -EPERM if non IPA channels are accessed
- *	     -ENODEV if ndev is NULL, tc956xmac_priv extracted from ndev is NULL
+ *	     -ENODEV if ndev is NULL, stmmac_priv extracted from ndev is NULL
  *	     -EINVAL if channel pointer or memory buffers in channel pointer are NULL
  *
  * \remarks : DMA Channel has to be stopped prior to invoking this API
@@ -253,7 +253,7 @@ int release_channel(struct net_device *ndev, struct channel_info *channel);
  *
  * \return : O for success
  *	     -EPERM if non IPA channels are accessed, out of range PCIe access location for CM3
- *	     -ENODEV if ndev is NULL, tc956xmac_priv extracted from ndev is NULL
+ *	     -ENODEV if ndev is NULL, stmmac_priv extracted from ndev is NULL
  *	     -EINVAL if channel pointer NULL
  *
  * \remarks :
@@ -277,7 +277,7 @@ int request_event(struct net_device *ndev, struct channel_info *channel, dma_add
  *
  * \return : Return 0 on success, -ve value on error
  *	     -EPERM if non IPA channels are accessed
- *	     -ENODEV if ndev is NULL, tc956xmac_priv extracted from ndev is NULL
+ *	     -ENODEV if ndev is NULL, stmmac_priv extracted from ndev is NULL
  *	     -EINVAL if channel pointer NULL
  */
 int release_event(struct net_device *ndev, struct channel_info *channel);
@@ -292,7 +292,7 @@ int release_event(struct net_device *ndev, struct channel_info *channel);
  * \param[in] channel : Pointer to structure containing channel_info that needs to be released
  * \return : Return 0 on success, -ve value on error
  *	     -EPERM if non IPA channels are accessed
- *	     -ENODEV if ndev is NULL, tc956xmac_priv extracted from ndev is NULL
+ *	     -ENODEV if ndev is NULL, stmmac_priv extracted from ndev is NULL
  *	     -EINVAL if channel pointer NULL
  */
 int enable_event(struct net_device *ndev, struct channel_info *channel);
@@ -307,7 +307,7 @@ int enable_event(struct net_device *ndev, struct channel_info *channel);
  * \param[in] channel : Pointer to structure containing channel_info that needs to be released
  * \return : Return 0 on success, -ve value on error
  *	     -EPERM if non IPA channels are accessed
- *	     -ENODEV if ndev is NULL, tc956xmac_priv extracted from ndev is NULL
+ *	     -ENODEV if ndev is NULL, stmmac_priv extracted from ndev is NULL
  *	     -EINVAL if channel pointer NULL
  */
 int disable_event(struct net_device *ndev, struct channel_info *channel);
@@ -325,7 +325,7 @@ int disable_event(struct net_device *ndev, struct channel_info *channel);
  *
  * \return : Return 0 on success, -ve value on error
  *	     -EPERM if non IPA channels are accessed, IPA Tx channel
- *	     -ENODEV if ndev is NULL, tc956xmac_priv extracted from ndev is NULL
+ *	     -ENODEV if ndev is NULL, stmmac_priv extracted from ndev is NULL
  *	     -EINVAL if channel pointer NULL
  */
 int set_event_mod(struct net_device *ndev, struct channel_info *channel, unsigned int wdt);
@@ -340,7 +340,7 @@ int set_event_mod(struct net_device *ndev, struct channel_info *channel, unsigne
  * \param[in] ndev : TC956x netdev data structure
  * \param[in] filter_params: filter_params containig the parameters based on which packet will pass or drop
  * \return : Return 0 on success, -ve value on error
- *	     -ENODEV if ndev is NULL, tc956xmac_priv extracted from ndev is NULL
+ *	     -ENODEV if ndev is NULL, stmmac_priv extracted from ndev is NULL
  *	     -EINVAL filter_params, if number of entries > 72
  *
  * \remarks : The entries should be prepared considering the filtering and routing to CortexA also
@@ -357,7 +357,7 @@ int set_rx_filter(struct net_device *ndev, struct rx_filter_info *filter_params)
  *
  * \param[in] ndev : TC956x netdev data structure
  * \return : Return 0 on success, -ve value on error
- *	     -ENODEV if ndev is NULL, tc956xmac_priv extracted from ndev is NULL
+ *	     -ENODEV if ndev is NULL, stmmac_priv extracted from ndev is NULL
  *
  * \remarks : MAC Rx will be stopped while updating FRP table dynamically.
 
@@ -376,7 +376,7 @@ int clear_rx_filter(struct net_device *ndev);
  *
  * \return : Return 0 on success, -ve value on error
  *	     -EPERM if non IPA channels are accessed
- *	     -ENODEV if ndev is NULL, tc956xmac_priv extracted from ndev is NULL
+ *	     -ENODEV if ndev is NULL, stmmac_priv extracted from ndev is NULL
  *	     -EINVAL if channel pointer NULL
 
  */
@@ -395,7 +395,7 @@ int start_channel(struct net_device *ndev, struct channel_info *channel);
  *
  * \return : Return 0 on success, -ve value on error
  *	     -EPERM if non IPA channels are accessed
- *	     -ENODEV if ndev is NULL, tc956xmac_priv extracted from ndev is NULL
+ *	     -ENODEV if ndev is NULL, stmmac_priv extracted from ndev is NULL
  *	     -EINVAL if channel pointer  NULL
  */
 int stop_channel(struct net_device *ndev, struct channel_info *channel);
@@ -411,7 +411,7 @@ int stop_channel(struct net_device *ndev, struct channel_info *channel);
  *
  * \return : Return 0 on success, -ve value on error
  *	     -EPERM if index 0 used
- *	     -ENODEV if ndev is NULL, tc956xmac_priv extracted from ndev is NULL
+ *	     -ENODEV if ndev is NULL, stmmac_priv extracted from ndev is NULL
  *	     -EINVAL if mac_addr NULL
  *
  * \remarks : Do not use the API to set register at index 0.

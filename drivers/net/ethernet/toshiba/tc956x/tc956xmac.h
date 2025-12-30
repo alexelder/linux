@@ -765,8 +765,8 @@ struct stmmac_priv {
 
 	unsigned int l2_filtering_mode; /* 0 - if perfect and 1 - if hash filtering */
 	unsigned int vlan_hash_filtering;
-	struct tc956x_mac_addr *mac_table;
-	struct tc956x_vlan_id *vlan_table;
+	struct stm_mac_addr *mac_table;
+	struct stm_vlan_id *vlan_table;
 	u32 sa_vlan_ins_via_reg;
 	unsigned char ins_mac_addr[ETH_ALEN];
 

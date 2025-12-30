@@ -1562,8 +1562,8 @@ static int tc956x_mbx_reset_eee_mode(struct stmmac_priv *priv, u8 *mbx_buff, u8 
 static int tc956xmac_mbx_vf_reset(struct stmmac_priv *priv, u8 *mbx_buff,
 					u8 *ack_msg, u8 vf)
 {
-	struct tc956x_mac_addr *mac_table = &priv->mac_table[0];
-	struct tc956x_vlan_id *vlan_table = &priv->vlan_table[0];
+	struct stm_mac_addr *mac_table = &priv->mac_table[0];
+	struct stm_vlan_id *vlan_table = &priv->vlan_table[0];
 	u8 i, vf_number;
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 	unsigned long flags;

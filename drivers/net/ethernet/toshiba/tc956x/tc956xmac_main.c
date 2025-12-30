@@ -7982,8 +7982,8 @@ static int tc956xmac_release(struct net_device *dev)
 	int addr = priv->plat->phy_addr;
 
 #endif
-	struct tc956x_mac_addr *mac_table = &priv->mac_table[0];
-	struct tc956x_vlan_id *vlan_table = &priv->vlan_table[0];
+	struct stm_mac_addr *mac_table = &priv->mac_table[0];
+	struct stm_vlan_id *vlan_table = &priv->vlan_table[0];
 	int i, vf_number;
 #endif
 	u32 ch;
@@ -14936,7 +14936,7 @@ static void tc956xmac_reset_subtask(struct stmmac_priv *priv)
 
 static void tc956xmac_service_task(struct work_struct *work)
 {
-	struct stmmac_priv *priv = container_of(work, struct tc956xmac_priv,
+	struct stmmac_priv *priv = container_of(work, struct stmmac_priv,
 			service_task);
 
 	tc956xmac_reset_subtask(priv);
@@ -14950,7 +14950,7 @@ static void tc956xmac_service_task(struct work_struct *work)
  */
 static void tc956xmac_service_mbx_task(struct work_struct *work)
 {
-	struct stmmac_priv *priv = container_of(work, struct tc956xmac_priv,
+	struct stmmac_priv *priv = container_of(work, struct stmmac_priv,
 			service_mbx_task);
 	u32 dma_ch = 0;
 	u8 vf;
@@ -15018,7 +15018,7 @@ static void tc956xmac_service_mbx_task(struct work_struct *work)
 #ifdef TC956X_SRIOV_VF
 static void tc956xmac_mailbox_service_task(struct work_struct *work)
 {
-	struct stmmac_priv *priv = container_of(work, struct tc956xmac_priv, mbx_service_task);
+	struct stmmac_priv *priv = container_of(work, struct stmmac_priv, mbx_service_task);
 	struct pci_dev *pdev = to_pci_dev(priv->device);
 
 	if (priv->flag == SCH_WQ_PF_FLR) {
@@ -16091,13 +16091,13 @@ int tc956xmac_vf_dvr_probe(struct device *device,
 #endif
 	priv->mac_table =
 		kcalloc(TC956X_MAX_PERFECT_ADDRESSES - XGMAC_ADDR_ADD_SKIP_OFST,
-			sizeof(struct tc956x_mac_addr), GFP_KERNEL);
+			sizeof(struct stm_mac_addr), GFP_KERNEL);
 
 	if (!priv->mac_table)
 		goto error_hw_init;
 
 	priv->vlan_table =
-		kcalloc(TC956X_MAX_PERFECT_VLAN, sizeof(struct tc956x_vlan_id), GFP_KERNEL);
+		kcalloc(TC956X_MAX_PERFECT_VLAN, sizeof(struct stm_vlan_id), GFP_KERNEL);
 
 	if (!priv->vlan_table) {
 		kfree(priv->mac_table);

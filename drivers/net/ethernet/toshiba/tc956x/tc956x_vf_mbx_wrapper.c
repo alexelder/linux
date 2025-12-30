@@ -1502,7 +1502,7 @@ static void tc956xmac_vf_delete_vlan(struct stmmac_priv *priv, u16 vid)
  *
  * \return None
  */
-static void tc956x_mbx_get_drv_cap(struct stmmac_priv *priv, struct tc956xmac_priv *priv1)
+static void tc956x_mbx_get_drv_cap(struct stmmac_priv *priv, struct stmmac_priv *priv1)
 {
 	/* Prepare mailbox message and call mailbox API for posting
 	 * and getting the ACK

@@ -879,7 +879,7 @@ struct tc956xmac_mbx_wrapper_ops {
 	int (*phy_link)(struct stmmac_priv *priv, u8 *msg_buf, u8 *ack_msg);
 	int (*setup_mbx_etf)(struct stmmac_priv *priv, u8 *msg_buf, u8 *ack_msg);
 	/* Get driver Capabilities from PF */
-	void (*get_drv_cap)(struct stmmac_priv *priv, struct tc956xmac_priv *priv1);
+	void (*get_drv_cap)(struct stmmac_priv *priv, struct stmmac_priv *priv1);
 	void (*reset_eee_mode)(struct stmmac_priv *priv, struct mac_device_info *hw);
 	void (*vf_reset)(struct stmmac_priv *priv, u8 vf_status);
 	/* Rx CRC state update from PF */

@@ -2501,7 +2501,7 @@ struct tc956x_sw_counters {
 };
 #endif //#ifdef TC956X_SRIOV_VF
 
-struct tc956x_mac_addr {
+struct stm_mac_addr {
 	u8 mac_address[6];
 	u8 status;
 	u8 counter;
@@ -2513,7 +2513,7 @@ struct vf_status {
 	u8 loc_counter;
 };
 
-struct tc956x_vlan_id {
+struct stm_vlan_id {
 	u16 vid;
 	u8 status;
 	u8 glo_counter;
