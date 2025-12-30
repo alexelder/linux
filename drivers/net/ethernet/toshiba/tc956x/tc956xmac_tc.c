@@ -148,8 +148,11 @@ static int tc_fill_entry(struct stmmac_priv *priv,
 		return -EINVAL;
 
 	off = sel->keys[0].off << sel->offshift;
-	data = sel->keys[0].val;
-	mask = sel->keys[0].mask;
+	/* Just cast; code below does some shifting that might be comparable */
+	/* data = __be32_to_cpu(sel->keys[0].val); */
+	/* mask = __be32_to_cpu(sel->keys[0].mask); */
+	data = (__force u32)sel->keys[0].val;
+	mask = (__force u32)sel->keys[0].mask;
 
 	switch (ntohs(cls->common.protocol)) {
 	case ETH_P_ALL:
