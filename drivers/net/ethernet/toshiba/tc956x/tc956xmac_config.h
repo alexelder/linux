@@ -45,12 +45,12 @@
 #define TC956XMAC_RXQ(__n, __cfg)		__TC956XMAC_RXQ(__n, __cfg)
 
 #ifndef SCFG_TC956XMAC
-static inline void tc956xmac_config_data(struct plat_tc956xmacenet_data *plat)
+static inline void stmmac_config_data(struct plat_stmmacenet_data *plat)
 {
 	/* Nothing to do */
 }
 #else /* !SCFG_TC956XMAC */
-static inline void tc956xmac_config_data(struct plat_tc956xmacenet_data *plat)
+static inline void stmmac_config_data(struct plat_stmmacenet_data *plat)
 {
 	plat->force_sf_dma_mode = TC956XMAC_EN(MTL_SF);
 	plat->force_thresh_dma_mode = TC956XMAC_EN(MTL_THR);

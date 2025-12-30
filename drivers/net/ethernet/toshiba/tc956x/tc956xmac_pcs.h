@@ -1,7 +1,7 @@
 /*
  * TC956X ethernet driver.
  *
- * tc956xmac_pcs.h
+ * stmmac_pcs.h
  *
  * Copyright (C) 2016 STMicroelectronics (R&D) Limited
  * Copyright (C) 2021 Toshiba Electronic Devices & Storage Corporation
@@ -88,15 +88,15 @@ static inline void dwmac_pcs_isr(void __iomem *ioaddr, u32 reg,
 	if (intr_status & PCS_ANE_IRQ) {
 		x->irq_pcs_ane_n++;
 		if (val & GMAC_AN_STATUS_ANC)
-			pr_info("tc956xmac_pcs: ANE process completed\n");
+			pr_info("stmmac_pcs: ANE process completed\n");
 	}
 
 	if (intr_status & PCS_LINK_IRQ) {
 		x->irq_pcs_link_n++;
 		if (val & GMAC_AN_STATUS_LS)
-			pr_info("tc956xmac_pcs: Link Up\n");
+			pr_info("stmmac_pcs: Link Up\n");
 		else
-			pr_info("tc956xmac_pcs: Link Down\n");
+			pr_info("stmmac_pcs: Link Down\n");
 	}
 }
 

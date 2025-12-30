@@ -111,7 +111,7 @@ static void stm_vf_rsc_mng_get_rscs(struct stmmac_priv *priv, struct net_device 
 	*rscs = ((readl(ioaddr + RSCMNG_RSC_ST_REG)) & RSC_MNG_RSC_STATUS_MASK);
 }
 
-const struct mac_rsc_mng_ops tc956xmac_rsc_mng_ops = {
+const struct mac_rsc_mng_ops stmmac_rsc_mng_ops = {
 	.init = stm_vf_rsc_mng_init,
 	.get_fn_id = stm_vf_rsc_mng_get_fn_id,
 	.set_rscs = NULL, /* Not applicable for VF */

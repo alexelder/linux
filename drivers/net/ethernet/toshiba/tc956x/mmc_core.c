@@ -230,7 +230,7 @@ static void dwmac_mmc_ctrl(struct stmmac_priv *priv, void __iomem *mmcaddr,
 
 	writel(value, mmcaddr + MMC_CNTRL);
 
-	pr_debug("tc956xmac: MMC ctrl register (offset 0x%x): 0x%08x\n",
+	pr_debug("stmmac: MMC ctrl register (offset 0x%x): 0x%08x\n",
 		 MMC_CNTRL, value);
 }
 

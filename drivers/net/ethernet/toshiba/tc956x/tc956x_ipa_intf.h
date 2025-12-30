@@ -416,7 +416,7 @@ int stop_channel(struct net_device *ndev, struct channel_info *channel);
  *
  * \remarks : Do not use the API to set register at index 0.
  *	      There is possibilty of kernel network subsytem overwriting these registers
- *	      when " tc956xmac_set_rx_mode" is invoked via "ndo_set_rx_mode" callback.
+ *	      when " stmmac_set_rx_mode" is invoked via "ndo_set_rx_mode" callback.
  */
 int set_mac_addr(struct net_device *ndev, struct mac_addr_list *mac_addr, u8 index);
 

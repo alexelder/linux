@@ -1,7 +1,7 @@
 /*
  * TC956X ethernet driver.
  *
- * tc956xmac_selftests.c
+ * stmmac_selftests.c
  *
  * Copyright (C) 2019 Synopsys, Inc. and/or its affiliates.
  * Copyright (C) 2024 Toshiba Electronic Devices & Storage Corporation
@@ -52,14 +52,14 @@
 #include <net/tc_act/tc_gact.h>
 #include "tc956xmac.h"
 
-struct tc956xmachdr {
+struct stmmachdr {
 	__be32 version;
 	__be64 magic;
 	u8 id;
 } __packed;
 
 #define TC956XMAC_TEST_PKT_SIZE (sizeof(struct ethhdr) + sizeof(struct iphdr) + \
-			      sizeof(struct tc956xmachdr))
+			      sizeof(struct stmmachdr))
 #define TC956XMAC_TEST_PKT_MAGIC	0xdeadcafecafedeadULL
 #define TC956XMAC_LB_TIMEOUT	msecs_to_jiffies(200)
 #define TC956XMAC_PTP_TIMEOUT	msecs_to_jiffies(2000)
@@ -69,7 +69,7 @@ struct tc956xmachdr {
 static int filter_vlan_id;
 #endif
 
-struct tc956xmac_packet_attrs {
+struct stmmac_packet_attrs {
 	int vlan;
 	int vlan_id_in;
 	int vlan_id_out;
@@ -96,15 +96,15 @@ struct tc956xmac_packet_attrs {
 	u64 timestamp;
 };
 
-static u8 tc956xmac_test_next_id;
+static u8 stmmac_test_next_id;
 
-static struct sk_buff *tc956xmac_test_get_udp_skb(struct stmmac_priv *priv,
-					       struct tc956xmac_packet_attrs *attr)
+static struct sk_buff *stmmac_test_get_udp_skb(struct stmmac_priv *priv,
+					       struct stmmac_packet_attrs *attr)
 {
 	struct sk_buff *skb = NULL;
 	struct udphdr *uhdr = NULL;
 	struct tcphdr *thdr = NULL;
-	struct tc956xmachdr *shdr;
+	struct stmmachdr *shdr;
 	struct ethhdr *ehdr;
 	struct iphdr *ihdr;
 	int iplen, size;
@@ -230,8 +230,8 @@ static struct sk_buff *tc956xmac_test_get_udp_skb(struct stmmac_priv *priv,
 	shdr = skb_put(skb, sizeof(*shdr));
 	shdr->version = 0;
 	shdr->magic = cpu_to_be64(TC956XMAC_TEST_PKT_MAGIC);
-	attr->id = tc956xmac_test_next_id;
-	shdr->id = tc956xmac_test_next_id++;
+	attr->id = stmmac_test_next_id;
+	shdr->id = stmmac_test_next_id++;
 
 	if (attr->size)
 		skb_put(skb, attr->size);
@@ -258,8 +258,8 @@ static struct sk_buff *tc956xmac_test_get_udp_skb(struct stmmac_priv *priv,
 	return skb;
 }
 
-struct tc956xmac_test_priv {
-	struct tc956xmac_packet_attrs *packet;
+struct stmmac_test_priv {
+	struct stmmac_packet_attrs *packet;
 	struct packet_type pt;
 	struct completion comp;
 	int double_vlan;
@@ -267,19 +267,19 @@ struct tc956xmac_test_priv {
 	int ok;
 };
 
-static int tc956xmac_test_loopback_validate(struct sk_buff *skb,
+static int stmmac_test_loopback_validate(struct sk_buff *skb,
 					 struct net_device *ndev,
 					 struct packet_type *pt,
 					 struct net_device *orig_ndev)
 {
-	struct tc956xmac_test_priv *tpriv = pt->af_packet_priv;
+	struct stmmac_test_priv *tpriv = pt->af_packet_priv;
 	unsigned char *src = tpriv->packet->src;
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 146)
 	unsigned char *dst = tpriv->packet->dst;
 #else
 	const unsigned char *dst = tpriv->packet->dst;
 #endif
-	struct tc956xmachdr *shdr;
+	struct stmmachdr *shdr;
 	struct ethhdr *ehdr;
 	struct udphdr *uhdr;
 	struct tcphdr *thdr;
@@ -319,7 +319,7 @@ static int tc956xmac_test_loopback_validate(struct sk_buff *skb,
 		if (thdr->dest != htons(tpriv->packet->dport))
 			goto out;
 
-		shdr = (struct tc956xmachdr *)((u8 *)thdr + sizeof(*thdr));
+		shdr = (struct stmmachdr *)((u8 *)thdr + sizeof(*thdr));
 	} else {
 		if (ihdr->protocol != IPPROTO_UDP)
 			goto out;
@@ -328,7 +328,7 @@ static int tc956xmac_test_loopback_validate(struct sk_buff *skb,
 		if (uhdr->dest != htons(tpriv->packet->dport))
 			goto out;
 
-		shdr = (struct tc956xmachdr *)((u8 *)uhdr + sizeof(*uhdr));
+		shdr = (struct stmmachdr *)((u8 *)uhdr + sizeof(*uhdr));
 	}
 
 	if (shdr->magic != cpu_to_be64(TC956XMAC_TEST_PKT_MAGIC))
@@ -345,10 +345,10 @@ out:
 	return 0;
 }
 
-static int __tc956xmac_test_loopback(struct stmmac_priv *priv,
-				  struct tc956xmac_packet_attrs *attr)
+static int __stmmac_test_loopback(struct stmmac_priv *priv,
+				  struct stmmac_packet_attrs *attr)
 {
-	struct tc956xmac_test_priv *tpriv;
+	struct stmmac_test_priv *tpriv;
 	struct sk_buff *skb = NULL;
 	int ret = 0;
 
@@ -360,7 +360,7 @@ static int __tc956xmac_test_loopback(struct stmmac_priv *priv,
 	init_completion(&tpriv->comp);
 
 	tpriv->pt.type = htons(ETH_P_IP);
-	tpriv->pt.func = tc956xmac_test_loopback_validate;
+	tpriv->pt.func = stmmac_test_loopback_validate;
 	tpriv->pt.dev = priv->dev;
 	tpriv->pt.af_packet_priv = tpriv;
 	tpriv->packet = attr;
@@ -368,7 +368,7 @@ static int __tc956xmac_test_loopback(struct stmmac_priv *priv,
 	if (!attr->dont_wait)
 		dev_add_pack(&tpriv->pt);
 
-	skb = tc956xmac_test_get_udp_skb(priv, attr);
+	skb = stmmac_test_get_udp_skb(priv, attr);
 	if (!skb) {
 		ret = -ENOMEM;
 		goto cleanup;
@@ -395,17 +395,17 @@ cleanup:
 	return ret;
 }
 
-static int tc956xmac_test_mac_loopback(struct stmmac_priv *priv)
+static int stmmac_test_mac_loopback(struct stmmac_priv *priv)
 {
-	struct tc956xmac_packet_attrs attr = { };
+	struct stmmac_packet_attrs attr = { };
 
 	attr.dst = priv->dev->dev_addr;
-	return __tc956xmac_test_loopback(priv, &attr);
+	return __stmmac_test_loopback(priv, &attr);
 }
 
-static int tc956xmac_test_phy_loopback(struct stmmac_priv *priv)
+static int stmmac_test_phy_loopback(struct stmmac_priv *priv)
 {
-	struct tc956xmac_packet_attrs attr = { };
+	struct stmmac_packet_attrs attr = { };
 	int ret;
 
 	if (!priv->dev->phydev)
@@ -416,7 +416,7 @@ static int tc956xmac_test_phy_loopback(struct stmmac_priv *priv)
 
 	msleep(7000);
 	attr.dst = priv->dev->dev_addr;
-	ret = __tc956xmac_test_loopback(priv, &attr);
+	ret = __stmmac_test_loopback(priv, &attr);
 
 	phy_loopback(priv->dev->phydev, false, 0);
 	msleep(7000);
@@ -424,7 +424,7 @@ static int tc956xmac_test_phy_loopback(struct stmmac_priv *priv)
 	return ret;
 }
 
-static int tc956xmac_test_mmc(struct stmmac_priv *priv)
+static int stmmac_test_mmc(struct stmmac_priv *priv)
 {
 	struct stmmac_counters final;
 	int ret;
@@ -435,14 +435,14 @@ static int tc956xmac_test_mmc(struct stmmac_priv *priv)
 		return -EOPNOTSUPP;
 
 	/* Save previous results into internal struct */
-	tc956xmac_mmc_read(priv, priv->mmcaddr, &priv->mmc);
+	stmmac_mmc_read(priv, priv->mmcaddr, &priv->mmc);
 
-	ret = tc956xmac_test_mac_loopback(priv);
+	ret = stmmac_test_mac_loopback(priv);
 	if (ret)
 		return ret;
 
 	/* These will be loopback results so no need to save them */
-	tc956xmac_mmc_read(priv, priv->mmcaddr, &final);
+	stmmac_mmc_read(priv, priv->mmcaddr, &final);
 
 	/*
 	 * The number of MMC counters available depends on HW configuration
@@ -456,7 +456,7 @@ static int tc956xmac_test_mmc(struct stmmac_priv *priv)
 }
 
 #ifdef SELFTEST_NOT_SUPPORTED
-static int tc956xmac_test_eee(struct stmmac_priv *priv)
+static int stmmac_test_eee(struct stmmac_priv *priv)
 {
 	struct stmmac_extra_stats *initial, *final;
 	int retries = 10;
@@ -477,7 +477,7 @@ static int tc956xmac_test_eee(struct stmmac_priv *priv)
 
 	memcpy(initial, &priv->xstats, sizeof(*initial));
 
-	ret = tc956xmac_test_mac_loopback(priv);
+	ret = stmmac_test_mac_loopback(priv);
 	if (ret)
 		goto out_free_final;
 
@@ -516,7 +516,7 @@ out_free_initial:
 }
 #endif
 
-static int tc956xmac_filter_check(struct stmmac_priv *priv)
+static int stmmac_filter_check(struct stmmac_priv *priv)
 {
 	if (!(priv->dev->flags & IFF_PROMISC))
 		return 0;
@@ -525,7 +525,7 @@ static int tc956xmac_filter_check(struct stmmac_priv *priv)
 	return -EOPNOTSUPP;
 }
 
-static bool tc956xmac_hash_check(struct stmmac_priv *priv, unsigned char *addr)
+static bool stmmac_hash_check(struct stmmac_priv *priv, unsigned char *addr)
 {
 	int mc_offset = 32 - priv->hw->mcast_bits_log2;
 	struct netdev_hw_addr *ha;
@@ -548,7 +548,7 @@ static bool tc956xmac_hash_check(struct stmmac_priv *priv, unsigned char *addr)
 	return true;
 }
 
-static bool tc956xmac_perfect_check(struct stmmac_priv *priv, unsigned char *addr)
+static bool stmmac_perfect_check(struct stmmac_priv *priv, unsigned char *addr)
 {
 	struct netdev_hw_addr *ha;
 
@@ -562,14 +562,14 @@ static bool tc956xmac_perfect_check(struct stmmac_priv *priv, unsigned char *add
 	return true;
 }
 
-static int tc956xmac_test_hfilt(struct stmmac_priv *priv)
+static int stmmac_test_hfilt(struct stmmac_priv *priv)
 {
 	unsigned char gd_addr[ETH_ALEN] = {0xf1, 0xee, 0xdd, 0xcc, 0xbb, 0xaa};
 	unsigned char bd_addr[ETH_ALEN] = {0xf1, 0xff, 0xff, 0xff, 0xff, 0xff};
-	struct tc956xmac_packet_attrs attr = { };
+	struct stmmac_packet_attrs attr = { };
 	int ret, tries = 256;
 
-	ret = tc956xmac_filter_check(priv);
+	ret = stmmac_filter_check(priv);
 	if (ret)
 		return ret;
 
@@ -579,7 +579,7 @@ static int tc956xmac_test_hfilt(struct stmmac_priv *priv)
 	while (--tries) {
 		/* We only need to check the bd_addr for collisions */
 		bd_addr[ETH_ALEN - 1] = tries;
-		if (tc956xmac_hash_check(priv, bd_addr))
+		if (stmmac_hash_check(priv, bd_addr))
 			break;
 	}
 
@@ -593,14 +593,14 @@ static int tc956xmac_test_hfilt(struct stmmac_priv *priv)
 	attr.dst = gd_addr;
 
 	/* Shall receive packet */
-	ret = __tc956xmac_test_loopback(priv, &attr);
+	ret = __stmmac_test_loopback(priv, &attr);
 	if (ret)
 		goto cleanup;
 
 	attr.dst = bd_addr;
 
 	/* Shall NOT receive packet */
-	ret = __tc956xmac_test_loopback(priv, &attr);
+	ret = __stmmac_test_loopback(priv, &attr);
 	ret = ret ? 0 : -EINVAL;
 
 cleanup:
@@ -608,14 +608,14 @@ cleanup:
 	return ret;
 }
 
-static int tc956xmac_test_pfilt(struct stmmac_priv *priv)
+static int stmmac_test_pfilt(struct stmmac_priv *priv)
 {
 	unsigned char gd_addr[ETH_ALEN] = {0xf0, 0x01, 0x44, 0x55, 0x66, 0x77};
 	unsigned char bd_addr[ETH_ALEN] = {0xf0, 0xff, 0xff, 0xff, 0xff, 0xff};
-	struct tc956xmac_packet_attrs attr = { };
+	struct stmmac_packet_attrs attr = { };
 	int ret, tries = 256;
 
-	if (tc956xmac_filter_check(priv))
+	if (stmmac_filter_check(priv))
 		return -EOPNOTSUPP;
 	if (netdev_uc_count(priv->dev) >= priv->hw->unicast_filter_entries)
 		return -EOPNOTSUPP;
@@ -623,7 +623,7 @@ static int tc956xmac_test_pfilt(struct stmmac_priv *priv)
 	while (--tries) {
 		/* We only need to check the bd_addr for collisions */
 		bd_addr[ETH_ALEN - 1] = tries;
-		if (tc956xmac_perfect_check(priv, bd_addr))
+		if (stmmac_perfect_check(priv, bd_addr))
 			break;
 	}
 
@@ -637,14 +637,14 @@ static int tc956xmac_test_pfilt(struct stmmac_priv *priv)
 	attr.dst = gd_addr;
 
 	/* Shall receive packet */
-	ret = __tc956xmac_test_loopback(priv, &attr);
+	ret = __stmmac_test_loopback(priv, &attr);
 	if (ret)
 		goto cleanup;
 
 	attr.dst = bd_addr;
 
 	/* Shall NOT receive packet */
-	ret = __tc956xmac_test_loopback(priv, &attr);
+	ret = __stmmac_test_loopback(priv, &attr);
 	ret = ret ? 0 : -EINVAL;
 
 cleanup:
@@ -652,14 +652,14 @@ cleanup:
 	return ret;
 }
 
-static int tc956xmac_test_mcfilt(struct stmmac_priv *priv)
+static int stmmac_test_mcfilt(struct stmmac_priv *priv)
 {
 	unsigned char uc_addr[ETH_ALEN] = {0xf0, 0xff, 0xff, 0xff, 0xff, 0xff};
 	unsigned char mc_addr[ETH_ALEN] = {0xf1, 0xff, 0xff, 0xff, 0xff, 0xff};
-	struct tc956xmac_packet_attrs attr = { };
+	struct stmmac_packet_attrs attr = { };
 	int ret, tries = 256;
 
-	if (tc956xmac_filter_check(priv))
+	if (stmmac_filter_check(priv))
 		return -EOPNOTSUPP;
 	if (netdev_uc_count(priv->dev) >= priv->hw->unicast_filter_entries)
 		return -EOPNOTSUPP;
@@ -669,7 +669,7 @@ static int tc956xmac_test_mcfilt(struct stmmac_priv *priv)
 	while (--tries) {
 		/* We only need to check the mc_addr for collisions */
 		mc_addr[ETH_ALEN - 1] = tries;
-		if (tc956xmac_hash_check(priv, mc_addr))
+		if (stmmac_hash_check(priv, mc_addr))
 			break;
 	}
 
@@ -683,14 +683,14 @@ static int tc956xmac_test_mcfilt(struct stmmac_priv *priv)
 	attr.dst = uc_addr;
 
 	/* Shall receive packet */
-	ret = __tc956xmac_test_loopback(priv, &attr);
+	ret = __stmmac_test_loopback(priv, &attr);
 	if (ret)
 		goto cleanup;
 
 	attr.dst = mc_addr;
 
 	/* Shall NOT receive packet */
-	ret = __tc956xmac_test_loopback(priv, &attr);
+	ret = __stmmac_test_loopback(priv, &attr);
 	ret = ret ? 0 : -EINVAL;
 
 cleanup:
@@ -698,14 +698,14 @@ cleanup:
 	return ret;
 }
 
-static int tc956xmac_test_ucfilt(struct stmmac_priv *priv)
+static int stmmac_test_ucfilt(struct stmmac_priv *priv)
 {
 	unsigned char uc_addr[ETH_ALEN] = {0xf0, 0xff, 0xff, 0xff, 0xff, 0xff};
 	unsigned char mc_addr[ETH_ALEN] = {0xf1, 0xff, 0xff, 0xff, 0xff, 0xff};
-	struct tc956xmac_packet_attrs attr = { };
+	struct stmmac_packet_attrs attr = { };
 	int ret, tries = 256;
 
-	if (tc956xmac_filter_check(priv))
+	if (stmmac_filter_check(priv))
 		return -EOPNOTSUPP;
 	if (netdev_uc_count(priv->dev) >= priv->hw->unicast_filter_entries)
 		return -EOPNOTSUPP;
@@ -715,7 +715,7 @@ static int tc956xmac_test_ucfilt(struct stmmac_priv *priv)
 	while (--tries) {
 		/* We only need to check the uc_addr for collisions */
 		uc_addr[ETH_ALEN - 1] = tries;
-		if (tc956xmac_perfect_check(priv, uc_addr))
+		if (stmmac_perfect_check(priv, uc_addr))
 			break;
 	}
 
@@ -729,14 +729,14 @@ static int tc956xmac_test_ucfilt(struct stmmac_priv *priv)
 	attr.dst = mc_addr;
 
 	/* Shall receive packet */
-	ret = __tc956xmac_test_loopback(priv, &attr);
+	ret = __stmmac_test_loopback(priv, &attr);
 	if (ret)
 		goto cleanup;
 
 	attr.dst = uc_addr;
 
 	/* Shall NOT receive packet */
-	ret = __tc956xmac_test_loopback(priv, &attr);
+	ret = __stmmac_test_loopback(priv, &attr);
 	ret = ret ? 0 : -EINVAL;
 
 cleanup:
@@ -745,12 +745,12 @@ cleanup:
 }
 
 #ifdef SELFTEST_NOT_SUPPORTED
-static int tc956xmac_test_flowctrl_validate(struct sk_buff *skb,
+static int stmmac_test_flowctrl_validate(struct sk_buff *skb,
 					 struct net_device *ndev,
 					 struct packet_type *pt,
 					 struct net_device *orig_ndev)
 {
-	struct tc956xmac_test_priv *tpriv = pt->af_packet_priv;
+	struct stmmac_test_priv *tpriv = pt->af_packet_priv;
 	struct ethhdr *ehdr;
 
 	ehdr = (struct ethhdr *)skb_mac_header(skb);
@@ -766,12 +766,12 @@ out:
 	return 0;
 }
 
-static int tc956xmac_test_flowctrl(struct stmmac_priv *priv)
+static int stmmac_test_flowctrl(struct stmmac_priv *priv)
 {
 	unsigned char paddr[ETH_ALEN] = {0x01, 0x80, 0xC2, 0x00, 0x00, 0x01};
 	struct phy_device *phydev = priv->dev->phydev;
 	u32 rx_cnt = priv->plat->rx_queues_to_use;
-	struct tc956xmac_test_priv *tpriv;
+	struct stmmac_test_priv *tpriv;
 	unsigned int pkt_count;
 	int i, ret = 0;
 
@@ -785,7 +785,7 @@ static int tc956xmac_test_flowctrl(struct stmmac_priv *priv)
 	tpriv->ok = false;
 	init_completion(&tpriv->comp);
 	tpriv->pt.type = htons(ETH_P_PAUSE);
-	tpriv->pt.func = tc956xmac_test_flowctrl_validate;
+	tpriv->pt.func = stmmac_test_flowctrl_validate;
 	tpriv->pt.dev = priv->dev;
 	tpriv->pt.af_packet_priv = tpriv;
 	dev_add_pack(&tpriv->pt);
@@ -798,7 +798,7 @@ static int tc956xmac_test_flowctrl(struct stmmac_priv *priv)
 	pkt_count *= 2;
 
 	for (i = 0; i < rx_cnt; i++)
-		tc956xmac_stop_rx(priv, priv->ioaddr, i);
+		stmmac_stop_rx(priv, priv->ioaddr, i);
 
 	ret = dev_set_promiscuity(priv->dev, 1);
 	if (ret)
@@ -809,13 +809,13 @@ static int tc956xmac_test_flowctrl(struct stmmac_priv *priv)
 		goto cleanup;
 
 	for (i = 0; i < pkt_count; i++) {
-		struct tc956xmac_packet_attrs attr = { };
+		struct stmmac_packet_attrs attr = { };
 
 		attr.dst = priv->dev->dev_addr;
 		attr.dont_wait = true;
 		attr.size = 1400;
 
-		ret = __tc956xmac_test_loopback(priv, &attr);
+		ret = __stmmac_test_loopback(priv, &attr);
 		if (ret)
 			goto cleanup;
 		if (tpriv->ok)
@@ -826,14 +826,14 @@ static int tc956xmac_test_flowctrl(struct stmmac_priv *priv)
 	msleep(200);
 
 	for (i = 0; i < rx_cnt; i++) {
-		struct tc956xmac_channel *ch = &priv->channel[i];
+		struct stmmac_channel *ch = &priv->channel[i];
 		u32 tail;
 
 		tail = priv->rx_queue[i].dma_rx_phy +
 			(DMA_RX_SIZE * sizeof(struct dma_desc));
 
-		tc956xmac_set_rx_tail_ptr(priv, priv->ioaddr, tail, i);
-		tc956xmac_start_rx(priv, priv->ioaddr, i);
+		stmmac_set_rx_tail_ptr(priv, priv->ioaddr, tail, i);
+		stmmac_start_rx(priv, priv->ioaddr, i);
 
 		local_bh_disable();
 		napi_reschedule(&ch->rx_napi);
@@ -853,13 +853,13 @@ cleanup:
 
 #endif
 
-static int tc956xmac_test_vlan_validate(struct sk_buff *skb,
+static int stmmac_test_vlan_validate(struct sk_buff *skb,
 				     struct net_device *ndev,
 				     struct packet_type *pt,
 				     struct net_device *orig_ndev)
 {
-	struct tc956xmac_test_priv *tpriv = pt->af_packet_priv;
-	struct tc956xmachdr *shdr;
+	struct stmmac_test_priv *tpriv = pt->af_packet_priv;
+	struct stmmachdr *shdr;
 	struct ethhdr *ehdr;
 	struct udphdr *uhdr;
 	struct iphdr *ihdr;
@@ -908,7 +908,7 @@ static int tc956xmac_test_vlan_validate(struct sk_buff *skb,
 	if (uhdr->dest != htons(tpriv->packet->dport))
 		goto out;
 
-	shdr = (struct tc956xmachdr *)((u8 *)uhdr + sizeof(*uhdr));
+	shdr = (struct stmmachdr *)((u8 *)uhdr + sizeof(*uhdr));
 	if (shdr->magic != cpu_to_be64(TC956XMAC_TEST_PKT_MAGIC))
 		goto out;
 
@@ -920,10 +920,10 @@ out:
 	return 0;
 }
 
-static int __tc956xmac_test_vlanfilt(struct stmmac_priv *priv)
+static int __stmmac_test_vlanfilt(struct stmmac_priv *priv)
 {
-	struct tc956xmac_packet_attrs attr = { };
-	struct tc956xmac_test_priv *tpriv;
+	struct stmmac_packet_attrs attr = { };
+	struct stmmac_test_priv *tpriv;
 	struct sk_buff *skb = NULL;
 	int ret = 0, i;
 
@@ -935,7 +935,7 @@ static int __tc956xmac_test_vlanfilt(struct stmmac_priv *priv)
 	init_completion(&tpriv->comp);
 
 	tpriv->pt.type = htons(ETH_P_IP);
-	tpriv->pt.func = tc956xmac_test_vlan_validate;
+	tpriv->pt.func = stmmac_test_vlan_validate;
 	tpriv->pt.dev = priv->dev;
 	tpriv->pt.af_packet_priv = tpriv;
 	tpriv->packet = &attr;
@@ -961,7 +961,7 @@ static int __tc956xmac_test_vlanfilt(struct stmmac_priv *priv)
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 2, 0)
 		filter_vlan_id = attr.vlan_id_out;
 #endif
-		skb = tc956xmac_test_get_udp_skb(priv, &attr);
+		skb = stmmac_test_get_udp_skb(priv, &attr);
 		if (!skb) {
 			ret = -ENOMEM;
 			goto vlan_del;
@@ -996,15 +996,15 @@ cleanup:
 	return ret;
 }
 
-static int tc956xmac_test_vlanfilt(struct stmmac_priv *priv)
+static int stmmac_test_vlanfilt(struct stmmac_priv *priv)
 {
 	if (!priv->dma_cap.vlhash)
 		return -EOPNOTSUPP;
 
-	return __tc956xmac_test_vlanfilt(priv);
+	return __stmmac_test_vlanfilt(priv);
 }
 
-static int tc956xmac_test_vlanfilt_perfect(struct stmmac_priv *priv)
+static int stmmac_test_vlanfilt_perfect(struct stmmac_priv *priv)
 {
 	int ret, prev_cap = priv->dma_cap.vlhash;
 
@@ -1012,16 +1012,16 @@ static int tc956xmac_test_vlanfilt_perfect(struct stmmac_priv *priv)
 		return -EOPNOTSUPP;
 
 	priv->dma_cap.vlhash = 0;
-	ret = __tc956xmac_test_vlanfilt(priv);
+	ret = __stmmac_test_vlanfilt(priv);
 	priv->dma_cap.vlhash = prev_cap;
 
 	return ret;
 }
 #ifdef SELFTEST_NOT_SUPPORTED
-static int __tc956xmac_test_dvlanfilt(struct stmmac_priv *priv)
+static int __stmmac_test_dvlanfilt(struct stmmac_priv *priv)
 {
-	struct tc956xmac_packet_attrs attr = { };
-	struct tc956xmac_test_priv *tpriv;
+	struct stmmac_packet_attrs attr = { };
+	struct stmmac_test_priv *tpriv;
 	struct sk_buff *skb = NULL;
 	int ret = 0, i;
 
@@ -1034,7 +1034,7 @@ static int __tc956xmac_test_dvlanfilt(struct stmmac_priv *priv)
 	init_completion(&tpriv->comp);
 
 	tpriv->pt.type = htons(ETH_P_8021Q);
-	tpriv->pt.func = tc956xmac_test_vlan_validate;
+	tpriv->pt.func = stmmac_test_vlan_validate;
 	tpriv->pt.dev = priv->dev;
 	tpriv->pt.af_packet_priv = tpriv;
 	tpriv->packet = &attr;
@@ -1058,7 +1058,7 @@ static int __tc956xmac_test_dvlanfilt(struct stmmac_priv *priv)
 		attr.sport = 9;
 		attr.dport = 9;
 
-		skb = tc956xmac_test_get_udp_skb(priv, &attr);
+		skb = stmmac_test_get_udp_skb(priv, &attr);
 		if (!skb) {
 			ret = -ENOMEM;
 			goto vlan_del;
@@ -1090,15 +1090,15 @@ cleanup:
 	return ret;
 }
 
-static int tc956xmac_test_dvlanfilt(struct stmmac_priv *priv)
+static int stmmac_test_dvlanfilt(struct stmmac_priv *priv)
 {
 	if (!priv->dma_cap.vlhash)
 		return -EOPNOTSUPP;
 
-	return __tc956xmac_test_dvlanfilt(priv);
+	return __stmmac_test_dvlanfilt(priv);
 }
 
-static int tc956xmac_test_dvlanfilt_perfect(struct stmmac_priv *priv)
+static int stmmac_test_dvlanfilt_perfect(struct stmmac_priv *priv)
 {
 	int ret, prev_cap = priv->dma_cap.vlhash;
 
@@ -1106,18 +1106,18 @@ static int tc956xmac_test_dvlanfilt_perfect(struct stmmac_priv *priv)
 		return -EOPNOTSUPP;
 
 	priv->dma_cap.vlhash = 0;
-	ret = __tc956xmac_test_dvlanfilt(priv);
+	ret = __stmmac_test_dvlanfilt(priv);
 	priv->dma_cap.vlhash = prev_cap;
 
 	return ret;
 }
 #endif
 #ifdef TC956X_FRP_ENABLE
-static int tc956xmac_test_rxp(struct stmmac_priv *priv)
+static int stmmac_test_rxp(struct stmmac_priv *priv)
 {
 	unsigned char addr[ETH_ALEN] = {0xde, 0xad, 0xbe, 0xef, 0x00, 0x00};
 	struct tc_cls_u32_offload cls_u32 = { };
-	struct tc956xmac_packet_attrs attr = { };
+	struct stmmac_packet_attrs attr = { };
 	struct tc_action **actions, *act;
 	struct tc_u32_sel *sel;
 	struct tcf_exts *exts;
@@ -1172,18 +1172,18 @@ static int tc956xmac_test_rxp(struct stmmac_priv *priv)
 	sel->keys[0].val = htonl(0xdeadbeef);
 	sel->keys[0].mask = ~0x0;
 
-	ret = tc956xmac_tc_setup_cls_u32(priv, &cls_u32);
+	ret = stmmac_tc_setup_cls_u32(priv, &cls_u32);
 	if (ret)
 		goto cleanup_act;
 
 	attr.dst = priv->dev->dev_addr;
 	attr.src = addr;
 
-	ret = __tc956xmac_test_loopback(priv, &attr);
+	ret = __stmmac_test_loopback(priv, &attr);
 	ret = ret ? 0 : -EINVAL; /* Shall NOT receive packet */
 
 	cls_u32.command = TC_CLSU32_DELETE_KNODE;
-	tc956xmac_tc_setup_cls_u32(priv, &cls_u32);
+	stmmac_tc_setup_cls_u32(priv, &cls_u32);
 
 cleanup_act:
 	kfree(act);
@@ -1197,10 +1197,10 @@ cleanup_sel:
 }
 #endif
 
-static int tc956xmac_test_reg_sai(struct stmmac_priv *priv)
+static int stmmac_test_reg_sai(struct stmmac_priv *priv)
 {
 	unsigned char src[ETH_ALEN] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-	struct tc956xmac_packet_attrs attr = { };
+	struct stmmac_packet_attrs attr = { };
 	int ret;
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 	unsigned long flags;
@@ -1217,25 +1217,25 @@ static int tc956xmac_test_reg_sai(struct stmmac_priv *priv)
 	spin_lock_irqsave(&priv->spn_lock.mac_filter, flags);
 #endif
 
-	tc956xmac_set_umac_addr(priv, priv->hw, (unsigned char*)priv->dev->dev_addr, 0, PF_DRIVER);
+	stmmac_set_umac_addr(priv, priv->hw, (unsigned char*)priv->dev->dev_addr, 0, PF_DRIVER);
 
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 	spin_unlock_irqrestore(&priv->spn_lock.mac_filter, flags);
 #endif
 
-	if (tc956xmac_sarc_configure(priv, priv->ioaddr, 0x2))
+	if (stmmac_sarc_configure(priv, priv->ioaddr, 0x2))
 		return -EOPNOTSUPP;
 
-	ret = __tc956xmac_test_loopback(priv, &attr);
+	ret = __stmmac_test_loopback(priv, &attr);
 
-	tc956xmac_sarc_configure(priv, priv->ioaddr, 0x0);
+	stmmac_sarc_configure(priv, priv->ioaddr, 0x0);
 	return ret;
 }
 
-static int tc956xmac_test_reg_sar(struct stmmac_priv *priv)
+static int stmmac_test_reg_sar(struct stmmac_priv *priv)
 {
 	unsigned char src[ETH_ALEN] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-	struct tc956xmac_packet_attrs attr = { };
+	struct stmmac_packet_attrs attr = { };
 	int ret;
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 	unsigned long flags;
@@ -1250,26 +1250,26 @@ static int tc956xmac_test_reg_sar(struct stmmac_priv *priv)
 	spin_lock_irqsave(&priv->spn_lock.mac_filter, flags);
 #endif
 
-	tc956xmac_set_umac_addr(priv, priv->hw, (unsigned char*)priv->dev->dev_addr, 0, PF_DRIVER);
+	stmmac_set_umac_addr(priv, priv->hw, (unsigned char*)priv->dev->dev_addr, 0, PF_DRIVER);
 
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 	spin_unlock_irqrestore(&priv->spn_lock.mac_filter, flags);
 #endif
 
-	if (tc956xmac_sarc_configure(priv, priv->ioaddr, 0x3))
+	if (stmmac_sarc_configure(priv, priv->ioaddr, 0x3))
 		return -EOPNOTSUPP;
 
-	ret = __tc956xmac_test_loopback(priv, &attr);
+	ret = __stmmac_test_loopback(priv, &attr);
 
-	tc956xmac_sarc_configure(priv, priv->ioaddr, 0x0);
+	stmmac_sarc_configure(priv, priv->ioaddr, 0x0);
 	return ret;
 }
 
 
-static int tc956xmac_test_vlanoff_common(struct stmmac_priv *priv, bool svlan)
+static int stmmac_test_vlanoff_common(struct stmmac_priv *priv, bool svlan)
 {
-	struct tc956xmac_packet_attrs attr = { };
-	struct tc956xmac_test_priv *tpriv;
+	struct stmmac_packet_attrs attr = { };
+	struct stmmac_test_priv *tpriv;
 	struct sk_buff *skb = NULL;
 	int ret = 0;
 	u16 proto;
@@ -1288,7 +1288,7 @@ static int tc956xmac_test_vlanoff_common(struct stmmac_priv *priv, bool svlan)
 	init_completion(&tpriv->comp);
 
 	tpriv->pt.type = svlan ? htons(ETH_P_8021Q) : htons(ETH_P_IP);
-	tpriv->pt.func = tc956xmac_test_vlan_validate;
+	tpriv->pt.func = stmmac_test_vlan_validate;
 	tpriv->pt.dev = priv->dev;
 	tpriv->pt.af_packet_priv = tpriv;
 	tpriv->packet = &attr;
@@ -1303,7 +1303,7 @@ static int tc956xmac_test_vlanoff_common(struct stmmac_priv *priv, bool svlan)
 
 	attr.dst = priv->dev->dev_addr;
 
-	skb = tc956xmac_test_get_udp_skb(priv, &attr);
+	skb = stmmac_test_get_udp_skb(priv, &attr);
 	if (!skb) {
 		ret = -ENOMEM;
 		goto vlan_del;
@@ -1330,35 +1330,35 @@ cleanup:
 	return ret;
 }
 
-static int tc956xmac_test_vlanoff(struct stmmac_priv *priv)
+static int stmmac_test_vlanoff(struct stmmac_priv *priv)
 {
-	return tc956xmac_test_vlanoff_common(priv, false);
+	return stmmac_test_vlanoff_common(priv, false);
 }
 
 
-static int __tc956xmac_test_jumbo(struct stmmac_priv *priv, u16 queue)
+static int __stmmac_test_jumbo(struct stmmac_priv *priv, u16 queue)
 {
-	struct tc956xmac_packet_attrs attr = { };
+	struct stmmac_packet_attrs attr = { };
 	int size = priv->dma_buf_sz;
 
 	attr.dst = priv->dev->dev_addr;
 	attr.max_size = size - ETH_FCS_LEN;
 	attr.queue_mapping = queue;
 
-	return __tc956xmac_test_loopback(priv, &attr);
+	return __stmmac_test_loopback(priv, &attr);
 }
 
-static int tc956xmac_test_jumbo(struct stmmac_priv *priv)
+static int stmmac_test_jumbo(struct stmmac_priv *priv)
 {
-	return __tc956xmac_test_jumbo(priv, 0);
+	return __stmmac_test_jumbo(priv, 0);
 }
 
 #ifdef SELFTEST_NOT_SUPPORTED
 
-static int tc956xmac_test_tbs(struct stmmac_priv *priv)
+static int stmmac_test_tbs(struct stmmac_priv *priv)
 {
 #define TC956XMAC_TBS_LT_OFFSET		(500 * 1000 * 1000) /* 500 ms*/
-	struct tc956xmac_packet_attrs attr = { };
+	struct stmmac_packet_attrs attr = { };
 	struct tc_etf_qopt_offload qopt;
 	u64 start_time, curr_time = 0;
 	unsigned long flags;
@@ -1378,12 +1378,12 @@ static int tc956xmac_test_tbs(struct stmmac_priv *priv)
 	qopt.enable = true;
 	qopt.queue = i;
 
-	ret = tc956xmac_tc_setup_etf(priv, &qopt);
+	ret = stmmac_tc_setup_etf(priv, &qopt);
 	if (ret)
 		return ret;
 
 	spin_lock_irqsave(&priv->ptp_lock, flags);
-	tc956xmac_get_systime(priv, priv->ptpaddr, &curr_time);
+	stmmac_get_systime(priv, priv->ptpaddr, &curr_time);
 	spin_unlock_irqrestore(&priv->ptp_lock, flags);
 
 	if (!curr_time) {
@@ -1399,13 +1399,13 @@ static int tc956xmac_test_tbs(struct stmmac_priv *priv)
 	attr.timeout = nsecs_to_jiffies(2 * TC956XMAC_TBS_LT_OFFSET);
 	attr.queue_mapping = i;
 
-	ret = __tc956xmac_test_loopback(priv, &attr);
+	ret = __stmmac_test_loopback(priv, &attr);
 	if (ret)
 		goto fail_disable;
 
 	/* Check if expected time has elapsed */
 	spin_lock_irqsave(&priv->ptp_lock, flags);
-	tc956xmac_get_systime(priv, priv->ptpaddr, &curr_time);
+	stmmac_get_systime(priv, priv->ptpaddr, &curr_time);
 	spin_unlock_irqrestore(&priv->ptp_lock, flags);
 
 	if ((curr_time - start_time) < TC956XMAC_TBS_LT_OFFSET)
@@ -1413,17 +1413,17 @@ static int tc956xmac_test_tbs(struct stmmac_priv *priv)
 
 fail_disable:
 	qopt.enable = false;
-	tc956xmac_tc_setup_etf(priv, &qopt);
+	stmmac_tc_setup_etf(priv, &qopt);
 	return ret;
 }
 
-static int tc956xmac_test_ptp_validate(struct sk_buff *skb,
+static int stmmac_test_ptp_validate(struct sk_buff *skb,
 				    struct net_device *ndev,
 				    struct packet_type *pt,
 				    struct net_device *orig_ndev)
 {
 	unsigned char dst[ETH_ALEN] = { 0x01, 0x1b, 0x19, 0x00, 0x00, 0x00 };
-	struct tc956xmac_test_priv *tpriv = pt->af_packet_priv;
+	struct stmmac_test_priv *tpriv = pt->af_packet_priv;
 	struct ethhdr *ehdr;
 
 	ehdr = (struct ethhdr *)skb_mac_header(skb);
@@ -1439,10 +1439,10 @@ out:
 	return 0;
 }
 
-static int tc956xmac_test_ptp_offload(struct stmmac_priv *priv)
+static int stmmac_test_ptp_offload(struct stmmac_priv *priv)
 {
 #define TC956XMAC_PTP_CNT			10
-	struct tc956xmac_test_priv *tpriv;
+	struct stmmac_test_priv *tpriv;
 	int ret, i;
 
 	if (!priv->dma_cap.ptoen)
@@ -1458,7 +1458,7 @@ static int tc956xmac_test_ptp_offload(struct stmmac_priv *priv)
 	init_completion(&tpriv->comp);
 
 	tpriv->pt.type = htons(ETH_P_1588);
-	tpriv->pt.func = tc956xmac_test_ptp_validate;
+	tpriv->pt.func = stmmac_test_ptp_validate;
 	tpriv->pt.dev = priv->dev;
 	tpriv->pt.af_packet_priv = tpriv;
 	dev_add_pack(&tpriv->pt);
@@ -1467,7 +1467,7 @@ static int tc956xmac_test_ptp_offload(struct stmmac_priv *priv)
 	if (ret)
 		goto cleanup;
 
-	ret = tc956xmac_set_ptp_offload(priv, priv->ioaddr, true);
+	ret = stmmac_set_ptp_offload(priv, priv->ioaddr, true);
 	if (ret)
 		goto cleanup;
 
@@ -1479,7 +1479,7 @@ static int tc956xmac_test_ptp_offload(struct stmmac_priv *priv)
 	}
 
 cleanup:
-	tc956xmac_set_ptp_offload(priv, priv->ioaddr, false);
+	stmmac_set_ptp_offload(priv, priv->ioaddr, false);
 	dev_set_promiscuity(priv->dev, -1);
 	dev_remove_pack(&tpriv->pt);
 	kfree(tpriv);
@@ -1491,121 +1491,121 @@ cleanup:
 #define TC956XMAC_LOOPBACK_MAC	1
 #define TC956XMAC_LOOPBACK_PHY	2
 
-static const struct tc956xmac_test {
+static const struct stmmac_test {
 	char name[ETH_GSTRING_LEN];
 	int lb;
 	int (*fn)(struct stmmac_priv *priv);
-} tc956xmac_selftests[] = {
+} stmmac_selftests[] = {
 	{
 		.name = "MAC Loopback               ",
 		.lb = TC956XMAC_LOOPBACK_MAC,
-		.fn = tc956xmac_test_mac_loopback,
+		.fn = stmmac_test_mac_loopback,
 	}, {
 		.name = "PHY Loopback               ",
 		.lb = TC956XMAC_LOOPBACK_NONE, /* Test will handle it */
-		.fn = tc956xmac_test_phy_loopback,
+		.fn = stmmac_test_phy_loopback,
 	}, {
 		.name = "MMC Counters               ",
 		.lb = TC956XMAC_LOOPBACK_PHY,
-		.fn = tc956xmac_test_mmc,
+		.fn = stmmac_test_mmc,
 	},
 #ifdef SELFTEST_NOT_SUPPORTED
 	{
 		.name = "EEE                        ",
 		.lb = TC956XMAC_LOOPBACK_PHY,
-		.fn = tc956xmac_test_eee,
+		.fn = stmmac_test_eee,
 	},
 #endif
 	{
 		.name = "Hash Filter MC             ",
 		.lb = TC956XMAC_LOOPBACK_PHY,
-		.fn = tc956xmac_test_hfilt,
+		.fn = stmmac_test_hfilt,
 	}, {
 		.name = "Perfect Filter UC          ",
 		.lb = TC956XMAC_LOOPBACK_PHY,
-		.fn = tc956xmac_test_pfilt,
+		.fn = stmmac_test_pfilt,
 	}, {
 		.name = "MC Filter                  ",
 		.lb = TC956XMAC_LOOPBACK_PHY,
-		.fn = tc956xmac_test_mcfilt,
+		.fn = stmmac_test_mcfilt,
 	}, {
 		.name = "UC Filter                  ",
 		.lb = TC956XMAC_LOOPBACK_PHY,
-		.fn = tc956xmac_test_ucfilt,
+		.fn = stmmac_test_ucfilt,
 	},
 #ifdef SELFTEST_NOT_SUPPORTED
 	{
 		.name = "Flow Control               ",
 		.lb = TC956XMAC_LOOPBACK_PHY,
-		.fn = tc956xmac_test_flowctrl,
+		.fn = stmmac_test_flowctrl,
 	},
 #endif
 	{
 		.name = "VLAN Filtering             ",
 		.lb = TC956XMAC_LOOPBACK_PHY,
-		.fn = tc956xmac_test_vlanfilt,
+		.fn = stmmac_test_vlanfilt,
 	}, {
 		.name = "VLAN Filtering (perf)      ",
 		.lb = TC956XMAC_LOOPBACK_PHY,
-		.fn = tc956xmac_test_vlanfilt_perfect,
+		.fn = stmmac_test_vlanfilt_perfect,
 	},
 #ifdef SELFTEST_NOT_SUPPORTED
 	{
 		.name = "Double VLAN Filter         ",
 		.lb = TC956XMAC_LOOPBACK_PHY,
-		.fn = tc956xmac_test_dvlanfilt,
+		.fn = stmmac_test_dvlanfilt,
 	}, {
 		.name = "Double VLAN Filter (perf)  ",
 		.lb = TC956XMAC_LOOPBACK_PHY,
-		.fn = tc956xmac_test_dvlanfilt_perfect,
+		.fn = stmmac_test_dvlanfilt_perfect,
 	},
 #endif
 #ifdef TC956X_FRP_ENABLE
 	{
 		.name = "Flexible RX Parser         ",
 		.lb = TC956XMAC_LOOPBACK_PHY,
-		.fn = tc956xmac_test_rxp,
+		.fn = stmmac_test_rxp,
 	},
 #endif
 	{
 		.name = "SA Insertion (reg)         ",
 		.lb = TC956XMAC_LOOPBACK_PHY,
-		.fn = tc956xmac_test_reg_sai,
+		.fn = stmmac_test_reg_sai,
 	}, {
 		.name = "SA Replacement (reg)       ",
 		.lb = TC956XMAC_LOOPBACK_PHY,
-		.fn = tc956xmac_test_reg_sar,
+		.fn = stmmac_test_reg_sar,
 	}, {
 		.name = "VLAN TX Insertion          ",
 		.lb = TC956XMAC_LOOPBACK_PHY,
-		.fn = tc956xmac_test_vlanoff,
+		.fn = stmmac_test_vlanoff,
 	}, {
 		.name = "Jumbo Frame                ",
 		.lb = TC956XMAC_LOOPBACK_PHY,
-		.fn = tc956xmac_test_jumbo,
+		.fn = stmmac_test_jumbo,
 	},
 #ifdef SELFTEST_NOT_SUPPORTED
 	{
 		.name = "TBS (ETF Scheduler)        ",
 		.lb = TC956XMAC_LOOPBACK_PHY,
-		.fn = tc956xmac_test_tbs,
+		.fn = stmmac_test_tbs,
 	}, {
 		.name = "PTP Offload                ",
 		.lb = TC956XMAC_LOOPBACK_PHY,
-		.fn = tc956xmac_test_ptp_offload,
+		.fn = stmmac_test_ptp_offload,
 	},
 #endif
 };
 
-void tc956xmac_selftest_run(struct net_device *dev,
+void stmmac_selftest_run(struct net_device *dev,
 			 struct ethtool_test *etest, u64 *buf)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
-	int count = tc956xmac_selftest_get_count(priv);
+	int count = stmmac_selftest_get_count(priv);
 	int i, ret, phy_loopback_enabled = 0;
 
 	memset(buf, 0, sizeof(*buf) * count);
-	tc956xmac_test_next_id = 0;
+	stmmac_test_next_id = 0;
 
 	if (etest->flags != ETH_TEST_FL_OFFLINE) {
 		netdev_err(priv->dev, "Only offline tests are supported\n");
@@ -1623,7 +1623,7 @@ void tc956xmac_selftest_run(struct net_device *dev,
 	for (i = 0; i < count; i++) {
 		ret = 0;
 
-		switch (tc956xmac_selftests[i].lb) {
+		switch (stmmac_selftests[i].lb) {
 		case TC956XMAC_LOOPBACK_PHY:
 			ret = -EOPNOTSUPP;
 			if ((dev->phydev) && !(phy_loopback_enabled)) {
@@ -1638,7 +1638,7 @@ void tc956xmac_selftest_run(struct net_device *dev,
 				break;
 			fallthrough;
 		case TC956XMAC_LOOPBACK_MAC:
-			ret = tc956xmac_set_mac_loopback(priv, priv->ioaddr, true);
+			ret = stmmac_set_mac_loopback(priv, priv->ioaddr, true);
 			break;
 		case TC956XMAC_LOOPBACK_NONE:
 			break;
@@ -1657,15 +1657,15 @@ void tc956xmac_selftest_run(struct net_device *dev,
 			break;
 		}
 
-		ret = tc956xmac_selftests[i].fn(priv);
+		ret = stmmac_selftests[i].fn(priv);
 		if (ret && (ret != -EOPNOTSUPP))
 			etest->flags |= ETH_TEST_FL_FAILED;
 		buf[i] = ret;
 
-		switch (tc956xmac_selftests[i].lb) {
+		switch (stmmac_selftests[i].lb) {
 			/* Fallthrough */
 		case TC956XMAC_LOOPBACK_MAC:
-			tc956xmac_set_mac_loopback(priv, priv->ioaddr, false);
+			stmmac_set_mac_loopback(priv, priv->ioaddr, false);
 			break;
 		default:
 			break;
@@ -1678,19 +1678,19 @@ void tc956xmac_selftest_run(struct net_device *dev,
 	}
 }
 
-void tc956xmac_selftest_get_strings(struct stmmac_priv *priv, u8 *data)
+void stmmac_selftest_get_strings(struct stmmac_priv *priv, u8 *data)
 {
 	u8 *p = data;
 	int i;
 
-	for (i = 0; i < tc956xmac_selftest_get_count(priv); i++) {
+	for (i = 0; i < stmmac_selftest_get_count(priv); i++) {
 		snprintf(p, ETH_GSTRING_LEN, "%2d. %s", i + 1,
-			 tc956xmac_selftests[i].name);
+			 stmmac_selftests[i].name);
 		p += ETH_GSTRING_LEN;
 	}
 }
 
-int tc956xmac_selftest_get_count(struct stmmac_priv *priv)
+int stmmac_selftest_get_count(struct stmmac_priv *priv)
 {
-	return ARRAY_SIZE(tc956xmac_selftests);
+	return ARRAY_SIZE(stmmac_selftests);
 }

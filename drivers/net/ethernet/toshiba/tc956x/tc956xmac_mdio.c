@@ -1,7 +1,7 @@
 /*
  * TC956X ethernet driver.
  *
- * tc956xmac_mdio.c
+ * stmmac_mdio.c
  *
  * Copyright (C) 2007-2009  STMicroelectronics Ltd
  * Copyright (C) 2025 Toshiba Electronic Devices & Storage Corporation
@@ -112,7 +112,7 @@
 #define TC956X_MII_DEVADDR_C45_SHIFT		16
 #define TC956X_MII_REGADDR_C45_MASK			GENMASK(15, 0)
 
-static int tc956xmac_xgmac2_c45_format(struct stmmac_priv *priv, int phyaddr,
+static int stmmac_xgmac2_c45_format(struct stmmac_priv *priv, int phyaddr,
 				    int phyreg, u32 *hw_addr)
 {
 	u32 tmp;
@@ -127,7 +127,7 @@ static int tc956xmac_xgmac2_c45_format(struct stmmac_priv *priv, int phyaddr,
 	return 0;
 }
 
-static int tc956xmac_xgmac2_c22_format(struct stmmac_priv *priv, int phyaddr,
+static int stmmac_xgmac2_c22_format(struct stmmac_priv *priv, int phyaddr,
 				    int phyreg, u32 *hw_addr)
 {
 	u32 tmp;
@@ -141,7 +141,7 @@ static int tc956xmac_xgmac2_c22_format(struct stmmac_priv *priv, int phyaddr,
 	return 0;
 }
 
-static int __tc956xmac_xgmac2_mdio_read(struct mii_bus *bus, int phyaddr, int phyreg)
+static int __stmmac_xgmac2_mdio_read(struct mii_bus *bus, int phyaddr, int phyreg)
 {
 	struct net_device *ndev = bus->priv;
 	struct stmmac_priv *priv = netdev_priv(ndev);
@@ -184,11 +184,11 @@ static int __tc956xmac_xgmac2_mdio_read(struct mii_bus *bus, int phyaddr, int ph
 	if (phyreg & TC956X_MII_ADDR_C45) {
 		phyreg &= ~TC956X_MII_ADDR_C45;
 
-		ret = tc956xmac_xgmac2_c45_format(priv, phyaddr, phyreg, &addr);
+		ret = stmmac_xgmac2_c45_format(priv, phyaddr, phyreg, &addr);
 		if (ret)
 			return ret;
 	} else {
-		ret = tc956xmac_xgmac2_c22_format(priv, phyaddr, phyreg, &addr);
+		ret = stmmac_xgmac2_c22_format(priv, phyaddr, phyreg, &addr);
 		if (ret)
 			return ret;
 
@@ -227,21 +227,21 @@ static int __tc956xmac_xgmac2_mdio_read(struct mii_bus *bus, int phyaddr, int ph
 	return readl(priv->ioaddr + mii_data) & GENMASK(15, 0);
 }
 /**
- * tc956xmac_xgmac2_mdio_read
+ * stmmac_xgmac2_mdio_read
  * @bus: points to the mii_bus structure
  * @phyaddr: MII addr
  * @phyreg: MII reg
  * Description: Check whether MDIO bus is registered successfully or not
  * if registered then access MDIO for Read operation
  */
-static int tc956xmac_xgmac2_mdio_read(struct mii_bus *bus, int phyaddr, int phyreg)
+static int stmmac_xgmac2_mdio_read(struct mii_bus *bus, int phyaddr, int phyreg)
 {
 	return bus->priv ?
-		__tc956xmac_xgmac2_mdio_read(bus, phyaddr, phyreg) : -EIO;
+		__stmmac_xgmac2_mdio_read(bus, phyaddr, phyreg) : -EIO;
 }
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
 /**
- * tc956xmac_xgmac2_mdio_read_c45
+ * stmmac_xgmac2_mdio_read_c45
  * @bus: points to the mii_bus structure
  * @phyaddr: MII addr
  * @devad: device (MMD) address
@@ -249,15 +249,15 @@ static int tc956xmac_xgmac2_mdio_read(struct mii_bus *bus, int phyaddr, int phyr
  * Description: Check whether MDIO bus is registered successfully or not
  * if registered then access MDIO for C45 Read operation
  */
-static int tc956xmac_xgmac2_mdio_read_c45(struct mii_bus *bus, int phyaddr,
+static int stmmac_xgmac2_mdio_read_c45(struct mii_bus *bus, int phyaddr,
 				       int devad, int phyreg)
 {
-	return bus->priv ? __tc956xmac_xgmac2_mdio_read(bus, phyaddr,
+	return bus->priv ? __stmmac_xgmac2_mdio_read(bus, phyaddr,
 		TC956X_MII_ADDR_C45 | (devad << TC956X_MII_DEVADDR_C45_SHIFT) | phyreg) : -EIO;
 }
 #endif /* KERNEL_VERSION(6, 3, 0) */
 
-static int __tc956xmac_xgmac2_mdio_write(struct mii_bus *bus, int phyaddr,
+static int __stmmac_xgmac2_mdio_write(struct mii_bus *bus, int phyaddr,
 				    int phyreg, u16 phydata)
 {
 	struct net_device *ndev = bus->priv;
@@ -288,11 +288,11 @@ static int __tc956xmac_xgmac2_mdio_write(struct mii_bus *bus, int phyaddr,
 	if (phyreg & TC956X_MII_ADDR_C45) {
 		phyreg &= ~TC956X_MII_ADDR_C45;
 
-		ret = tc956xmac_xgmac2_c45_format(priv, phyaddr, phyreg, &addr);
+		ret = stmmac_xgmac2_c45_format(priv, phyaddr, phyreg, &addr);
 		if (ret)
 			return ret;
 	} else {
-		ret = tc956xmac_xgmac2_c22_format(priv, phyaddr, phyreg, &addr);
+		ret = stmmac_xgmac2_c22_format(priv, phyaddr, phyreg, &addr);
 		if (ret)
 			return ret;
 
@@ -368,7 +368,7 @@ static int __tc956xmac_xgmac2_mdio_write(struct mii_bus *bus, int phyaddr,
 				  !(tmp & MII_XGMAC_BUSY), /*100*/poll_time + 10, 10000);
 }
 /**
- * tc956xmac_xgmac2_mdio_write
+ * stmmac_xgmac2_mdio_write
  * @bus: points to the mii_bus structure
  * @phyaddr: MII addr
  * @phyreg: MII reg
@@ -376,16 +376,16 @@ static int __tc956xmac_xgmac2_mdio_write(struct mii_bus *bus, int phyaddr,
  * Description: Check whether MDIO bus is registered successfully or not
  * if registered then access MDIO for write operation
  */
-static int tc956xmac_xgmac2_mdio_write(struct mii_bus *bus, int phyaddr,
+static int stmmac_xgmac2_mdio_write(struct mii_bus *bus, int phyaddr,
 				    int phyreg, u16 phydata)
 {
 	return bus->priv ?
-		__tc956xmac_xgmac2_mdio_write(bus, phyaddr, phyreg, phydata) : -EIO;
+		__stmmac_xgmac2_mdio_write(bus, phyaddr, phyreg, phydata) : -EIO;
 }
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
 /**
- * tc956xmac_xgmac2_mdio_write_c45
+ * stmmac_xgmac2_mdio_write_c45
  * @bus: points to the mii_bus structure
  * @phyaddr: MII addr
  * @devad: device (MMD) address
@@ -394,10 +394,10 @@ static int tc956xmac_xgmac2_mdio_write(struct mii_bus *bus, int phyaddr,
  * Description: Check whether MDIO bus is registered successfully or not
  * if registered then access MDIO for C45 Write operation
  */
-static int tc956xmac_xgmac2_mdio_write_c45(struct mii_bus *bus, int phyaddr,
+static int stmmac_xgmac2_mdio_write_c45(struct mii_bus *bus, int phyaddr,
 					int devad, int phyreg, u16 phydata)
 {
-	return bus->priv ? __tc956xmac_xgmac2_mdio_write(bus, phyaddr,
+	return bus->priv ? __stmmac_xgmac2_mdio_write(bus, phyaddr,
 		TC956X_MII_ADDR_C45 | (devad << TC956X_MII_DEVADDR_C45_SHIFT) | phyreg, phydata) : -EIO;
 }
 #endif /* KERNEL_VERSION(6, 3, 0) */
@@ -405,7 +405,7 @@ static int tc956xmac_xgmac2_mdio_write_c45(struct mii_bus *bus, int phyaddr,
 #ifdef TC956X_UNSUPPORTED_UNTESTED_FEATURE
 
 /**
- * tc956xmac_mdio_read
+ * stmmac_mdio_read
  * @bus: points to the mii_bus structure
  * @phyaddr: MII addr
  * @phyreg: MII reg
@@ -414,7 +414,7 @@ static int tc956xmac_xgmac2_mdio_write_c45(struct mii_bus *bus, int phyaddr,
  * accessing the PHY registers.
  * Fortunately, it seems this has no drawback for the 7109 MAC.
  */
-static int tc956xmac_mdio_read(struct mii_bus *bus, int phyaddr, int phyreg)
+static int stmmac_mdio_read(struct mii_bus *bus, int phyaddr, int phyreg)
 {
 	struct net_device *ndev = bus->priv;
 	struct stmmac_priv *priv = netdev_priv(ndev);
@@ -477,7 +477,7 @@ static int tc956xmac_mdio_read(struct mii_bus *bus, int phyaddr, int phyreg)
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
 /**
- * tc956xmac_mdio_read_c45
+ * stmmac_mdio_read_c45
  * @bus: points to the mii_bus structure
  * @phyaddr: MII addr
  * @devad: device (MMD) address
@@ -487,23 +487,23 @@ static int tc956xmac_mdio_read(struct mii_bus *bus, int phyaddr, int phyreg)
  * accessing the PHY registers.
  * Fortunately, it seems this has no drawback for the 7109 MAC.
  */
-static int tc956xmac_mdio_read_c45(struct mii_bus *bus, int phyaddr, int devad,
+static int stmmac_mdio_read_c45(struct mii_bus *bus, int phyaddr, int devad,
 				int phyreg)
 {
-	return tc956xmac_mdio_read(bus, phyaddr,
+	return stmmac_mdio_read(bus, phyaddr,
 		TC956X_MII_ADDR_C45 | (devad << TC956X_MII_DEVADDR_C45_SHIFT) | phyreg);
 }
 #endif /* KERNEL_VERSION(6, 3, 0) */
 
 /**
- * tc956xmac_mdio_write
+ * stmmac_mdio_write
  * @bus: points to the mii_bus structure
  * @phyaddr: MII addr
  * @phyreg: MII reg
  * @phydata: phy data
  * Description: it writes the data into the MII register from within the device.
  */
-static int tc956xmac_mdio_write(struct mii_bus *bus, int phyaddr, int phyreg,
+static int stmmac_mdio_write(struct mii_bus *bus, int phyaddr, int phyreg,
 			     u16 phydata)
 {
 	struct net_device *ndev = bus->priv;
@@ -552,7 +552,7 @@ static int tc956xmac_mdio_write(struct mii_bus *bus, int phyaddr, int phyreg,
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
 /**
- * tc956xmac_mdio_write_c45
+ * stmmac_mdio_write_c45
  * @bus: points to the mii_bus structure
  * @phyaddr: MII addr
  * @phyreg: MII reg
@@ -560,21 +560,21 @@ static int tc956xmac_mdio_write(struct mii_bus *bus, int phyaddr, int phyreg,
  * @phydata: phy data
  * Description: it writes the data into the MII register from within the device.
  */
-static int tc956xmac_mdio_write_c45(struct mii_bus *bus, int phyaddr,
+static int stmmac_mdio_write_c45(struct mii_bus *bus, int phyaddr,
 				 int devad, int phyreg, u16 phydata)
 {
-	return tc956xmac_mdio_write(bus, phyaddr,
+	return stmmac_mdio_write(bus, phyaddr,
 		TC956X_MII_ADDR_C45 | (devad << TC956X_MII_DEVADDR_C45_SHIFT) | phyreg, phydata);
 }
 #endif /* KERNEL_VERSION(6, 3, 0) */
 #endif /* TC956X_UNSUPPORTED_UNTESTED_FEATURE */
 
 /**
- * tc956xmac_mdio_reset
+ * stmmac_mdio_reset
  * @bus: points to the mii_bus structure
  * Description: reset the MII bus
  */
-int tc956xmac_mdio_reset(struct mii_bus *bus)
+int stmmac_mdio_reset(struct mii_bus *bus)
 {
 #if IS_ENABLED(CONFIG_TC956XMAC_PLATFORM)
 	struct net_device *ndev = bus->priv;
@@ -621,16 +621,16 @@ int tc956xmac_mdio_reset(struct mii_bus *bus)
 }
 
 /**
- * tc956xmac_mdio_register
+ * stmmac_mdio_register
  * @ndev: net device structure
  * Description: it registers the MII bus
  */
-int tc956xmac_mdio_register(struct net_device *ndev)
+int stmmac_mdio_register(struct net_device *ndev)
 {
 	int err = 0;
 	struct mii_bus *new_bus;
 	struct stmmac_priv *priv = netdev_priv(ndev);
-	struct tc956xmac_mdio_bus_data *mdio_bus_data = priv->plat->mdio_bus_data;
+	struct stmmac_mdio_bus_data *mdio_bus_data = priv->plat->mdio_bus_data;
 	struct device_node *mdio_node = priv->plat->mdio_node;
 	struct device *dev = ndev->dev.parent;
 	int addr, found, start_addr;
@@ -645,14 +645,14 @@ int tc956xmac_mdio_register(struct net_device *ndev)
 	if (mdio_bus_data->irqs)
 		memcpy(new_bus->irq, mdio_bus_data->irqs, sizeof(new_bus->irq));
 
-	new_bus->name = "tc956xmac";
+	new_bus->name = "stmmac";
 
 	if (priv->plat->has_xgmac) {
-		new_bus->read = &tc956xmac_xgmac2_mdio_read;
-		new_bus->write = &tc956xmac_xgmac2_mdio_write;
+		new_bus->read = &stmmac_xgmac2_mdio_read;
+		new_bus->write = &stmmac_xgmac2_mdio_write;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
-		new_bus->read_c45 = &tc956xmac_xgmac2_mdio_read_c45;
-		new_bus->write_c45 = &tc956xmac_xgmac2_mdio_write_c45;
+		new_bus->read_c45 = &stmmac_xgmac2_mdio_read_c45;
+		new_bus->write_c45 = &stmmac_xgmac2_mdio_write_c45;
 #endif
 #ifndef TC956X
 		/* Check if DT specified an unsupported phy addr */
@@ -663,19 +663,19 @@ int tc956xmac_mdio_register(struct net_device *ndev)
 	}
 #ifdef TC956X_UNSUPPORTED_UNTESTED_FEATURE
 	else {
-		new_bus->read = &tc956xmac_mdio_read;
-		new_bus->write = &tc956xmac_mdio_write;
+		new_bus->read = &stmmac_mdio_read;
+		new_bus->write = &stmmac_mdio_write;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
 		if (priv->plat->has_gmac4) {
-			new_bus->read_c45 = &tc956xmac_mdio_read_c45;
-			new_bus->write_c45 = &tc956xmac_mdio_write_c45;
+			new_bus->read_c45 = &stmmac_mdio_read_c45;
+			new_bus->write_c45 = &stmmac_mdio_write_c45;
 		}
 #endif
 	}
 #endif /* TC956X_UNSUPPORTED_UNTESTED_FEATURE */
 
 	if (mdio_bus_data->needs_reset)
-		new_bus->reset = &tc956xmac_mdio_reset;
+		new_bus->reset = &stmmac_mdio_reset;
 
 	snprintf(new_bus->id, MII_BUS_ID_SIZE, "%s-%x",
 		 new_bus->name, priv->plat->bus_id);
@@ -696,9 +696,9 @@ int tc956xmac_mdio_register(struct net_device *ndev)
 	/* Looks like we need a dummy read for XGMAC only and C45 PHYs */
 	if (priv->plat->has_xgmac)
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0)
-		tc956xmac_xgmac2_mdio_read(new_bus, 0, MII_ADDR_C45);
+		stmmac_xgmac2_mdio_read(new_bus, 0, MII_ADDR_C45);
 #else
-		tc956xmac_xgmac2_mdio_read_c45(new_bus, 0, 0, 0);
+		stmmac_xgmac2_mdio_read_c45(new_bus, 0, 0, 0);
 #endif
 
 #ifndef TC956X
@@ -720,7 +720,7 @@ int tc956xmac_mdio_register(struct net_device *ndev)
 
 		/* For C22 based PHYs, check for Status to detect PHY */
 #ifdef TC956X
-		phy_reg_read = tc956xmac_xgmac2_mdio_read(new_bus, addr, MII_BMSR);
+		phy_reg_read = stmmac_xgmac2_mdio_read(new_bus, addr, MII_BMSR);
 #endif
 
 		if (phy_reg_read != -EBUSY && phy_reg_read != -ENODEV) {
@@ -778,14 +778,14 @@ int tc956xmac_mdio_register(struct net_device *ndev)
 
 			/* For C45 based PHYs, check for PHY ID to detect PHY */
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0)
-			phy_reg_read1 = tc956xmac_xgmac2_mdio_read(new_bus, addr,
+			phy_reg_read1 = stmmac_xgmac2_mdio_read(new_bus, addr,
 								((PHY_CL45_PHYID1_REG) | MII_ADDR_C45));
-			phy_reg_read2 = tc956xmac_xgmac2_mdio_read(new_bus, addr,
+			phy_reg_read2 = stmmac_xgmac2_mdio_read(new_bus, addr,
 								((PHY_CL45_PHYID2_REG) | MII_ADDR_C45));
 #else
-			phy_reg_read1 = tc956xmac_xgmac2_mdio_read_c45(new_bus, addr,
+			phy_reg_read1 = stmmac_xgmac2_mdio_read_c45(new_bus, addr,
 								PHY_CL45_PHYID1_MMD_BANK, PHY_CL45_PHYID1_ADDR);
-			phy_reg_read2 = tc956xmac_xgmac2_mdio_read_c45(new_bus, addr,
+			phy_reg_read2 = stmmac_xgmac2_mdio_read_c45(new_bus, addr,
 								PHY_CL45_PHYID2_MMD_BANK, PHY_CL45_PHYID2_ADDR);
 #endif
 
@@ -861,11 +861,11 @@ bus_register_fail:
 }
 
 /**
- * tc956xmac_mdio_unregister
+ * stmmac_mdio_unregister
  * @ndev: net device structure
  * Description: it unregisters the MII bus
  */
-int tc956xmac_mdio_unregister(struct net_device *ndev)
+int stmmac_mdio_unregister(struct net_device *ndev)
 {
 	struct stmmac_priv *priv = netdev_priv(ndev);
 

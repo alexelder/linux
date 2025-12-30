@@ -53,7 +53,7 @@
 #include "tc956xmac_inc.h"
 #include <linux/version.h>
 
-#define tc956xmac_do_void_callback(__priv, __module, __cname,  __arg0, __args...) \
+#define stmmac_do_void_callback(__priv, __module, __cname,  __arg0, __args...) \
 ({ \
 	int __result = -EINVAL; \
 	if ((__priv)->hw->__module && (__priv)->hw->__module->__cname) { \
@@ -62,14 +62,14 @@
 	} \
 	__result; \
 })
-#define tc956xmac_do_callback(__priv, __module, __cname,  __arg0, __args...) \
+#define stmmac_do_callback(__priv, __module, __cname,  __arg0, __args...) \
 ({ \
 	int __result = -EINVAL; \
 	if ((__priv)->hw->__module && (__priv)->hw->__module->__cname) \
 		__result = (__priv)->hw->__module->__cname(__priv, (__arg0), ##__args); \
 	__result; \
 })
-#define tc956xmac_do_void_no_param_callback(__priv, __module, __cname) \
+#define stmmac_do_void_no_param_callback(__priv, __module, __cname) \
 ({ \
 	int __result = -EINVAL; \
 	if ((__priv)->hw->__module && (__priv)->hw->__module->__cname) { \
@@ -162,70 +162,70 @@ struct stmmac_desc_ops {
 	void (*set_ostc)(struct stmmac_priv *priv, struct dma_desc *p, u32 ttsh, u32 ttsl);
 };
 
-#define tc956xmac_init_rx_desc(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, desc, init_rx_desc, __args)
-#define tc956xmac_init_tx_desc(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, desc, init_tx_desc, __args)
-#define tc956xmac_prepare_tx_desc(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, desc, prepare_tx_desc, __args)
-#define tc956xmac_prepare_tso_tx_desc(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, desc, prepare_tso_tx_desc, __args)
-#define tc956xmac_set_tx_owner(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, desc, set_tx_owner, __args)
-#define tc956xmac_get_tx_owner(__priv, __args...) \
-	tc956xmac_do_callback(__priv, desc, get_tx_owner, __args)
-#define tc956xmac_release_tx_desc(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, desc, release_tx_desc, __args)
-#define tc956xmac_set_tx_ic(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, desc, set_tx_ic, __args)
-#define tc956xmac_get_tx_ls(__priv, __args...) \
-	tc956xmac_do_callback(__priv, desc, get_tx_ls, __args)
-#define tc956xmac_tx_status(__priv, __args...) \
-	tc956xmac_do_callback(__priv, desc, tx_status, __args)
-#define tc956xmac_get_tx_len(__priv, __args...) \
-	tc956xmac_do_callback(__priv, desc, get_tx_len, __args)
-#define tc956xmac_set_rx_owner(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, desc, set_rx_owner, __args)
-#define tc956xmac_get_rx_frame_len(__priv, __args...) \
-	tc956xmac_do_callback(__priv, desc, get_rx_frame_len, __args)
-#define tc956xmac_rx_status(__priv, __args...) \
-	tc956xmac_do_callback(__priv, desc, rx_status, __args)
-#define tc956xmac_rx_extended_status(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, desc, rx_extended_status, __args)
-#define tc956xmac_enable_tx_timestamp(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, desc, enable_tx_timestamp, __args)
-#define tc956xmac_get_tx_timestamp_status(__priv, __args...) \
-	tc956xmac_do_callback(__priv, desc, get_tx_timestamp_status, __args)
-#define tc956xmac_get_timestamp(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, desc, get_timestamp, __args)
-#define tc956xmac_get_rx_timestamp_status(__priv, __args...) \
-	tc956xmac_do_callback(__priv, desc, get_rx_timestamp_status, __args)
-#define tc956xmac_display_ring(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, desc, display_ring, __args)
-#define tc956xmac_set_mss(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, desc, set_mss, __args)
-#define tc956xmac_get_desc_addr(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, desc, get_addr, __args)
-#define tc956xmac_set_desc_addr(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, desc, set_addr, __args)
-#define tc956xmac_clear_desc(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, desc, clear, __args)
-#define tc956xmac_get_rx_hash(__priv, __args...) \
-	tc956xmac_do_callback(__priv, desc, get_rx_hash, __args)
-#define tc956xmac_get_rx_header_len(__priv, __args...) \
-	tc956xmac_do_callback(__priv, desc, get_rx_header_len, __args)
-#define tc956xmac_set_desc_sec_addr(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, desc, set_sec_addr, __args)
-#define tc956xmac_set_desc_sarc(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, desc, set_sarc, __args)
-#define tc956xmac_set_desc_vlan_tag(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, desc, set_vlan_tag, __args)
-#define tc956xmac_set_desc_vlan(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, desc, set_vlan, __args)
-#define tc956xmac_set_desc_tbs(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, desc, set_tbs, __args)
-#define tc956xmac_set_desc_ostc(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, desc, set_ostc, __args)
+#define stmmac_init_rx_desc(__priv, __args...) \
+	stmmac_do_void_callback(__priv, desc, init_rx_desc, __args)
+#define stmmac_init_tx_desc(__priv, __args...) \
+	stmmac_do_void_callback(__priv, desc, init_tx_desc, __args)
+#define stmmac_prepare_tx_desc(__priv, __args...) \
+	stmmac_do_void_callback(__priv, desc, prepare_tx_desc, __args)
+#define stmmac_prepare_tso_tx_desc(__priv, __args...) \
+	stmmac_do_void_callback(__priv, desc, prepare_tso_tx_desc, __args)
+#define stmmac_set_tx_owner(__priv, __args...) \
+	stmmac_do_void_callback(__priv, desc, set_tx_owner, __args)
+#define stmmac_get_tx_owner(__priv, __args...) \
+	stmmac_do_callback(__priv, desc, get_tx_owner, __args)
+#define stmmac_release_tx_desc(__priv, __args...) \
+	stmmac_do_void_callback(__priv, desc, release_tx_desc, __args)
+#define stmmac_set_tx_ic(__priv, __args...) \
+	stmmac_do_void_callback(__priv, desc, set_tx_ic, __args)
+#define stmmac_get_tx_ls(__priv, __args...) \
+	stmmac_do_callback(__priv, desc, get_tx_ls, __args)
+#define stmmac_tx_status(__priv, __args...) \
+	stmmac_do_callback(__priv, desc, tx_status, __args)
+#define stmmac_get_tx_len(__priv, __args...) \
+	stmmac_do_callback(__priv, desc, get_tx_len, __args)
+#define stmmac_set_rx_owner(__priv, __args...) \
+	stmmac_do_void_callback(__priv, desc, set_rx_owner, __args)
+#define stmmac_get_rx_frame_len(__priv, __args...) \
+	stmmac_do_callback(__priv, desc, get_rx_frame_len, __args)
+#define stmmac_rx_status(__priv, __args...) \
+	stmmac_do_callback(__priv, desc, rx_status, __args)
+#define stmmac_rx_extended_status(__priv, __args...) \
+	stmmac_do_void_callback(__priv, desc, rx_extended_status, __args)
+#define stmmac_enable_tx_timestamp(__priv, __args...) \
+	stmmac_do_void_callback(__priv, desc, enable_tx_timestamp, __args)
+#define stmmac_get_tx_timestamp_status(__priv, __args...) \
+	stmmac_do_callback(__priv, desc, get_tx_timestamp_status, __args)
+#define stmmac_get_timestamp(__priv, __args...) \
+	stmmac_do_void_callback(__priv, desc, get_timestamp, __args)
+#define stmmac_get_rx_timestamp_status(__priv, __args...) \
+	stmmac_do_callback(__priv, desc, get_rx_timestamp_status, __args)
+#define stmmac_display_ring(__priv, __args...) \
+	stmmac_do_void_callback(__priv, desc, display_ring, __args)
+#define stmmac_set_mss(__priv, __args...) \
+	stmmac_do_void_callback(__priv, desc, set_mss, __args)
+#define stmmac_get_desc_addr(__priv, __args...) \
+	stmmac_do_void_callback(__priv, desc, get_addr, __args)
+#define stmmac_set_desc_addr(__priv, __args...) \
+	stmmac_do_void_callback(__priv, desc, set_addr, __args)
+#define stmmac_clear_desc(__priv, __args...) \
+	stmmac_do_void_callback(__priv, desc, clear, __args)
+#define stmmac_get_rx_hash(__priv, __args...) \
+	stmmac_do_callback(__priv, desc, get_rx_hash, __args)
+#define stmmac_get_rx_header_len(__priv, __args...) \
+	stmmac_do_callback(__priv, desc, get_rx_header_len, __args)
+#define stmmac_set_desc_sec_addr(__priv, __args...) \
+	stmmac_do_void_callback(__priv, desc, set_sec_addr, __args)
+#define stmmac_set_desc_sarc(__priv, __args...) \
+	stmmac_do_void_callback(__priv, desc, set_sarc, __args)
+#define stmmac_set_desc_vlan_tag(__priv, __args...) \
+	stmmac_do_void_callback(__priv, desc, set_vlan_tag, __args)
+#define stmmac_set_desc_vlan(__priv, __args...) \
+	stmmac_do_void_callback(__priv, desc, set_vlan, __args)
+#define stmmac_set_desc_tbs(__priv, __args...) \
+	stmmac_do_void_callback(__priv, desc, set_tbs, __args)
+#define stmmac_set_desc_ostc(__priv, __args...) \
+	stmmac_do_void_callback(__priv, desc, set_ostc, __args)
 
 struct stmmac_dma_cfg;
 struct dma_features;
@@ -283,81 +283,81 @@ struct stmmac_dma_ops {
 	void (*desc_stats)(struct stmmac_priv *priv, void __iomem *ioaddr);
 };
 
-#define tc956xmac_reset(__priv, __args...) \
-	tc956xmac_do_callback(__priv, dma, reset, __args)
-#define tc956xmac_dma_init(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, dma, init, __args)
-#define tc956xmac_init_chan(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, dma, init_chan, __args)
-#define tc956xmac_init_rx_chan(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, dma, init_rx_chan, __args)
-#define tc956xmac_init_tx_chan(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, dma, init_tx_chan, __args)
-#define tc956xmac_axi(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, dma, axi, __args)
-#define tc956xmac_dump_dma_regs(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, dma, dump_regs, __args)
-#define tc956xmac_dma_rx_mode(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, dma, dma_rx_mode, __args)
+#define stmmac_reset(__priv, __args...) \
+	stmmac_do_callback(__priv, dma, reset, __args)
+#define stmmac_dma_init(__priv, __args...) \
+	stmmac_do_void_callback(__priv, dma, init, __args)
+#define stmmac_init_chan(__priv, __args...) \
+	stmmac_do_void_callback(__priv, dma, init_chan, __args)
+#define stmmac_init_rx_chan(__priv, __args...) \
+	stmmac_do_void_callback(__priv, dma, init_rx_chan, __args)
+#define stmmac_init_tx_chan(__priv, __args...) \
+	stmmac_do_void_callback(__priv, dma, init_tx_chan, __args)
+#define stmmac_axi(__priv, __args...) \
+	stmmac_do_void_callback(__priv, dma, axi, __args)
+#define stmmac_dump_dma_regs(__priv, __args...) \
+	stmmac_do_void_callback(__priv, dma, dump_regs, __args)
+#define stmmac_dma_rx_mode(__priv, __args...) \
+	stmmac_do_void_callback(__priv, dma, dma_rx_mode, __args)
 #ifdef TC956X_SRIOV_PF
-#define tc956xmac_dma_tx_mode(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, dma, dma_tx_mode, __args)
+#define stmmac_dma_tx_mode(__priv, __args...) \
+	stmmac_do_void_callback(__priv, dma, dma_tx_mode, __args)
 #elif (defined TC956X_SRIOV_VF)
-#define tc956xmac_dma_tx_mode(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mbx_wrapper, dma_tx_mode, __args)
+#define stmmac_dma_tx_mode(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mbx_wrapper, dma_tx_mode, __args)
 #endif
-#define tc956xmac_dma_diagnostic_fr(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, dma, dma_diagnostic_fr, __args)
-#define tc956xmac_enable_dma_transmission(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, dma, enable_dma_transmission, __args)
-#define tc956xmac_enable_dma_irq(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, dma, enable_dma_irq, __args)
-#define tc956xmac_disable_dma_irq(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, dma, disable_dma_irq, __args)
-#define tc956xmac_start_tx(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, dma, start_tx, __args)
-#define tc956xmac_stop_tx(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, dma, stop_tx, __args)
-#define tc956xmac_start_rx(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, dma, start_rx, __args)
-#define tc956xmac_stop_rx(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, dma, stop_rx, __args)
-#define tc956xmac_dma_interrupt_status(__priv, __args...) \
-	tc956xmac_do_callback(__priv, dma, dma_interrupt, __args)
-#define tc956xmac_get_hw_feature(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, dma, get_hw_feature, __args)
-#define tc956xmac_rx_watchdog(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, dma, rx_watchdog, __args)
-#define tc956xmac_set_tx_ring_len(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, dma, set_tx_ring_len, __args)
-#define tc956xmac_set_rx_ring_len(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, dma, set_rx_ring_len, __args)
-#define tc956xmac_set_rx_tail_ptr(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, dma, set_rx_tail_ptr, __args)
-#define tc956xmac_set_tx_tail_ptr(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, dma, set_tx_tail_ptr, __args)
-#define tc956xmac_enable_tso(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, dma, enable_tso, __args)
-#define tc956xmac_dma_qmode(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, dma, qmode, __args)
-#define tc956xmac_set_dma_bfsize(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, dma, set_bfsize, __args)
-#define tc956xmac_enable_sph(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, dma, enable_sph, __args)
-#define tc956xmac_enable_tbs(__priv, __args...) \
-	tc956xmac_do_callback(__priv, dma, enable_tbs, __args)
-#define tc956xmac_dma_desc_stats(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, dma, desc_stats, __args)
+#define stmmac_dma_diagnostic_fr(__priv, __args...) \
+	stmmac_do_void_callback(__priv, dma, dma_diagnostic_fr, __args)
+#define stmmac_enable_dma_transmission(__priv, __args...) \
+	stmmac_do_void_callback(__priv, dma, enable_dma_transmission, __args)
+#define stmmac_enable_dma_irq(__priv, __args...) \
+	stmmac_do_void_callback(__priv, dma, enable_dma_irq, __args)
+#define stmmac_disable_dma_irq(__priv, __args...) \
+	stmmac_do_void_callback(__priv, dma, disable_dma_irq, __args)
+#define stmmac_start_tx(__priv, __args...) \
+	stmmac_do_void_callback(__priv, dma, start_tx, __args)
+#define stmmac_stop_tx(__priv, __args...) \
+	stmmac_do_void_callback(__priv, dma, stop_tx, __args)
+#define stmmac_start_rx(__priv, __args...) \
+	stmmac_do_void_callback(__priv, dma, start_rx, __args)
+#define stmmac_stop_rx(__priv, __args...) \
+	stmmac_do_void_callback(__priv, dma, stop_rx, __args)
+#define stmmac_dma_interrupt_status(__priv, __args...) \
+	stmmac_do_callback(__priv, dma, dma_interrupt, __args)
+#define stmmac_get_hw_feature(__priv, __args...) \
+	stmmac_do_void_callback(__priv, dma, get_hw_feature, __args)
+#define stmmac_rx_watchdog(__priv, __args...) \
+	stmmac_do_void_callback(__priv, dma, rx_watchdog, __args)
+#define stmmac_set_tx_ring_len(__priv, __args...) \
+	stmmac_do_void_callback(__priv, dma, set_tx_ring_len, __args)
+#define stmmac_set_rx_ring_len(__priv, __args...) \
+	stmmac_do_void_callback(__priv, dma, set_rx_ring_len, __args)
+#define stmmac_set_rx_tail_ptr(__priv, __args...) \
+	stmmac_do_void_callback(__priv, dma, set_rx_tail_ptr, __args)
+#define stmmac_set_tx_tail_ptr(__priv, __args...) \
+	stmmac_do_void_callback(__priv, dma, set_tx_tail_ptr, __args)
+#define stmmac_enable_tso(__priv, __args...) \
+	stmmac_do_void_callback(__priv, dma, enable_tso, __args)
+#define stmmac_dma_qmode(__priv, __args...) \
+	stmmac_do_void_callback(__priv, dma, qmode, __args)
+#define stmmac_set_dma_bfsize(__priv, __args...) \
+	stmmac_do_void_callback(__priv, dma, set_bfsize, __args)
+#define stmmac_enable_sph(__priv, __args...) \
+	stmmac_do_void_callback(__priv, dma, enable_sph, __args)
+#define stmmac_enable_tbs(__priv, __args...) \
+	stmmac_do_callback(__priv, dma, enable_tbs, __args)
+#define stmmac_dma_desc_stats(__priv, __args...) \
+	stmmac_do_void_callback(__priv, dma, desc_stats, __args)
 
 struct mac_device_info;
 struct net_device;
 struct rgmii_adv;
 struct stmmac_safety_stats;
-struct tc956xmac_tc_entry;
-struct tc956xmac_pps_cfg;
-struct tc956xmac_rss;
-struct tc956xmac_est;
-struct tc956xmac_rx_parser_cfg;
+struct stmmac_tc_entry;
+struct stmmac_pps_cfg;
+struct stmmac_rss;
+struct stmmac_est;
+struct stmmac_rx_parser_cfg;
 
 /* Helpers to program the MAC core */
 struct stmmac_ops {
@@ -436,21 +436,21 @@ struct stmmac_ops {
 	int (*safety_feat_dump)(struct stmmac_priv *priv, struct stmmac_safety_stats *stats,
 			int index, unsigned long *count, const char **desc);
 	/* Flexible RX Parser */
-	int (*rxp_config)(struct stmmac_priv *priv, void __iomem *ioaddr, struct tc956xmac_tc_entry *entries,
+	int (*rxp_config)(struct stmmac_priv *priv, void __iomem *ioaddr, struct stmmac_tc_entry *entries,
 			  unsigned int count);
 	int (*rx_parser_init)(struct stmmac_priv *priv, struct net_device *ndev,
 			struct mac_device_info *hw, unsigned int spram,
 			unsigned int frpsel, unsigned int frpes,
-			struct tc956xmac_rx_parser_cfg *cnf);
+			struct stmmac_rx_parser_cfg *cnf);
 	/* Flexible PPS */
 	int (*flex_pps_config)(struct stmmac_priv *priv, void __iomem *ioaddr, int index,
-			       struct tc956xmac_pps_cfg *cfg, bool enable,
+			       struct stmmac_pps_cfg *cfg, bool enable,
 			       u32 sub_second_inc, u32 systime_flags);
 	/* Loopback for selftests */
 	void (*set_mac_loopback)(struct stmmac_priv *priv, void __iomem *ioaddr, bool enable);
 	/* RSS */
 	int (*rss_configure)(struct stmmac_priv *priv, struct mac_device_info *hw,
-			     struct tc956xmac_rss *cfg, u32 num_rxq);
+			     struct stmmac_rss *cfg, u32 num_rxq);
 	/* VLAN */
 	void (*update_vlan_hash)(struct stmmac_priv *priv, struct net_device *dev, bool is_double, u16 vid,
 				u16 vf);
@@ -477,7 +477,7 @@ struct stmmac_ops {
 				bool en, bool udp, bool sa, bool inv,
 				u32 match);
 	void (*set_arp_offload)(struct stmmac_priv *priv, struct mac_device_info *hw, bool en, u32 addr);
-	int (*est_configure)(struct stmmac_priv *priv, void __iomem *ioaddr, struct tc956xmac_est *cfg,
+	int (*est_configure)(struct stmmac_priv *priv, void __iomem *ioaddr, struct stmmac_est *cfg,
 			     unsigned int ptp_rate);
 	void (*fpe_configure)(struct stmmac_priv *priv, void __iomem *ioaddr, u32 num_txq, u32 num_rxq,
 			      bool enable);
@@ -485,226 +485,226 @@ struct stmmac_ops {
 	void (*jumbo_en)(struct stmmac_priv *priv, struct net_device *dev, u32 en);
 };
 
-#define tc956xmac_core_init(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, core_init, __args)
-#define tc956xmac_mac_set(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, set_mac, __args)
-#define tc956xmac_mac_set_tx(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, set_mac_tx, __args)
-#define tc956xmac_mac_set_rx(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, set_mac_rx, __args)
-#define tc956xmac_rx_ipc(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mac, rx_ipc, __args)
-#define tc956xmac_rx_queue_enable(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, rx_queue_enable, __args)
-#define tc956xmac_rx_queue_prio(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, rx_queue_prio, __args)
+#define stmmac_core_init(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, core_init, __args)
+#define stmmac_mac_set(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, set_mac, __args)
+#define stmmac_mac_set_tx(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, set_mac_tx, __args)
+#define stmmac_mac_set_rx(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, set_mac_rx, __args)
+#define stmmac_rx_ipc(__priv, __args...) \
+	stmmac_do_callback(__priv, mac, rx_ipc, __args)
+#define stmmac_rx_queue_enable(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, rx_queue_enable, __args)
+#define stmmac_rx_queue_prio(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, rx_queue_prio, __args)
 #ifdef TC956X_SRIOV_PF
-#define tc956xmac_tx_queue_prio(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, tx_queue_prio, __args)
+#define stmmac_tx_queue_prio(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, tx_queue_prio, __args)
 #elif (defined TC956X_SRIOV_VF)
-#define tc956xmac_tx_queue_prio(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mbx_wrapper, tx_queue_prio, __args)
+#define stmmac_tx_queue_prio(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mbx_wrapper, tx_queue_prio, __args)
 #endif
-#define tc956xmac_rx_queue_routing(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, rx_queue_routing, __args)
-#define tc956xmac_prog_mtl_rx_algorithms(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, prog_mtl_rx_algorithms, __args)
-#define tc956xmac_prog_mtl_tx_algorithms(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, prog_mtl_tx_algorithms, __args)
+#define stmmac_rx_queue_routing(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, rx_queue_routing, __args)
+#define stmmac_prog_mtl_rx_algorithms(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, prog_mtl_rx_algorithms, __args)
+#define stmmac_prog_mtl_tx_algorithms(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, prog_mtl_tx_algorithms, __args)
 #ifdef TC956X_SRIOV_PF
-#define tc956xmac_set_mtl_tx_queue_weight(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, set_mtl_tx_queue_weight, __args)
+#define stmmac_set_mtl_tx_queue_weight(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, set_mtl_tx_queue_weight, __args)
 #elif (defined TC956X_SRIOV_VF)
-#define tc956xmac_set_mtl_tx_queue_weight(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mbx_wrapper, set_mtl_tx_queue_weight, __args)
+#define stmmac_set_mtl_tx_queue_weight(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mbx_wrapper, set_mtl_tx_queue_weight, __args)
 #endif
 
-#define tc956xmac_map_mtl_to_dma(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, map_mtl_to_dma, __args)
+#define stmmac_map_mtl_to_dma(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, map_mtl_to_dma, __args)
 #ifdef TC956X_SRIOV_PF
-#define tc956xmac_config_cbs(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, config_cbs, __args)
+#define stmmac_config_cbs(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, config_cbs, __args)
 #elif defined TC956X_SRIOV_VF
-#define tc956xmac_config_cbs(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mbx_wrapper, config_cbs, __args)
+#define stmmac_config_cbs(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mbx_wrapper, config_cbs, __args)
 #endif
 
 #ifdef TC956X_SRIOV_VF
 #define stm_phy_link(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mbx_wrapper, phy_link, __args)
+	stmmac_do_callback(__priv, mbx_wrapper, phy_link, __args)
 #define stm_setup_mbx_etf(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mbx_wrapper, setup_mbx_etf, __args)
+	stmmac_do_callback(__priv, mbx_wrapper, setup_mbx_etf, __args)
 #define stm_get_drv_cap(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mbx_wrapper, get_drv_cap, __args)
+	stmmac_do_void_callback(__priv, mbx_wrapper, get_drv_cap, __args)
 #define stm_rx_crc(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mbx_wrapper, rx_crc, __args)
+	stmmac_do_callback(__priv, mbx_wrapper, rx_crc, __args)
 #define stm_rx_dma_ch_tlptr(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mbx_wrapper, rx_dma_ch_tlptr, __args)
+	stmmac_do_callback(__priv, mbx_wrapper, rx_dma_ch_tlptr, __args)
 #define stm_rx_dma_err(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mbx_wrapper, rx_dma_err, __args)
+	stmmac_do_callback(__priv, mbx_wrapper, rx_dma_err, __args)
 #define stm_rx_csum(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mbx_wrapper, rx_csum, __args)
+	stmmac_do_callback(__priv, mbx_wrapper, rx_csum, __args)
 #define stm_mbx_flr(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mbx_wrapper, pf_flr, __args)
+	stmmac_do_callback(__priv, mbx_wrapper, pf_flr, __args)
 #endif
 
-#define tc956xmac_dump_mac_regs(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, dump_regs, __args)
-#define tc956xmac_host_irq_status(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mac, host_irq_status, __args)
-#define tc956xmac_host_mtl_irq_status(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mac, host_mtl_irq_status, __args)
-#define tc956xmac_set_filter(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, set_filter, __args)
-#define tc956xmac_flow_ctrl(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, flow_ctrl, __args)
-#define tc956xmac_pmt(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, pmt, __args)
+#define stmmac_dump_mac_regs(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, dump_regs, __args)
+#define stmmac_host_irq_status(__priv, __args...) \
+	stmmac_do_callback(__priv, mac, host_irq_status, __args)
+#define stmmac_host_mtl_irq_status(__priv, __args...) \
+	stmmac_do_callback(__priv, mac, host_mtl_irq_status, __args)
+#define stmmac_set_filter(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, set_filter, __args)
+#define stmmac_flow_ctrl(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, flow_ctrl, __args)
+#define stmmac_pmt(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, pmt, __args)
 #ifdef TC956X_SRIOV_PF
-#define tc956xmac_set_umac_addr(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, set_umac_addr, __args)
+#define stmmac_set_umac_addr(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, set_umac_addr, __args)
 #elif (defined TC956X_SRIOV_VF)
-#define tc956xmac_set_umac_addr(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mbx_wrapper, set_umac_addr, __args)
+#define stmmac_set_umac_addr(__priv, __args...) \
+	stmmac_do_callback(__priv, mbx_wrapper, set_umac_addr, __args)
 #endif
 #ifdef TC956X_SRIOV_PF
-#define tc956xmac_get_umac_addr(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, get_umac_addr, __args)
+#define stmmac_get_umac_addr(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, get_umac_addr, __args)
 #elif (defined TC956X_SRIOV_VF)
-#define tc956xmac_get_umac_addr(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mbx_wrapper, get_umac_addr, __args)
+#define stmmac_get_umac_addr(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mbx_wrapper, get_umac_addr, __args)
 #endif
-#define tc956xmac_set_eee_mode(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, set_eee_mode, __args)
+#define stmmac_set_eee_mode(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, set_eee_mode, __args)
 #ifdef TC956X_SRIOV_VF
-#define tc956xmac_reset_eee_mode(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mbx_wrapper, reset_eee_mode, __args)
+#define stmmac_reset_eee_mode(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mbx_wrapper, reset_eee_mode, __args)
 #else
-#define tc956xmac_reset_eee_mode(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, reset_eee_mode, __args)
+#define stmmac_reset_eee_mode(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, reset_eee_mode, __args)
 #endif
-#define tc956xmac_set_eee_timer(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, set_eee_timer, __args)
-#define tc956xmac_set_eee_pls(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, set_eee_pls, __args)
-#define tc956xmac_mac_debug(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, debug, __args)
+#define stmmac_set_eee_timer(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, set_eee_timer, __args)
+#define stmmac_set_eee_pls(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, set_eee_pls, __args)
+#define stmmac_mac_debug(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, debug, __args)
 #ifdef TC956X
-#define tc956xmac_xpcs_init(__priv, __args...) \
-		tc956xmac_do_callback(__priv, mac, xpcs_init, __args)
-#define tc956xmac_xpcs_ctrl_ane(__priv, __args...) \
-		tc956xmac_do_void_callback(__priv, mac, xpcs_ctrl_ane, __args)
+#define stmmac_xpcs_init(__priv, __args...) \
+		stmmac_do_callback(__priv, mac, xpcs_init, __args)
+#define stmmac_xpcs_ctrl_ane(__priv, __args...) \
+		stmmac_do_void_callback(__priv, mac, xpcs_ctrl_ane, __args)
 #endif
-#define tc956xmac_pcs_ctrl_ane(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, pcs_ctrl_ane, __args)
-#define tc956xmac_pcs_rane(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, pcs_rane, __args)
-#define tc956xmac_pcs_get_adv_lp(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, pcs_get_adv_lp, __args)
-#define tc956xmac_safety_feat_config(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mac, safety_feat_config, __args)
-#define tc956xmac_safety_feat_irq_status(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mac, safety_feat_irq_status, __args)
-#define tc956xmac_safety_feat_dump(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mac, safety_feat_dump, __args)
-#define tc956xmac_rxp_config(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mac, rxp_config, __args)
-#define tc956xmac_rx_parser_init(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mac, rx_parser_init, __args)
-#define tc956xmac_flex_pps_config(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mac, flex_pps_config, __args)
-#define tc956xmac_set_mac_loopback(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, set_mac_loopback, __args)
-#define tc956xmac_rss_configure(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mac, rss_configure, __args)
-#define tc956xmac_update_vlan_hash(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, update_vlan_hash, __args)
+#define stmmac_pcs_ctrl_ane(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, pcs_ctrl_ane, __args)
+#define stmmac_pcs_rane(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, pcs_rane, __args)
+#define stmmac_pcs_get_adv_lp(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, pcs_get_adv_lp, __args)
+#define stmmac_safety_feat_config(__priv, __args...) \
+	stmmac_do_callback(__priv, mac, safety_feat_config, __args)
+#define stmmac_safety_feat_irq_status(__priv, __args...) \
+	stmmac_do_callback(__priv, mac, safety_feat_irq_status, __args)
+#define stmmac_safety_feat_dump(__priv, __args...) \
+	stmmac_do_callback(__priv, mac, safety_feat_dump, __args)
+#define stmmac_rxp_config(__priv, __args...) \
+	stmmac_do_callback(__priv, mac, rxp_config, __args)
+#define stmmac_rx_parser_init(__priv, __args...) \
+	stmmac_do_callback(__priv, mac, rx_parser_init, __args)
+#define stmmac_flex_pps_config(__priv, __args...) \
+	stmmac_do_callback(__priv, mac, flex_pps_config, __args)
+#define stmmac_set_mac_loopback(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, set_mac_loopback, __args)
+#define stmmac_rss_configure(__priv, __args...) \
+	stmmac_do_callback(__priv, mac, rss_configure, __args)
+#define stmmac_update_vlan_hash(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, update_vlan_hash, __args)
 #ifdef TC956X_SRIOV_PF
-#define tc956xmac_delete_vlan(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, delete_vlan, __args)
+#define stmmac_delete_vlan(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, delete_vlan, __args)
 #else //TC956X_SRIOV_PF
-#define tc956xmac_delete_vlan(__priv, __args...) \
-			tc956xmac_do_void_callback(__priv, mbx_wrapper, delete_vlan, __args)
+#define stmmac_delete_vlan(__priv, __args...) \
+			stmmac_do_void_callback(__priv, mbx_wrapper, delete_vlan, __args)
 #endif
-#define tc956xmac_enable_vlan(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, enable_vlan, __args)
+#define stmmac_enable_vlan(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, enable_vlan, __args)
 #ifdef TC956X
-#define tc956xmac_disable_tx_vlan(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, disable_tx_vlan, __args)
-#define tc956xmac_enable_rx_vlan_stripping(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, enable_rx_vlan_stripping, __args)
-#define tc956xmac_disable_rx_vlan_stripping(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, disable_rx_vlan_stripping, __args)
-#define tc956xmac_enable_rx_vlan_filtering(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, enable_rx_vlan_filtering, __args)
-#define tc956xmac_disable_rx_vlan_filtering(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, disable_rx_vlan_filtering, __args)
+#define stmmac_disable_tx_vlan(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, disable_tx_vlan, __args)
+#define stmmac_enable_rx_vlan_stripping(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, enable_rx_vlan_stripping, __args)
+#define stmmac_disable_rx_vlan_stripping(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, disable_rx_vlan_stripping, __args)
+#define stmmac_enable_rx_vlan_filtering(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, enable_rx_vlan_filtering, __args)
+#define stmmac_disable_rx_vlan_filtering(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, disable_rx_vlan_filtering, __args)
 #endif
-#define tc956xmac_get_mac_tx_timestamp(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mac, get_mac_tx_timestamp, __args)
-#define tc956xmac_sarc_configure(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, sarc_configure, __args)
-#define tc956xmac_config_l3_filter(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mac, config_l3_filter, __args)
-#define tc956xmac_config_l4_filter(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mac, config_l4_filter, __args)
-#define tc956xmac_set_arp_offload(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, set_arp_offload, __args)
-#define tc956xmac_est_configure(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mac, est_configure, __args)
-#define tc956xmac_fpe_configure(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, fpe_configure, __args)
-#define tc956xmac_set_ptp_offload(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, set_ptp_offload, __args)
-#define tc956xmac_jumbo_en(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mac, jumbo_en, __args)
+#define stmmac_get_mac_tx_timestamp(__priv, __args...) \
+	stmmac_do_callback(__priv, mac, get_mac_tx_timestamp, __args)
+#define stmmac_sarc_configure(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, sarc_configure, __args)
+#define stmmac_config_l3_filter(__priv, __args...) \
+	stmmac_do_callback(__priv, mac, config_l3_filter, __args)
+#define stmmac_config_l4_filter(__priv, __args...) \
+	stmmac_do_callback(__priv, mac, config_l4_filter, __args)
+#define stmmac_set_arp_offload(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, set_arp_offload, __args)
+#define stmmac_est_configure(__priv, __args...) \
+	stmmac_do_callback(__priv, mac, est_configure, __args)
+#define stmmac_fpe_configure(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, fpe_configure, __args)
+#define stmmac_set_ptp_offload(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, set_ptp_offload, __args)
+#define stmmac_jumbo_en(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mac, jumbo_en, __args)
 #ifdef TC956X_SRIOV_VF
-#define tc956xmac_get_speed(__priv, __args...) \
-		tc956xmac_do_callback(__priv, mbx_wrapper, get_speed, __args)
-#define tc956xmac_get_est(__priv, __args...) \
-		tc956xmac_do_callback(__priv, mbx_wrapper, get_est, __args)
-#define tc956xmac_set_est(__priv, __args...) \
-		tc956xmac_do_callback(__priv, mbx_wrapper, set_est, __args)
-#define tc956xmac_get_rxp(__priv, __args...) \
-		tc956xmac_do_callback(__priv, mbx_wrapper, get_rxp, __args)
-#define tc956xmac_set_rxp(__priv, __args...) \
-		tc956xmac_do_callback(__priv, mbx_wrapper, set_rxp, __args)
-#define tc956xmac_get_fpe(__priv, __args...) \
-		tc956xmac_do_callback(__priv, mbx_wrapper, get_fpe, __args)
-#define tc956xmac_set_fpe(__priv, __args...) \
-		tc956xmac_do_callback(__priv, mbx_wrapper, set_fpe, __args)
-#define tc956xmac_reg_wr(__priv, __args...) \
-			tc956xmac_do_callback(__priv, mbx_wrapper, reg_wr, __args)
+#define stmmac_get_speed(__priv, __args...) \
+		stmmac_do_callback(__priv, mbx_wrapper, get_speed, __args)
+#define stmmac_get_est(__priv, __args...) \
+		stmmac_do_callback(__priv, mbx_wrapper, get_est, __args)
+#define stmmac_set_est(__priv, __args...) \
+		stmmac_do_callback(__priv, mbx_wrapper, set_est, __args)
+#define stmmac_get_rxp(__priv, __args...) \
+		stmmac_do_callback(__priv, mbx_wrapper, get_rxp, __args)
+#define stmmac_set_rxp(__priv, __args...) \
+		stmmac_do_callback(__priv, mbx_wrapper, set_rxp, __args)
+#define stmmac_get_fpe(__priv, __args...) \
+		stmmac_do_callback(__priv, mbx_wrapper, get_fpe, __args)
+#define stmmac_set_fpe(__priv, __args...) \
+		stmmac_do_callback(__priv, mbx_wrapper, set_fpe, __args)
+#define stmmac_reg_wr(__priv, __args...) \
+			stmmac_do_callback(__priv, mbx_wrapper, reg_wr, __args)
 
-#define tc956xmac_get_cbs(__priv, __args...) \
-			tc956xmac_do_callback(__priv, mbx_wrapper, get_cbs, __args)
+#define stmmac_get_cbs(__priv, __args...) \
+			stmmac_do_callback(__priv, mbx_wrapper, get_cbs, __args)
 
-#define tc956xmac_set_cbs(__priv, __args...) \
-			tc956xmac_do_callback(__priv, mbx_wrapper, set_cbs, __args)
+#define stmmac_set_cbs(__priv, __args...) \
+			stmmac_do_callback(__priv, mbx_wrapper, set_cbs, __args)
 
-#define tc956xmac_ethtool_get_pauseparam(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mbx_wrapper, get_pause_param, __args)
+#define stmmac_ethtool_get_pauseparam(__priv, __args...) \
+	stmmac_do_callback(__priv, mbx_wrapper, get_pause_param, __args)
 
-#define tc956xmac_ethtool_get_eee(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mbx_wrapper, get_eee, __args)
+#define stmmac_ethtool_get_eee(__priv, __args...) \
+	stmmac_do_callback(__priv, mbx_wrapper, get_eee, __args)
 
 
-#define tc956xmac_add_mac(__priv, __args...) \
-			tc956xmac_do_callback(__priv, mbx_wrapper, add_mac, __args)
+#define stmmac_add_mac(__priv, __args...) \
+			stmmac_do_callback(__priv, mbx_wrapper, add_mac, __args)
 
-#define tc956xmac_delete_mac(__priv, __args...) \
-			tc956xmac_do_void_callback(__priv, mbx_wrapper, delete_mac, __args)
+#define stmmac_delete_mac(__priv, __args...) \
+			stmmac_do_void_callback(__priv, mbx_wrapper, delete_mac, __args)
 
-#define tc956xmac_add_vlan(__priv, __args...) \
-			tc956xmac_do_void_callback(__priv, mbx_wrapper, add_vlan, __args)
+#define stmmac_add_vlan(__priv, __args...) \
+			stmmac_do_void_callback(__priv, mbx_wrapper, add_vlan, __args)
 #endif
 #ifdef TC956X_SRIOV_VF
-#define tc956xmac_get_link_status(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mbx_wrapper, get_link_status, __args)
+#define stmmac_get_link_status(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mbx_wrapper, get_link_status, __args)
 
-#define tc956xmac_vf_reset(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mbx_wrapper, vf_reset, __args)
+#define stmmac_vf_reset(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mbx_wrapper, vf_reset, __args)
 #endif
 /* PTP and HW Timer helpers */
 struct stmmac_hwtimestamp {
@@ -722,21 +722,21 @@ struct stmmac_hwtimestamp {
 #endif
 };
 
-#define tc956xmac_config_hw_tstamping(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, ptp, config_hw_tstamping, __args)
-#define tc956xmac_config_sub_second_increment(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, ptp, config_sub_second_increment, __args)
-#define tc956xmac_init_systime(__priv, __args...) \
-	tc956xmac_do_callback(__priv, ptp, init_systime, __args)
-#define tc956xmac_config_addend(__priv, __args...) \
-	tc956xmac_do_callback(__priv, ptp, config_addend, __args)
-#define tc956xmac_adjust_systime(__priv, __args...) \
-	tc956xmac_do_callback(__priv, ptp, adjust_systime, __args)
-#define tc956xmac_get_systime(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, ptp, get_systime, __args)
+#define stmmac_config_hw_tstamping(__priv, __args...) \
+	stmmac_do_void_callback(__priv, ptp, config_hw_tstamping, __args)
+#define stmmac_config_sub_second_increment(__priv, __args...) \
+	stmmac_do_void_callback(__priv, ptp, config_sub_second_increment, __args)
+#define stmmac_init_systime(__priv, __args...) \
+	stmmac_do_callback(__priv, ptp, init_systime, __args)
+#define stmmac_config_addend(__priv, __args...) \
+	stmmac_do_callback(__priv, ptp, config_addend, __args)
+#define stmmac_adjust_systime(__priv, __args...) \
+	stmmac_do_callback(__priv, ptp, adjust_systime, __args)
+#define stmmac_get_systime(__priv, __args...) \
+	stmmac_do_void_callback(__priv, ptp, get_systime, __args)
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5,13,0)
-#define tc956xmac_timestamp_interrupt(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, ptp, timestamp_interrupt, __args)
+#define stmmac_timestamp_interrupt(__priv, __args...) \
+	stmmac_do_void_callback(__priv, ptp, timestamp_interrupt, __args)
 #endif
 
 /* Helpers to manage the descriptors for chain and ring modes */
@@ -751,20 +751,20 @@ struct stmmac_mode_ops {
 	void (*clean_desc3)(struct stmmac_priv *priv, void *priv_ptr, struct dma_desc *p);
 };
 
-#define tc956xmac_mode_init(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mode, init, __args)
-#define tc956xmac_is_jumbo_frm(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mode, is_jumbo_frm, __args)
-#define tc956xmac_jumbo_frm(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mode, jumbo_frm, __args)
-#define tc956xmac_set_16kib_bfsize(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mode, set_16kib_bfsize, __args)
-#define tc956xmac_init_desc3(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mode, init_desc3, __args)
-#define tc956xmac_refill_desc3(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mode, refill_desc3, __args)
-#define tc956xmac_clean_desc3(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mode, clean_desc3, __args)
+#define stmmac_mode_init(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mode, init, __args)
+#define stmmac_is_jumbo_frm(__priv, __args...) \
+	stmmac_do_callback(__priv, mode, is_jumbo_frm, __args)
+#define stmmac_jumbo_frm(__priv, __args...) \
+	stmmac_do_callback(__priv, mode, jumbo_frm, __args)
+#define stmmac_set_16kib_bfsize(__priv, __args...) \
+	stmmac_do_callback(__priv, mode, set_16kib_bfsize, __args)
+#define stmmac_init_desc3(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mode, init_desc3, __args)
+#define stmmac_refill_desc3(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mode, refill_desc3, __args)
+#define stmmac_clean_desc3(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mode, clean_desc3, __args)
 
 #ifdef TC956X_SRIOV_PF
 struct stmmac_priv;
@@ -792,26 +792,26 @@ struct stmmac_tc_ops {
 			 struct tc_query_caps_base *base);
 };
 
-#define tc956xmac_tc_init(__priv, __args...) \
-	tc956xmac_do_callback(__priv, tc, init, __args)
-#define tc956xmac_tc_setup_cls_u32(__priv, __args...) \
-	tc956xmac_do_callback(__priv, tc, setup_cls_u32, __args)
+#define stmmac_tc_init(__priv, __args...) \
+	stmmac_do_callback(__priv, tc, init, __args)
+#define stmmac_tc_setup_cls_u32(__priv, __args...) \
+	stmmac_do_callback(__priv, tc, setup_cls_u32, __args)
 #ifdef TC956X_SRIOV_PF
-#define tc956xmac_tc_setup_cbs(__priv, __args...) \
-	tc956xmac_do_callback(__priv, tc, setup_cbs, __args)
+#define stmmac_tc_setup_cbs(__priv, __args...) \
+	stmmac_do_callback(__priv, tc, setup_cbs, __args)
 #elif (defined TC956X_SRIOV_VF)
-#define tc956xmac_tc_setup_cbs(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mbx_wrapper, setup_cbs, __args)
+#define stmmac_tc_setup_cbs(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mbx_wrapper, setup_cbs, __args)
 #endif
-#define tc956xmac_tc_setup_cls(__priv, __args...) \
-	tc956xmac_do_callback(__priv, tc, setup_cls, __args)
-#define tc956xmac_tc_setup_taprio(__priv, __args...) \
-	tc956xmac_do_callback(__priv, tc, setup_taprio, __args)
-#define tc956xmac_tc_setup_etf(__priv, __args...) \
-	tc956xmac_do_callback(__priv, tc, setup_etf, __args)
+#define stmmac_tc_setup_cls(__priv, __args...) \
+	stmmac_do_callback(__priv, tc, setup_cls, __args)
+#define stmmac_tc_setup_taprio(__priv, __args...) \
+	stmmac_do_callback(__priv, tc, setup_taprio, __args)
+#define stmmac_tc_setup_etf(__priv, __args...) \
+	stmmac_do_callback(__priv, tc, setup_etf, __args)
 #if LINUX_VERSION_CODE > KERNEL_VERSION(6,2,16)
-#define tc956xmac_tc_setup_query_cap(__priv, __args...) \
-	tc956xmac_do_callback(__priv, tc, query_caps, __args)
+#define stmmac_tc_setup_query_cap(__priv, __args...) \
+	stmmac_do_callback(__priv, tc, query_caps, __args)
 #endif
 
 struct stmmac_counters;
@@ -822,12 +822,12 @@ struct stmmac_mmc_ops {
 	void (*read)(struct stmmac_priv *priv, void __iomem *ioaddr, struct stmmac_counters *mmc);
 };
 
-#define tc956xmac_mmc_ctrl(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mmc, ctrl, __args)
-#define tc956xmac_mmc_intr_all_mask(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mmc, intr_all_mask, __args)
-#define tc956xmac_mmc_read(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mmc, read, __args)
+#define stmmac_mmc_ctrl(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mmc, ctrl, __args)
+#define stmmac_mmc_intr_all_mask(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mmc, intr_all_mask, __args)
+#define stmmac_mmc_read(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mmc, read, __args)
 
 #if defined(TC956X_SRIOV_PF) | defined(TC956X_SRIOV_VF)
 struct mac_rsc_mng_ops {
@@ -843,19 +843,19 @@ struct mac_rsc_mng_ops {
 #endif
 
 #ifdef TC956X_SRIOV_VF
-#define tc956xmac_rsc_mng_init(__priv, __args...) \
-	tc956xmac_do_callback(__priv, rsc, init, __args)
+#define stmmac_rsc_mng_init(__priv, __args...) \
+	stmmac_do_callback(__priv, rsc, init, __args)
 #endif
-#define tc956xmac_rsc_mng_get_fn_id(__priv, __args...) \
-	tc956xmac_do_callback(__priv, rsc, get_fn_id, __args)
-#define tc956xmac_rsc_mng_set_rscs(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, rsc, set_rscs, __args)
-#define tc956xmac_rsc_mng_get_rscs(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, rsc, get_rscs, __args)
+#define stmmac_rsc_mng_get_fn_id(__priv, __args...) \
+	stmmac_do_callback(__priv, rsc, get_fn_id, __args)
+#define stmmac_rsc_mng_set_rscs(__priv, __args...) \
+	stmmac_do_void_callback(__priv, rsc, set_rscs, __args)
+#define stmmac_rsc_mng_get_rscs(__priv, __args...) \
+	stmmac_do_void_callback(__priv, rsc, get_rscs, __args)
 
 #ifdef TC956X_SRIOV_VF
 /* Specific mailbox helpers */
-struct tc956xmac_mbx_wrapper_ops {
+struct stmmac_mbx_wrapper_ops {
 	void (*dma_tx_mode)(struct stmmac_priv *priv, int mode, u32 channel,
 			    int fifosz, u8 qmode);
 	void (*get_umac_addr)(struct stmmac_priv *priv, unsigned char *addr,
@@ -924,16 +924,16 @@ struct mac_mbx_ops {
 	int (*poll_for_ack)(struct stmmac_priv *priv, enum mbx_msg_fns msg_src);
 };
 
-#define tc956xmac_mbx_init(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mbx, init, __args)
-#define tc956xmac_mbx_read(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mbx, read, __args)
-#define tc956xmac_mbx_write(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mbx, write, __args)
-#define tc956xmac_mbx_send_ack(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, mbx, send_ack, __args)
-#define tc956xmac_mbx_poll_for_ack(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mbx, poll_for_ack, __args)
+#define stmmac_mbx_init(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mbx, init, __args)
+#define stmmac_mbx_read(__priv, __args...) \
+	stmmac_do_callback(__priv, mbx, read, __args)
+#define stmmac_mbx_write(__priv, __args...) \
+	stmmac_do_callback(__priv, mbx, write, __args)
+#define stmmac_mbx_send_ack(__priv, __args...) \
+	stmmac_do_void_callback(__priv, mbx, send_ack, __args)
+#define stmmac_mbx_poll_for_ack(__priv, __args...) \
+	stmmac_do_callback(__priv, mbx, poll_for_ack, __args)
 #endif /* #ifdef TC956X_SRIOV_PF/VF */
 
 #ifdef TC956X_SRIOV_PF
@@ -945,11 +945,11 @@ struct stm_msi_ops {
 };
 
 #define stm_msi_init(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, msi, init, __args)
+	stmmac_do_void_callback(__priv, msi, init, __args)
 #define stm_msi_intr_en(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, msi, interrupt_en, __args)
+	stmmac_do_void_callback(__priv, msi, interrupt_en, __args)
 #define stm_msi_intr_clr(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, msi, interrupt_clr, __args)
+	stmmac_do_void_callback(__priv, msi, interrupt_clr, __args)
 
 /* Specific mailbox helpers */
 struct stm_mbx_wrapper_ops {
@@ -980,65 +980,65 @@ struct stm_mbx_wrapper_ops {
 };
 
 #define stm_mbx_wrap_phy_link(__priv) \
-	tc956xmac_do_void_no_param_callback(__priv, mbx_wrapper, phy_link)
+	stmmac_do_void_no_param_callback(__priv, mbx_wrapper, phy_link)
 #define stm_mbx_wrap_set_dma_tx_mode(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mbx_wrapper, set_dma_tx_mode, __args)
+	stmmac_do_callback(__priv, mbx_wrapper, set_dma_tx_mode, __args)
 #define stm_mbx_wrap_set_mtl_tx_queue_weight(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mbx_wrapper, set_mtl_tx_queue_weight, __args)
+	stmmac_do_callback(__priv, mbx_wrapper, set_mtl_tx_queue_weight, __args)
 #define stm_mbx_wrap_config_cbs(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mbx_wrapper, config_cbs, __args)
+	stmmac_do_callback(__priv, mbx_wrapper, config_cbs, __args)
 #define stm_mbx_wrap_setup_cbs(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mbx_wrapper, setup_cbs, __args)
+	stmmac_do_callback(__priv, mbx_wrapper, setup_cbs, __args)
 #define stm_mbx_wrap_setup_etf(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mbx_wrapper, setup_mbx_etf, __args)
+	stmmac_do_callback(__priv, mbx_wrapper, setup_mbx_etf, __args)
 #define stm_mbx_wrap_tx_queue_prior(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mbx_wrapper, tx_queue_prio, __args)
+	stmmac_do_callback(__priv, mbx_wrapper, tx_queue_prio, __args)
 #define stm_mbx_wrap_get_link_status(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mbx_wrapper, vf_get_link_status, __args)
+	stmmac_do_callback(__priv, mbx_wrapper, vf_get_link_status, __args)
 #define stm_mbx_wrap_set_rx_crc(__priv, __args...) \
-	tc956xmac_do_void_no_param_callback(__priv, mbx_wrapper, rx_crc)
+	stmmac_do_void_no_param_callback(__priv, mbx_wrapper, rx_crc)
 #define stm_mbx_wrap_set_rx_csum(__priv, __args...) \
-	tc956xmac_do_void_no_param_callback(__priv, mbx_wrapper, rx_csum)
+	stmmac_do_void_no_param_callback(__priv, mbx_wrapper, rx_csum)
 #define stm_mbx_wrap_pf_flr(__priv, __args...) \
-	tc956xmac_do_void_no_param_callback(__priv, mbx_wrapper, pf_flr)
+	stmmac_do_void_no_param_callback(__priv, mbx_wrapper, pf_flr)
 #define stm_mbx_wrap_rx_dma_ch_tlptr(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mbx_wrapper, rx_dma_ch_tlptr, __args)
+	stmmac_do_callback(__priv, mbx_wrapper, rx_dma_ch_tlptr, __args)
 #define stm_mbx_wrap_rx_dma_err(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mbx_wrapper, rx_dma_err, __args)
+	stmmac_do_callback(__priv, mbx_wrapper, rx_dma_err, __args)
 #define stm_mbx_wrap_reset_eee_mode(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mbx_wrapper, reset_eee_mode, __args)
+	stmmac_do_callback(__priv, mbx_wrapper, reset_eee_mode, __args)
 #define stm_mbx_wrap_get_umac_addr(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mbx_wrapper, get_umac_addr, __args)
+	stmmac_do_callback(__priv, mbx_wrapper, get_umac_addr, __args)
 #define stm_mbx_wrap_set_umac_addr(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mbx_wrapper, set_umac_addr, __args)
+	stmmac_do_callback(__priv, mbx_wrapper, set_umac_addr, __args)
 #define stm_mbx_wrap_get_drv_cap(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mbx_wrapper, get_drv_cap, __args)
+	stmmac_do_callback(__priv, mbx_wrapper, get_drv_cap, __args)
 #define stm_mbx_wrap_vf_reset(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mbx_wrapper, vf_reset, __args)
-#define tc956xmac_mbx_ioctl_interface(__priv, __args...) \
-	tc956xmac_do_callback(__priv, mbx_wrapper, vf_ioctl, __args)
-#define tc956xmac_mbx_ethtool_interface(__priv, __args...) \
-		tc956xmac_do_callback(__priv, mbx_wrapper, vf_ethtool, __args)
+	stmmac_do_callback(__priv, mbx_wrapper, vf_reset, __args)
+#define stmmac_mbx_ioctl_interface(__priv, __args...) \
+	stmmac_do_callback(__priv, mbx_wrapper, vf_ioctl, __args)
+#define stmmac_mbx_ethtool_interface(__priv, __args...) \
+		stmmac_do_callback(__priv, mbx_wrapper, vf_ethtool, __args)
 
-#define tc956xmac_mbx_add_mac(__priv, __args...) \
-		tc956xmac_do_callback(__priv, mbx_wrapper, add_mac, __args)
-#define tc956xmac_mbx_delete_mac(__priv, __args...) \
-			tc956xmac_do_callback(__priv, mbx_wrapper, delete_mac, __args)
-#define tc956xmac_mbx_add_vlan(__priv, __args...) \
-			tc956xmac_do_callback(__priv, mbx_wrapper, add_vlan, __args)
-#define tc956xmac_mbx_delete_vlan(__priv, __args...) \
-				tc956xmac_do_callback(__priv, mbx_wrapper, delete_vlan, __args)
+#define stmmac_mbx_add_mac(__priv, __args...) \
+		stmmac_do_callback(__priv, mbx_wrapper, add_mac, __args)
+#define stmmac_mbx_delete_mac(__priv, __args...) \
+			stmmac_do_callback(__priv, mbx_wrapper, delete_mac, __args)
+#define stmmac_mbx_add_vlan(__priv, __args...) \
+			stmmac_do_callback(__priv, mbx_wrapper, add_vlan, __args)
+#define stmmac_mbx_delete_vlan(__priv, __args...) \
+				stmmac_do_callback(__priv, mbx_wrapper, delete_vlan, __args)
 
 #endif /* TC956X_SRIOV_PF */
 
 #ifdef TC956X
 /*PMA module*/
-struct tc956xmac_pma_ops {
+struct stmmac_pma_ops {
 	int (*init)(struct stmmac_priv *priv, void __iomem *pmaaddr);
 };
 
 #define stm_pma_setup(__priv, __args...) \
-	tc956xmac_do_callback(__priv, pma, init, __args)
+	stmmac_do_callback(__priv, pma, init, __args)
 
 #endif
 
@@ -1059,11 +1059,11 @@ struct stm_msi_ops {
 };
 
 #define stm_msi_init(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, msi, init, __args)
+	stmmac_do_void_callback(__priv, msi, init, __args)
 #define stm_msi_intr_en(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, msi, interrupt_en, __args)
+	stmmac_do_void_callback(__priv, msi, interrupt_en, __args)
 #define stm_msi_intr_clr(__priv, __args...) \
-	tc956xmac_do_void_callback(__priv, msi, interrupt_clr, __args)
+	stmmac_do_void_callback(__priv, msi, interrupt_clr, __args)
 #endif
 
 extern const struct stmmac_ops dwmac100_ops;
@@ -1082,23 +1082,23 @@ extern const struct stmmac_desc_ops dwxgmac210_desc_ops;
 extern const struct stmmac_mmc_ops dwmac_mmc_ops;
 extern const struct stmmac_mmc_ops dwxgmac_mmc_ops;
 #ifdef TC956X
-extern const struct tc956xmac_pma_ops stm_pma_ops;
+extern const struct stmmac_pma_ops stm_pma_ops;
 #endif
 #if defined(TC956X_SRIOV_PF) | defined(TC956X_SRIOV_VF)
 extern const struct stm_msi_ops stm_msigen_ops;
-extern const struct mac_rsc_mng_ops tc956xmac_rsc_mng_ops;
-extern const struct mac_mbx_ops tc956xmac_mbx_ops;
+extern const struct mac_rsc_mng_ops stmmac_rsc_mng_ops;
+extern const struct mac_mbx_ops stmmac_mbx_ops;
 #endif
 
 #ifdef TC956X_SRIOV_PF
-extern const struct stm_mbx_wrapper_ops tc956xmac_mbx_wrapper_ops;
+extern const struct stm_mbx_wrapper_ops stmmac_mbx_wrapper_ops;
 #elif defined TC956X_SRIOV_VF
-extern const struct tc956xmac_mbx_wrapper_ops tc956xmac_mbx_wrapper_ops;
+extern const struct stmmac_mbx_wrapper_ops stmmac_mbx_wrapper_ops;
 #endif
 
 #define GMAC_VERSION		(MAC_OFFSET + 0x00000020)	/* GMAC CORE Version */
 #define GMAC4_VERSION		(MAC_OFFSET + 0x00000110)	/* GMAC4+ CORE Version */
 
-int tc956xmac_hwif_init(struct stmmac_priv *priv);
+int stmmac_hwif_init(struct stmmac_priv *priv);
 
 #endif /* __TC956XMAC_HWIF_H__ */

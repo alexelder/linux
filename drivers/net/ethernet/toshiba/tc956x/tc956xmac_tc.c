@@ -1,7 +1,7 @@
 /*
  * TC956X ethernet driver.
  *
- * tc956xmac_tc.c
+ * stmmac_tc.c
  *
  * Copyright (C) 2018 Synopsys, Inc. and/or its affiliates.
  * Copyright (C) 2025 Toshiba Electronic Devices & Storage Corporation
@@ -50,9 +50,9 @@
 #include "dwxgmac2.h"
 
 #ifdef TC956X_SRIOV_PF
-static void tc_fill_all_pass_entry(struct tc956xmac_tc_entry *entry)
+static void tc_fill_all_pass_entry(struct stmmac_tc_entry *entry)
 #elif defined TC956X_SRIOV_VF
-static void tc_fill_all_pass_entry(struct tc956xmac_tc_entry *entry, struct stmmac_priv *priv)
+static void tc_fill_all_pass_entry(struct stmmac_tc_entry *entry, struct stmmac_priv *priv)
 #endif
 {
 	memset(entry, 0, sizeof(*entry));
@@ -71,11 +71,11 @@ static void tc_fill_all_pass_entry(struct tc956xmac_tc_entry *entry, struct stmm
 #endif
 }
 
-static struct tc956xmac_tc_entry *tc_find_entry(struct stmmac_priv *priv,
+static struct stmmac_tc_entry *tc_find_entry(struct stmmac_priv *priv,
 					     struct tc_cls_u32_offload *cls,
 					     bool free)
 {
-	struct tc956xmac_tc_entry *entry, *first = NULL, *dup = NULL;
+	struct stmmac_tc_entry *entry, *first = NULL, *dup = NULL;
 	u32 loc = cls->knode.handle;
 	int i;
 
@@ -100,11 +100,11 @@ static struct tc956xmac_tc_entry *tc_find_entry(struct stmmac_priv *priv,
 	return first;
 }
 
-static int tc_fill_actions(struct tc956xmac_tc_entry *entry,
-			   struct tc956xmac_tc_entry *frag,
+static int tc_fill_actions(struct stmmac_tc_entry *entry,
+			   struct stmmac_tc_entry *frag,
 			   struct tc_cls_u32_offload *cls)
 {
-	struct tc956xmac_tc_entry *action_entry = entry;
+	struct stmmac_tc_entry *action_entry = entry;
 	const struct tc_action *act;
 	struct tcf_exts *exts;
 	int i;
@@ -137,7 +137,7 @@ static int tc_fill_actions(struct tc956xmac_tc_entry *entry,
 static int tc_fill_entry(struct stmmac_priv *priv,
 			 struct tc_cls_u32_offload *cls)
 {
-	struct tc956xmac_tc_entry *entry, *frag = NULL;
+	struct stmmac_tc_entry *entry, *frag = NULL;
 	struct tc_u32_sel *sel = cls->knode.sel;
 	u32 off, data, mask, real_off, rem;
 	u32 prio = cls->common.prio << 16;
@@ -224,7 +224,7 @@ err_unuse:
 static void tc_unfill_entry(struct stmmac_priv *priv,
 			    struct tc_cls_u32_offload *cls)
 {
-	struct tc956xmac_tc_entry *entry;
+	struct stmmac_tc_entry *entry;
 
 	entry = tc_find_entry(priv, cls, false);
 	if (!entry)
@@ -244,7 +244,7 @@ static int tc_config_knode(struct stmmac_priv *priv,
 	int ret;
 	u32 val, i = 0;
 	void __iomem *ioaddr = priv->hw->pcsr;
-	struct tc956xmac_rx_parser_cfg *cfg = &priv->plat->rxp_cfg;
+	struct stmmac_rx_parser_cfg *cfg = &priv->plat->rxp_cfg;
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 	unsigned long flags;
 #endif
@@ -255,7 +255,7 @@ static int tc_config_knode(struct stmmac_priv *priv,
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 	spin_lock_irqsave(&priv->spn_lock.frp, flags);
 #endif
-	ret = tc956xmac_rxp_config(priv, priv->hw->pcsr, priv->tc_entries,
+	ret = stmmac_rxp_config(priv, priv->hw->pcsr, priv->tc_entries,
 			priv->tc_entries_max);
 	if (ret)
 		goto err_unfill;
@@ -293,7 +293,7 @@ static int tc_delete_knode(struct stmmac_priv *priv,
 	spin_lock_irqsave(&priv->spn_lock.frp, flags);
 #endif
 
-	ret = tc956xmac_rxp_config(priv, priv->hw->pcsr, priv->tc_entries,
+	ret = stmmac_rxp_config(priv, priv->hw->pcsr, priv->tc_entries,
 			priv->tc_entries_max);
 
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
@@ -448,7 +448,7 @@ static int tc_setup_cbs(struct stmmac_priv *priv,
 
 #ifndef TC956X
 	if (mode_to_use == MTL_QUEUE_DCB && qopt->enable) {
-		ret = tc956xmac_dma_qmode(priv, priv->ioaddr, queue, MTL_QUEUE_AVB);
+		ret = stmmac_dma_qmode(priv, priv->ioaddr, queue, MTL_QUEUE_AVB);
 		if (ret)
 			return ret;
 
@@ -458,7 +458,7 @@ static int tc_setup_cbs(struct stmmac_priv *priv,
 		 * such as mode from AVB to DCB and reset register values
 		 */
 
-		ret = tc956xmac_dma_qmode(priv, priv->ioaddr, queue, MTL_QUEUE_DCB);
+		ret = stmmac_dma_qmode(priv, priv->ioaddr, queue, MTL_QUEUE_DCB);
 		if (ret)
 			return ret;
 
@@ -511,14 +511,14 @@ static int tc_setup_cbs(struct stmmac_priv *priv,
 	priv->plat->tx_queues_cfg[queue].low_credit = value & GENMASK(28, 0);
 
 #ifndef TC956X_SRIOV_VF
-	ret = tc956xmac_config_cbs(priv, priv->hw,
+	ret = stmmac_config_cbs(priv, priv->hw,
 				priv->plat->tx_queues_cfg[queue].send_slope,
 				priv->plat->tx_queues_cfg[queue].idle_slope,
 				priv->plat->tx_queues_cfg[queue].high_credit,
 				priv->plat->tx_queues_cfg[queue].low_credit,
 				queue);
 #elif (defined TC956X_SRIOV_VF)
-	ret = tc956xmac_config_cbs(priv,
+	ret = stmmac_config_cbs(priv,
 			priv->plat->tx_queues_cfg[queue].send_slope,
 			priv->plat->tx_queues_cfg[queue].idle_slope,
 			priv->plat->tx_queues_cfg[queue].high_credit,
@@ -592,7 +592,7 @@ static int tc_setup_cbs(struct stmmac_priv *priv,
 
 static int tc_parse_flow_actions(struct stmmac_priv *priv,
 				 struct flow_action *action,
-				 struct tc956xmac_flow_entry *entry)
+				 struct stmmac_flow_entry *entry)
 {
 	struct flow_action_entry *act;
 	int i;
@@ -616,7 +616,7 @@ static int tc_parse_flow_actions(struct stmmac_priv *priv,
 
 static int tc_add_basic_flow(struct stmmac_priv *priv,
 			     struct flow_cls_offload *cls,
-			     struct tc956xmac_flow_entry *entry)
+			     struct stmmac_flow_entry *entry)
 {
 	struct flow_rule *rule = flow_cls_offload_flow_rule(cls);
 	struct flow_dissector *dissector = rule->match.dissector;
@@ -633,7 +633,7 @@ static int tc_add_basic_flow(struct stmmac_priv *priv,
 
 static int tc_add_ip4_flow(struct stmmac_priv *priv,
 			   struct flow_cls_offload *cls,
-			   struct tc956xmac_flow_entry *entry)
+			   struct stmmac_flow_entry *entry)
 {
 	struct flow_rule *rule = flow_cls_offload_flow_rule(cls);
 	struct flow_dissector *dissector = rule->match.dissector;
@@ -649,7 +649,7 @@ static int tc_add_ip4_flow(struct stmmac_priv *priv,
 	flow_rule_match_ipv4_addrs(rule, &match);
 	hw_match = ntohl(match.key->src) & ntohl(match.mask->src);
 	if (hw_match) {
-		ret = tc956xmac_config_l3_filter(priv, priv->hw, entry->idx, true,
+		ret = stmmac_config_l3_filter(priv, priv->hw, entry->idx, true,
 					      false, true, inv, hw_match);
 		if (ret)
 			return ret;
@@ -657,7 +657,7 @@ static int tc_add_ip4_flow(struct stmmac_priv *priv,
 
 	hw_match = ntohl(match.key->dst) & ntohl(match.mask->dst);
 	if (hw_match) {
-		ret = tc956xmac_config_l3_filter(priv, priv->hw, entry->idx, true,
+		ret = stmmac_config_l3_filter(priv, priv->hw, entry->idx, true,
 					      false, false, inv, hw_match);
 		if (ret)
 			return ret;
@@ -668,7 +668,7 @@ static int tc_add_ip4_flow(struct stmmac_priv *priv,
 
 static int tc_add_ports_flow(struct stmmac_priv *priv,
 			     struct flow_cls_offload *cls,
-			     struct tc956xmac_flow_entry *entry)
+			     struct stmmac_flow_entry *entry)
 {
 	struct flow_rule *rule = flow_cls_offload_flow_rule(cls);
 	struct flow_dissector *dissector = rule->match.dissector;
@@ -697,7 +697,7 @@ static int tc_add_ports_flow(struct stmmac_priv *priv,
 
 	hw_match = ntohs(match.key->src) & ntohs(match.mask->src);
 	if (hw_match) {
-		ret = tc956xmac_config_l4_filter(priv, priv->hw, entry->idx, true,
+		ret = stmmac_config_l4_filter(priv, priv->hw, entry->idx, true,
 					      is_udp, true, inv, hw_match);
 		if (ret)
 			return ret;
@@ -705,7 +705,7 @@ static int tc_add_ports_flow(struct stmmac_priv *priv,
 
 	hw_match = ntohs(match.key->dst) & ntohs(match.mask->dst);
 	if (hw_match) {
-		ret = tc956xmac_config_l4_filter(priv, priv->hw, entry->idx, true,
+		ret = stmmac_config_l4_filter(priv, priv->hw, entry->idx, true,
 					      is_udp, false, inv, hw_match);
 		if (ret)
 			return ret;
@@ -715,14 +715,14 @@ static int tc_add_ports_flow(struct stmmac_priv *priv,
 	return 0;
 }
 
-static struct tc956xmac_flow_entry *tc_find_flow(struct stmmac_priv *priv,
+static struct stmmac_flow_entry *tc_find_flow(struct stmmac_priv *priv,
 					      struct flow_cls_offload *cls,
 					      bool get_free)
 {
 	int i;
 
 	for (i = 0; i < priv->flow_entries_max; i++) {
-		struct tc956xmac_flow_entry *entry = &priv->flow_entries[i];
+		struct stmmac_flow_entry *entry = &priv->flow_entries[i];
 
 		if (entry->cookie == cls->cookie)
 			return entry;
@@ -735,21 +735,21 @@ static struct tc956xmac_flow_entry *tc_find_flow(struct stmmac_priv *priv,
 
 static struct {
 	int (*fn)(struct stmmac_priv *priv, struct flow_cls_offload *cls,
-		  struct tc956xmac_flow_entry *entry);
+		  struct stmmac_flow_entry *entry);
 } tc_flow_parsers[] = {
 	{ .fn = tc_add_basic_flow },
 	{ .fn = tc_add_ip4_flow },
 	{ .fn = tc_add_ports_flow },
 };
 
-static struct tc956xmac_rfs_entry *tc_find_rfs(struct stmmac_priv *priv,
+static struct stmmac_rfs_entry *tc_find_rfs(struct stmmac_priv *priv,
 					    struct flow_cls_offload *cls,
 					    bool get_free)
 {
 	int i;
 
 	for (i = 0; i < priv->rfs_entries_total; i++) {
-		struct tc956xmac_rfs_entry *entry = &priv->rfs_entries[i];
+		struct stmmac_rfs_entry *entry = &priv->rfs_entries[i];
 
 		if (entry->cookie == cls->cookie)
 			return entry;
@@ -765,7 +765,7 @@ static struct tc956xmac_rfs_entry *tc_find_rfs(struct stmmac_priv *priv,
 static int tc_add_ethtype_flow(struct stmmac_priv *priv,
 			       struct flow_cls_offload *cls)
 {
-	struct tc956xmac_rfs_entry *entry = tc_find_rfs(priv, cls, false);
+	struct stmmac_rfs_entry *entry = tc_find_rfs(priv, cls, false);
 	struct flow_rule *rule = flow_cls_offload_flow_rule(cls);
 	struct flow_dissector *dissector = rule->match.dissector;
 	int tc = tc_classid_to_hwtc(priv->dev, cls->classid);
@@ -804,7 +804,7 @@ static int tc_add_ethtype_flow(struct stmmac_priv *priv,
 			entry->type = TC956X_RFS_T_LLDP;
 			priv->rfs_entries_cnt[TC956X_RFS_T_LLDP]++;
 
-			tc956xmac_rx_queue_routing(priv, priv->hw,
+			stmmac_rx_queue_routing(priv, priv->hw,
 						PACKET_DCBCPQ, tc);
 			break;
 		case ETH_P_1588:
@@ -815,7 +815,7 @@ static int tc_add_ethtype_flow(struct stmmac_priv *priv,
 			entry->type = TC956X_RFS_T_1588;
 			priv->rfs_entries_cnt[TC956X_RFS_T_1588]++;
 
-			tc956xmac_rx_queue_routing(priv, priv->hw,
+			stmmac_rx_queue_routing(priv, priv->hw,
 						PACKET_PTPQ, tc);
 			break;
 		default:
@@ -838,7 +838,7 @@ static int tc_add_ethtype_flow(struct stmmac_priv *priv,
 static int tc_add_vlan_flow(struct stmmac_priv *priv,
 			    struct flow_cls_offload *cls)
 {
-	struct tc956xmac_rfs_entry *entry = tc_find_rfs(priv, cls, false);
+	struct stmmac_rfs_entry *entry = tc_find_rfs(priv, cls, false);
 	struct flow_rule *rule = flow_cls_offload_flow_rule(cls);
 	struct flow_dissector *dissector = rule->match.dissector;
 	int tc = tc_classid_to_hwtc(priv->dev, cls->classid);
@@ -873,7 +873,7 @@ static int tc_add_vlan_flow(struct stmmac_priv *priv,
 		}
 
 		prio = BIT(match.key->vlan_priority);
-		tc956xmac_rx_queue_prio(priv, priv->hw, prio, tc);
+		stmmac_rx_queue_prio(priv, priv->hw, prio, tc);
 
 		entry->in_use = true;
 		entry->cookie = cls->cookie;
@@ -887,7 +887,7 @@ static int tc_add_vlan_flow(struct stmmac_priv *priv,
 static int tc_add_flow(struct stmmac_priv *priv,
 		       struct flow_cls_offload *cls)
 {
-	struct tc956xmac_flow_entry *entry = tc_find_flow(priv, cls, false);
+	struct stmmac_flow_entry *entry = tc_find_flow(priv, cls, false);
 	struct flow_rule *rule = flow_cls_offload_flow_rule(cls);
 	int i, ret;
 
@@ -919,17 +919,17 @@ static int tc_add_flow(struct stmmac_priv *priv,
 static int tc_del_flow(struct stmmac_priv *priv,
 		       struct flow_cls_offload *cls)
 {
-	struct tc956xmac_flow_entry *entry = tc_find_flow(priv, cls, false);
+	struct stmmac_flow_entry *entry = tc_find_flow(priv, cls, false);
 	int ret;
 
 	if (!entry || !entry->in_use)
 		return -ENOENT;
 
 	if (entry->is_l4) {
-		ret = tc956xmac_config_l4_filter(priv, priv->hw, entry->idx, false,
+		ret = stmmac_config_l4_filter(priv, priv->hw, entry->idx, false,
 					      false, false, false, 0);
 	} else {
-		ret = tc956xmac_config_l3_filter(priv, priv->hw, entry->idx, false,
+		ret = stmmac_config_l3_filter(priv, priv->hw, entry->idx, false,
 					      false, false, false, 0);
 	}
 
@@ -942,7 +942,7 @@ static int tc_del_flow(struct stmmac_priv *priv,
 static int tc_del_ethtype_flow(struct stmmac_priv *priv,
 			       struct flow_cls_offload *cls)
 {
-	struct tc956xmac_rfs_entry *entry = tc_find_rfs(priv, cls, false);
+	struct stmmac_rfs_entry *entry = tc_find_rfs(priv, cls, false);
 
 	if (!entry || !entry->in_use ||
 	    entry->type < TC956X_RFS_T_LLDP ||
@@ -951,12 +951,12 @@ static int tc_del_ethtype_flow(struct stmmac_priv *priv,
 
 	switch (entry->etype) {
 	case ETH_P_LLDP:
-		tc956xmac_rx_queue_routing(priv, priv->hw,
+		stmmac_rx_queue_routing(priv, priv->hw,
 					PACKET_DCBCPQ, 0);
 		priv->rfs_entries_cnt[TC956X_RFS_T_LLDP]--;
 		break;
 	case ETH_P_1588:
-		tc956xmac_rx_queue_routing(priv, priv->hw,
+		stmmac_rx_queue_routing(priv, priv->hw,
 					PACKET_PTPQ, 0);
 		priv->rfs_entries_cnt[TC956X_RFS_T_1588]--;
 		break;
@@ -978,12 +978,12 @@ static int tc_del_ethtype_flow(struct stmmac_priv *priv,
 static int tc_del_vlan_flow(struct stmmac_priv *priv,
 			    struct flow_cls_offload *cls)
 {
-	struct tc956xmac_rfs_entry *entry = tc_find_rfs(priv, cls, false);
+	struct stmmac_rfs_entry *entry = tc_find_rfs(priv, cls, false);
 
 	if (!entry || !entry->in_use || entry->type != TC956X_RFS_T_VLAN)
 		return -ENOENT;
 
-	tc956xmac_rx_queue_prio(priv, priv->hw, 0, entry->tc);
+	stmmac_rx_queue_prio(priv, priv->hw, 0, entry->tc);
 
 	entry->in_use = false;
 	entry->cookie = 0;
@@ -1081,7 +1081,7 @@ static int tc_setup_taprio(struct stmmac_priv *priv,
 	u64 quotient;
 	u32 reminder;
 #endif
-	struct plat_tc956xmacenet_data *plat = priv->plat;
+	struct plat_stmmacenet_data *plat = priv->plat;
 	struct timespec64 time;
 	bool fpe = false;
 	int i, ret = 0;
@@ -1216,11 +1216,11 @@ static int tc_setup_taprio(struct stmmac_priv *priv,
 
 	/* Adjust for real system time */
 
-	tc956xmac_get_systime(priv, priv->ptpaddr, &system_time);
+	stmmac_get_systime(priv, priv->ptpaddr, &system_time);
 	current_time_ns = ns_to_ktime(system_time);
 	time = stm_calc_basetime(qopt->base_time, current_time_ns, qopt->cycle_time);
 
-	tc956xmac_get_systime(priv, priv->ptpaddr, &system_time);
+	stmmac_get_systime(priv, priv->ptpaddr, &system_time);
 
 	priv->plat->est->btr[0] = (u32)time.tv_nsec;
 	priv->plat->est->btr[1] = (u32)time.tv_sec;
@@ -1239,7 +1239,7 @@ static int tc_setup_taprio(struct stmmac_priv *priv,
 	fpe = qopt->mqprio.preemptible_tcs;
 #endif
 
-	ret = tc956xmac_fpe_configure(priv, priv->ioaddr,
+	ret = stmmac_fpe_configure(priv, priv->ioaddr,
 				   priv->plat->tx_queues_to_use,
 				   priv->plat->rx_queues_to_use, fpe);
 	if (ret && fpe) {
@@ -1247,7 +1247,7 @@ static int tc_setup_taprio(struct stmmac_priv *priv,
 		return ret;
 	}
 
-	ret = tc956xmac_est_configure(priv, priv->ioaddr, priv->plat->est,
+	ret = stmmac_est_configure(priv, priv->ioaddr, priv->plat->est,
 				   priv->plat->clk_ptp_rate);
 	if (ret) {
 		netdev_err(priv->dev, "failed to configure EST\n");
@@ -1259,7 +1259,7 @@ static int tc_setup_taprio(struct stmmac_priv *priv,
 
 disable:
 	priv->plat->est->enable = false;
-	tc956xmac_est_configure(priv, priv->ioaddr, priv->plat->est,
+	stmmac_est_configure(priv, priv->ioaddr, priv->plat->est,
 			     priv->plat->clk_ptp_rate);
 	return ret;
 }

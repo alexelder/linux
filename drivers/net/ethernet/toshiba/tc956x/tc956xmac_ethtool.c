@@ -1,7 +1,7 @@
 /*
  * TC956X ethernet driver.
  *
- * tc956xmac_ethtool.c - Ethtool support
+ * stmmac_ethtool.c - Ethtool support
  *
  * Copyright (C) 2007-2009  STMicroelectronics Ltd
  * Copyright (C) 2025 Toshiba Electronic Devices & Storage Corporation
@@ -93,11 +93,11 @@
 extern void stm_filter_debug(struct stmmac_priv *priv);
 #endif
 #ifndef TC956X_SRIOV_VF
-void tc956xmac_get_pauseparam(struct net_device *netdev, struct ethtool_pauseparam *pause);
+void stmmac_get_pauseparam(struct net_device *netdev, struct ethtool_pauseparam *pause);
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6,9,0)
-int tc956xmac_ethtool_op_get_eee(struct net_device *dev, struct ethtool_keee *edata);
+int stmmac_ethtool_op_get_eee(struct net_device *dev, struct ethtool_keee *edata);
 #else
-int tc956xmac_ethtool_op_get_eee(struct net_device *dev, struct ethtool_eee *edata);
+int stmmac_ethtool_op_get_eee(struct net_device *dev, struct ethtool_eee *edata);
 #endif
 #endif
 #ifdef TC956X_5_G_2_5_G_EEE_SUPPORT
@@ -114,7 +114,7 @@ struct stmmac_stats {
 	{ #m, sizeof_field(struct stmmac_extra_stats, m),	\
 	offsetof(struct stmmac_priv, xstats.m)}
 
-static const struct stmmac_stats tc956xmac_gstrings_stats[] = {
+static const struct stmmac_stats stmmac_gstrings_stats[] = {
 	/* Transmit errors */
 	TC956XMAC_STAT(tx_underflow),
 	TC956XMAC_STAT(tx_carrier),
@@ -751,14 +751,14 @@ static const struct stmmac_stats tc956xmac_gstrings_stats[] = {
 #endif
 
 };
-#define TC956XMAC_STATS_LEN ARRAY_SIZE(tc956xmac_gstrings_stats)
+#define TC956XMAC_STATS_LEN ARRAY_SIZE(stmmac_gstrings_stats)
 
 /* HW MAC Management counters (if supported) */
 #define TC956XMAC_MMC_STAT(m)	\
 	{ #m, sizeof_field(struct stmmac_counters, m),	\
 	offsetof(struct stmmac_priv, mmc.m)}
 
-static const struct stmmac_stats tc956xmac_mmc[] = {
+static const struct stmmac_stats stmmac_mmc[] = {
 	TC956XMAC_MMC_STAT(mmc_tx_octetcount_gb),
 	TC956XMAC_MMC_STAT(mmc_tx_framecount_gb),
 	TC956XMAC_MMC_STAT(mmc_tx_broadcastframe_g),
@@ -847,7 +847,7 @@ static const struct stmmac_stats tc956xmac_mmc[] = {
 	TC956XMAC_MMC_STAT(mmc_rx_packet_assembly_ok_cntr),
 	TC956XMAC_MMC_STAT(mmc_rx_fpe_fragment_cntr),
 };
-#define TC956XMAC_MMC_STATS_LEN ARRAY_SIZE(tc956xmac_mmc)
+#define TC956XMAC_MMC_STATS_LEN ARRAY_SIZE(stmmac_mmc)
 
 #ifdef TC956X_SRIOV_VF
 /* SW counters */
@@ -927,7 +927,7 @@ static const char stm_priv_flags_strings[][ETH_GSTRING_LEN] = {
 
 #define TC956X_PRIV_FLAGS_STR_LEN ARRAY_SIZE(stm_priv_flags_strings)
 
-static void tc956xmac_ethtool_getdrvinfo(struct net_device *dev,
+static void stmmac_ethtool_getdrvinfo(struct net_device *dev,
 				      struct ethtool_drvinfo *info)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
@@ -977,7 +977,7 @@ static void tc956xmac_ethtool_getdrvinfo(struct net_device *dev,
 	info->n_priv_flags = TC956X_PRIV_FLAGS_STR_LEN;
 }
 #ifndef TC956X_SRIOV_VF
-static int tc956xmac_ethtool_get_link_ksettings(struct net_device *dev,
+static int stmmac_ethtool_get_link_ksettings(struct net_device *dev,
 					     struct ethtool_link_ksettings *cmd)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
@@ -998,7 +998,7 @@ static int tc956xmac_ethtool_get_link_ksettings(struct net_device *dev,
 		cmd->base.speed = priv->xstats.pcs_speed;
 
 		/* Get and convert ADV/LP_ADV from the HW AN registers */
-		if (tc956xmac_pcs_get_adv_lp(priv, priv->ioaddr, &adv))
+		if (stmmac_pcs_get_adv_lp(priv, priv->ioaddr, &adv))
 			return -EOPNOTSUPP;	/* should never happen indeed */
 
 		/* Encoding of PSE bits is defined in 802.3z, 37.2.1.4 */
@@ -1070,7 +1070,7 @@ static int tc956xmac_ethtool_get_link_ksettings(struct net_device *dev,
 }
 
 static int
-tc956xmac_ethtool_set_link_ksettings(struct net_device *dev,
+stmmac_ethtool_set_link_ksettings(struct net_device *dev,
 				  const struct ethtool_link_ksettings *cmd)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
@@ -1096,7 +1096,7 @@ tc956xmac_ethtool_set_link_ksettings(struct net_device *dev,
 #ifdef TC956X
 		stm_xpcs_ctrl_ane(priv, 1);
 #else
-		tc956xmac_pcs_ctrl_ane(priv, priv->ioaddr, 1, priv->hw->ps, 0);
+		stmmac_pcs_ctrl_ane(priv, priv->ioaddr, 1, priv->hw->ps, 0);
 #endif
 #endif /* TC956X_SRIOV_VF */
 		mutex_unlock(&priv->lock);
@@ -1114,14 +1114,14 @@ tc956xmac_ethtool_set_link_ksettings(struct net_device *dev,
 	return phylink_ethtool_ksettings_set(priv->phylink, cmd);
 }
 #endif  /* TC956X_SRIOV_VF */
-static u32 tc956xmac_ethtool_getmsglevel(struct net_device *dev)
+static u32 stmmac_ethtool_getmsglevel(struct net_device *dev)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 
 	return priv->msg_enable;
 }
 
-static void tc956xmac_ethtool_setmsglevel(struct net_device *dev, u32 level)
+static void stmmac_ethtool_setmsglevel(struct net_device *dev, u32 level)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 
@@ -1129,14 +1129,14 @@ static void tc956xmac_ethtool_setmsglevel(struct net_device *dev, u32 level)
 
 }
 
-static int tc956xmac_check_if_running(struct net_device *dev)
+static int stmmac_check_if_running(struct net_device *dev)
 {
 	if (!netif_running(dev))
 		return -EBUSY;
 	return 0;
 }
 
-static int tc956xmac_ethtool_get_regs_len(struct net_device *dev)
+static int stmmac_ethtool_get_regs_len(struct net_device *dev)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 
@@ -1197,14 +1197,14 @@ static void stm_read_frp_stats(struct stmmac_priv *priv)
 #endif /* TC956X_SRIOV_DEBUG */
 #endif /* TC956X_SRIOV_PF */
 
-static void tc956xmac_ethtool_gregs(struct net_device *dev,
+static void stmmac_ethtool_gregs(struct net_device *dev,
 			  struct ethtool_regs *regs, void *space)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 	u32 *reg_space = (u32 *) space;
 
-	tc956xmac_dump_mac_regs(priv, priv->hw, reg_space);
-	tc956xmac_dump_dma_regs(priv, priv->ioaddr, reg_space);
+	stmmac_dump_mac_regs(priv, priv->hw, reg_space);
+	stmmac_dump_dma_regs(priv, priv->ioaddr, reg_space);
 #ifdef TC956X_SRIOV_PF
 #ifdef TC956X_SRIOV_DEBUG
 	stm_read_frp_stats(priv);
@@ -1223,7 +1223,7 @@ static void tc956xmac_ethtool_gregs(struct net_device *dev,
 
 #ifdef TC956X_UNSUPPORTED_UNTESTED_FEATURE
 #ifndef TC956X_SRIOV_VF
-static int tc956xmac_nway_reset(struct net_device *dev)
+static int stmmac_nway_reset(struct net_device *dev)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 
@@ -1234,24 +1234,24 @@ static int tc956xmac_nway_reset(struct net_device *dev)
 
 #ifdef TC956X_SRIOV_VF
 static void
-tc956xmac_get_pauseparam(struct net_device *netdev,
+stmmac_get_pauseparam(struct net_device *netdev,
 		      struct ethtool_pauseparam *pause)
 {
 	struct stmmac_priv *priv = netdev_priv(netdev);
 
-	tc956xmac_ethtool_get_pauseparam(priv, pause);
+	stmmac_ethtool_get_pauseparam(priv, pause);
 }
 #endif
 #ifndef TC956X_SRIOV_VF
 void
-tc956xmac_get_pauseparam(struct net_device *netdev,
+stmmac_get_pauseparam(struct net_device *netdev,
 		      struct ethtool_pauseparam *pause)
 {
 	struct stmmac_priv *priv = netdev_priv(netdev);
 	struct rgmii_adv adv_lp;
 
 	if (priv->hw->pcs &&
-	    !tc956xmac_pcs_get_adv_lp(priv, priv->ioaddr, &adv_lp)) {
+	    !stmmac_pcs_get_adv_lp(priv, priv->ioaddr, &adv_lp)) {
 		pause->autoneg = 1;
 		if (!adv_lp.pause)
 			return;
@@ -1264,7 +1264,7 @@ tc956xmac_get_pauseparam(struct net_device *netdev,
 #endif
 
 static int
-tc956xmac_set_pauseparam(struct net_device *netdev,
+stmmac_set_pauseparam(struct net_device *netdev,
 		      struct ethtool_pauseparam *pause)
 {
 	struct stmmac_priv *priv = netdev_priv(netdev);
@@ -1282,7 +1282,7 @@ tc956xmac_set_pauseparam(struct net_device *netdev,
 	}
 
 	if (priv->hw->pcs &&
-	    !tc956xmac_pcs_get_adv_lp(priv, priv->ioaddr, &adv_lp)) {
+	    !stmmac_pcs_get_adv_lp(priv, priv->ioaddr, &adv_lp)) {
 		pause->autoneg = 1;
 		if (!adv_lp.pause)
 			return -EOPNOTSUPP;
@@ -1298,13 +1298,13 @@ tc956xmac_set_pauseparam(struct net_device *netdev,
 		new_pause |= FLOW_TX;
 	priv->flow_ctrl = new_pause;
 
-	tc956xmac_flow_ctrl(priv, priv->hw, phy->duplex, priv->flow_ctrl,
+	stmmac_flow_ctrl(priv, priv->hw, phy->duplex, priv->flow_ctrl,
 				 priv->pause, tx_cnt);
 	return 0;
 }
 
 #ifndef TC956X_SRIOV_VF
-static void tc956xmac_m3fw_stats_read(struct stmmac_priv *priv)
+static void stmmac_m3fw_stats_read(struct stmmac_priv *priv)
 {
 	u32 rx_queues_count = priv->plat->rx_queues_to_use;
 	u32 tx_queues_count = priv->plat->tx_queues_to_use;
@@ -1392,7 +1392,7 @@ static void tc956xmac_m3fw_stats_read(struct stmmac_priv *priv)
 }
 #endif
 
-static void tc956xmac_get_ethtool_stats(struct net_device *dev,
+static void stmmac_get_ethtool_stats(struct net_device *dev,
 				 struct ethtool_stats *dummy, u64 *data)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
@@ -1422,42 +1422,42 @@ static void tc956xmac_get_ethtool_stats(struct net_device *dev,
 
 	if (priv->synopsys_id >= DWMAC_CORE_3_50 ||
 			priv->synopsys_id == DWXGMAC_CORE_3_01) {
-		tc956xmac_mac_debug(priv, priv->ioaddr,
+		stmmac_mac_debug(priv, priv->ioaddr,
 				(void *)&priv->xstats,
 				rx_queues_count, tx_queues_count);
 
-		tc956xmac_dma_desc_stats(priv, priv->ioaddr);
+		stmmac_dma_desc_stats(priv, priv->ioaddr);
 	}
 
 	for (i = 0; i < TC956XMAC_STATS_LEN; i++) {
-		char *p = (char *)priv + tc956xmac_gstrings_stats[i].stat_offset;
+		char *p = (char *)priv + stmmac_gstrings_stats[i].stat_offset;
 
-		data[j++] = (tc956xmac_gstrings_stats[i].sizeof_stat ==
+		data[j++] = (stmmac_gstrings_stats[i].sizeof_stat ==
 			     sizeof(u64)) ? (*(u64 *)p) : (*(u32 *)p);
 	}
 #else
 	if (priv->dma_cap.asp) {
 		for (i = 0; i < TC956XMAC_SAFETY_FEAT_SIZE; i++) {
-			if (!tc956xmac_safety_feat_dump(priv, &priv->sstats, i,
+			if (!stmmac_safety_feat_dump(priv, &priv->sstats, i,
 						&count, NULL))
 				data[j++] = count;
 		}
 	}
 
 	/* Update the DMA HW counters for dwmac10/100 */
-	ret = tc956xmac_dma_diagnostic_fr(priv, &dev->stats,
+	ret = stmmac_dma_diagnostic_fr(priv, &dev->stats,
 					(void *)&priv->xstats, priv->ioaddr);
 	if (ret) {
 		/* If supported, for new GMAC chips expose the MMC counters */
 		if (priv->dma_cap.rmon) {
-			tc956xmac_mmc_read(priv, priv->mmcaddr, &priv->mmc);
+			stmmac_mmc_read(priv, priv->mmcaddr, &priv->mmc);
 
 			for (i = 0; i < TC956XMAC_MMC_STATS_LEN; i++) {
 				char *p;
 
-				p = (char *)priv + tc956xmac_mmc[i].stat_offset;
+				p = (char *)priv + stmmac_mmc[i].stat_offset;
 
-				data[j++] = (tc956xmac_mmc[i].sizeof_stat ==
+				data[j++] = (stmmac_mmc[i].sizeof_stat ==
 					     sizeof(u64)) ? (*(u64 *)p) :
 					     (*(u32 *)p);
 			}
@@ -1472,24 +1472,24 @@ static void tc956xmac_get_ethtool_stats(struct net_device *dev,
 #endif  /* TC956X_SRIOV_VF */
 		if (priv->synopsys_id >= DWMAC_CORE_3_50 ||
 			priv->synopsys_id == DWXGMAC_CORE_3_01) {
-			tc956xmac_mac_debug(priv, priv->ioaddr,
+			stmmac_mac_debug(priv, priv->ioaddr,
 					(void *)&priv->xstats,
 					rx_queues_count, tx_queues_count);
 
-			tc956xmac_dma_desc_stats(priv, priv->ioaddr);
+			stmmac_dma_desc_stats(priv, priv->ioaddr);
 		}
 	}
-	tc956xmac_m3fw_stats_read(priv);
+	stmmac_m3fw_stats_read(priv);
 	for (i = 0; i < TC956XMAC_STATS_LEN; i++) {
-		char *p = (char *)priv + tc956xmac_gstrings_stats[i].stat_offset;
+		char *p = (char *)priv + stmmac_gstrings_stats[i].stat_offset;
 
-		data[j++] = (tc956xmac_gstrings_stats[i].sizeof_stat ==
+		data[j++] = (stmmac_gstrings_stats[i].sizeof_stat ==
 			     sizeof(u64)) ? (*(u64 *)p) : (*(u32 *)p);
 	}
 #endif
 }
 
-static int tc956xmac_get_sset_count(struct net_device *netdev, int sset)
+static int stmmac_get_sset_count(struct net_device *netdev, int sset)
 {
 	struct stmmac_priv *priv = netdev_priv(netdev);
 #ifdef TC956X_SRIOV_VF
@@ -1509,7 +1509,7 @@ static int tc956xmac_get_sset_count(struct net_device *netdev, int sset)
 			len += TC956XMAC_MMC_STATS_LEN;
 		if (priv->dma_cap.asp) {
 			for (i = 0; i < TC956XMAC_SAFETY_FEAT_SIZE; i++) {
-				if (!tc956xmac_safety_feat_dump(priv,
+				if (!stmmac_safety_feat_dump(priv,
 							&priv->sstats, i,
 							NULL, NULL))
 					safety_len++;
@@ -1520,7 +1520,7 @@ static int tc956xmac_get_sset_count(struct net_device *netdev, int sset)
 #endif
 		return len;
 	case ETH_SS_TEST:
-		return tc956xmac_selftest_get_count(priv);
+		return stmmac_selftest_get_count(priv);
 	case ETH_SS_PRIV_FLAGS:
 		return TC956X_PRIV_FLAGS_STR_LEN;
 	default:
@@ -1528,7 +1528,7 @@ static int tc956xmac_get_sset_count(struct net_device *netdev, int sset)
 	}
 }
 
-static void tc956xmac_get_strings(struct net_device *dev, u32 stringset, u8 *data)
+static void stmmac_get_strings(struct net_device *dev, u32 stringset, u8 *data)
 {
 	int i;
 	u8 *p = data;
@@ -1547,7 +1547,7 @@ static void tc956xmac_get_strings(struct net_device *dev, u32 stringset, u8 *dat
 			for (i = 0; i < TC956XMAC_SAFETY_FEAT_SIZE; i++) {
 				const char *desc;
 
-				if (!tc956xmac_safety_feat_dump(priv,
+				if (!stmmac_safety_feat_dump(priv,
 							&priv->sstats, i,
 							NULL, &desc)) {
 					memcpy(p, desc, ETH_GSTRING_LEN);
@@ -1557,20 +1557,20 @@ static void tc956xmac_get_strings(struct net_device *dev, u32 stringset, u8 *dat
 		}
 		if (priv->dma_cap.rmon)
 			for (i = 0; i < TC956XMAC_MMC_STATS_LEN; i++) {
-				memcpy(p, tc956xmac_mmc[i].stat_string,
+				memcpy(p, stmmac_mmc[i].stat_string,
 				       ETH_GSTRING_LEN);
 				p += ETH_GSTRING_LEN;
 			}
 #endif
 		for (i = 0; i < TC956XMAC_STATS_LEN; i++) {
-			memcpy(p, tc956xmac_gstrings_stats[i].stat_string,
+			memcpy(p, stmmac_gstrings_stats[i].stat_string,
 				ETH_GSTRING_LEN);
 			p += ETH_GSTRING_LEN;
 		}
 
 		break;
 	case ETH_SS_TEST:
-		tc956xmac_selftest_get_strings(priv, p);
+		stmmac_selftest_get_strings(priv, p);
 		break;
 	case ETH_SS_PRIV_FLAGS:
 		memcpy(data, stm_priv_flags_strings,
@@ -1584,7 +1584,7 @@ static void tc956xmac_get_strings(struct net_device *dev, u32 stringset, u8 *dat
 
 #ifndef TC956X_SRIOV_VF
 
-static void tc956xmac_get_wol(struct net_device *dev, struct ethtool_wolinfo *wol)
+static void stmmac_get_wol(struct net_device *dev, struct ethtool_wolinfo *wol)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 
@@ -1594,7 +1594,7 @@ static void tc956xmac_get_wol(struct net_device *dev, struct ethtool_wolinfo *wo
 		phylink_ethtool_get_wol(priv->phylink, wol);
 }
 
-static int tc956xmac_set_wol(struct net_device *dev, struct ethtool_wolinfo *wol)
+static int stmmac_set_wol(struct net_device *dev, struct ethtool_wolinfo *wol)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 	u32 support = (WAKE_MAGIC | WAKE_PHY);
@@ -2072,10 +2072,10 @@ int phy_ethtool_set_eee_2p5(struct phy_device *phydev, struct ethtool_eee *data)
 #endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6,9,0)
-int tc956xmac_ethtool_op_get_eee(struct net_device *dev,
+int stmmac_ethtool_op_get_eee(struct net_device *dev,
 				     struct ethtool_keee *edata)
 #else
-int tc956xmac_ethtool_op_get_eee(struct net_device *dev,
+int stmmac_ethtool_op_get_eee(struct net_device *dev,
 				     struct ethtool_eee *edata)
 #endif
 {
@@ -2114,25 +2114,25 @@ int tc956xmac_ethtool_op_get_eee(struct net_device *dev,
 #endif
 #ifdef TC956X_SRIOV_VF
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6,9,0)
-static int tc956xmac_ethtool_op_get_eee(struct net_device *dev,
+static int stmmac_ethtool_op_get_eee(struct net_device *dev,
 				     struct ethtool_keee *edata)
 #else
-static int tc956xmac_ethtool_op_get_eee(struct net_device *dev,
+static int stmmac_ethtool_op_get_eee(struct net_device *dev,
 				     struct ethtool_eee *edata)
 #endif
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 
-	tc956xmac_ethtool_get_eee(priv, edata);
+	stmmac_ethtool_get_eee(priv, edata);
 
 	return 0;
 }
 #endif
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6,9,0)
-static int tc956xmac_ethtool_op_set_eee(struct net_device *dev,
+static int stmmac_ethtool_op_set_eee(struct net_device *dev,
 				     struct ethtool_keee *edata)
 #else
-static int tc956xmac_ethtool_op_set_eee(struct net_device *dev,
+static int stmmac_ethtool_op_set_eee(struct net_device *dev,
 				     struct ethtool_eee *edata)
 #endif
 {
@@ -2146,7 +2146,7 @@ static int tc956xmac_ethtool_op_set_eee(struct net_device *dev,
 
 	if (!edata->eee_enabled) {
 		DBGPR_FUNC(priv->device, "%s Disable EEE\n", __func__);
-		tc956xmac_disable_eee_mode(priv);
+		stmmac_disable_eee_mode(priv);
 	} else {
 		DBGPR_FUNC(priv->device, "%s Enable EEE\n", __func__);
 		/* We are asking for enabling the EEE but it is safe
@@ -2162,7 +2162,7 @@ static int tc956xmac_ethtool_op_set_eee(struct net_device *dev,
 			priv->tx_lpi_timer = edata->tx_lpi_timer;
 		}
 
-		edata->eee_enabled = tc956xmac_eee_init(priv);
+		edata->eee_enabled = stmmac_eee_init(priv);
 		if (!edata->eee_enabled)
 			return -EOPNOTSUPP;
 	}
@@ -2185,9 +2185,9 @@ static int tc956xmac_ethtool_op_set_eee(struct net_device *dev,
 	return 0;
 }
 
-static u32 tc956xmac_usec2riwt(u32 usec, struct stmmac_priv *priv)
+static u32 stmmac_usec2riwt(u32 usec, struct stmmac_priv *priv)
 {
-	unsigned long clk = clk_get_rate(priv->plat->tc956xmac_clk);
+	unsigned long clk = clk_get_rate(priv->plat->stmmac_clk);
 	u32 value, mult = 256;
 
 	if (!clk) {
@@ -2205,9 +2205,9 @@ static u32 tc956xmac_usec2riwt(u32 usec, struct stmmac_priv *priv)
 	return value;
 }
 
-static u32 tc956xmac_riwt2usec(u32 riwt, struct stmmac_priv *priv)
+static u32 stmmac_riwt2usec(u32 riwt, struct stmmac_priv *priv)
 {
-	unsigned long clk = clk_get_rate(priv->plat->tc956xmac_clk);
+	unsigned long clk = clk_get_rate(priv->plat->stmmac_clk);
 	u32 mult = 256;
 
 	if (!clk) {
@@ -2228,7 +2228,7 @@ static u32 tc956xmac_riwt2usec(u32 riwt, struct stmmac_priv *priv)
 	return (riwt * mult) / (clk / 1000000);
 }
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 13, 0)
-static int __tc956xmac_get_coalesce(struct net_device *dev,
+static int __stmmac_get_coalesce(struct net_device *dev,
 				 struct ethtool_coalesce *ec,
 				 int queue)
 {
@@ -2256,7 +2256,7 @@ static int __tc956xmac_get_coalesce(struct net_device *dev,
 
 	if (priv->use_riwt && queue < rx_cnt) {
 		ec->rx_max_coalesced_frames = priv->rx_coal_frames[queue];
-		ec->rx_coalesce_usecs = tc956xmac_riwt2usec(priv->rx_riwt[queue],
+		ec->rx_coalesce_usecs = stmmac_riwt2usec(priv->rx_riwt[queue],
 							 priv);
 	} else {
 		ec->rx_max_coalesced_frames = 0;
@@ -2266,15 +2266,15 @@ static int __tc956xmac_get_coalesce(struct net_device *dev,
 	return 0;
 }
 
-static int tc956xmac_get_coalesce(struct net_device *dev,
+static int stmmac_get_coalesce(struct net_device *dev,
 			       struct ethtool_coalesce *ec,
 			       struct kernel_ethtool_coalesce *kernel_coal,
 			       struct netlink_ext_ack *extack)
 {
-	return __tc956xmac_get_coalesce(dev, ec, -1);
+	return __stmmac_get_coalesce(dev, ec, -1);
 }
 
-static int __tc956xmac_set_coalesce(struct net_device *dev,
+static int __stmmac_set_coalesce(struct net_device *dev,
 				 struct ethtool_coalesce *ec,
 				 int queue)
 {
@@ -2295,7 +2295,7 @@ static int __tc956xmac_set_coalesce(struct net_device *dev,
 		return -EINVAL;
 
 	if (priv->use_riwt && (ec->rx_coalesce_usecs > 0)) {
-		rx_riwt = tc956xmac_usec2riwt(ec->rx_coalesce_usecs, priv);
+		rx_riwt = stmmac_usec2riwt(ec->rx_coalesce_usecs, priv);
 
 		if ((rx_riwt > MAX_DMA_RIWT) || (rx_riwt < MIN_DMA_RIWT))
 			return -EINVAL;
@@ -2305,14 +2305,14 @@ static int __tc956xmac_set_coalesce(struct net_device *dev,
 
 			for (i = 0; i < rx_cnt; i++) {
 				priv->rx_riwt[i] = rx_riwt;
-				tc956xmac_rx_watchdog(priv, priv->ioaddr,
+				stmmac_rx_watchdog(priv, priv->ioaddr,
 						   rx_riwt, i);
 				priv->rx_coal_frames[i] =
 					ec->rx_max_coalesced_frames;
 			}
 		} else if (queue < rx_cnt) {
 			priv->rx_riwt[queue] = rx_riwt;
-			tc956xmac_rx_watchdog(priv, priv->ioaddr,
+			stmmac_rx_watchdog(priv, priv->ioaddr,
 					   rx_riwt, queue);
 			priv->rx_coal_frames[queue] =
 				ec->rx_max_coalesced_frames;
@@ -2346,15 +2346,15 @@ static int __tc956xmac_set_coalesce(struct net_device *dev,
 	return 0;
 }
 
-static int tc956xmac_set_coalesce(struct net_device *dev,
+static int stmmac_set_coalesce(struct net_device *dev,
 			       struct ethtool_coalesce *ec,
 			       struct kernel_ethtool_coalesce *kernel_coal,
 			       struct netlink_ext_ack *extack)
 {
-	return __tc956xmac_set_coalesce(dev, ec, -1);
+	return __stmmac_set_coalesce(dev, ec, -1);
 }
 #else
-static int tc956xmac_get_coalesce(struct net_device *dev,
+static int stmmac_get_coalesce(struct net_device *dev,
 			       struct ethtool_coalesce *ec)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
@@ -2364,13 +2364,13 @@ static int tc956xmac_get_coalesce(struct net_device *dev,
 
 	if (priv->use_riwt) {
 		ec->rx_max_coalesced_frames = priv->rx_coal_frames;
-		ec->rx_coalesce_usecs = tc956xmac_riwt2usec(priv->rx_riwt, priv);
+		ec->rx_coalesce_usecs = stmmac_riwt2usec(priv->rx_riwt, priv);
 	}
 
 	return 0;
 }
 
-static int tc956xmac_set_coalesce(struct net_device *dev,
+static int stmmac_set_coalesce(struct net_device *dev,
 			       struct ethtool_coalesce *ec)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
@@ -2394,7 +2394,7 @@ static int tc956xmac_set_coalesce(struct net_device *dev,
 #endif
 
 	if (priv->use_riwt && (ec->rx_coalesce_usecs > 0)) {
-		rx_riwt = tc956xmac_usec2riwt(ec->rx_coalesce_usecs, priv);
+		rx_riwt = stmmac_usec2riwt(ec->rx_coalesce_usecs, priv);
 
 		if ((rx_riwt > MAX_DMA_RIWT) || (rx_riwt < MIN_DMA_RIWT)) {
 			KPRINT_DEBUG1("Invalid rx_usecs value 0x%X\n", ec->rx_coalesce_usecs);
@@ -2402,7 +2402,7 @@ static int tc956xmac_set_coalesce(struct net_device *dev,
 		}
 
 		priv->rx_riwt = rx_riwt;
-		tc956xmac_rx_watchdog(priv, priv->ioaddr, priv->rx_riwt, rx_cnt);
+		stmmac_rx_watchdog(priv, priv->ioaddr, priv->rx_riwt, rx_cnt);
 	}
 
 	if (ec->rx_max_coalesced_frames > TC956XMAC_RX_MAX_FRAMES) {
@@ -2426,7 +2426,7 @@ static int tc956xmac_set_coalesce(struct net_device *dev,
 }
 #endif
 #ifndef TC956X
-static int tc956xmac_get_rxnfc(struct net_device *dev,
+static int stmmac_get_rxnfc(struct net_device *dev,
 			    struct ethtool_rxnfc *rxnfc, u32 *rule_locs)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
@@ -2442,21 +2442,21 @@ static int tc956xmac_get_rxnfc(struct net_device *dev,
 	return 0;
 }
 
-static u32 tc956xmac_get_rxfh_key_size(struct net_device *dev)
+static u32 stmmac_get_rxfh_key_size(struct net_device *dev)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 
 	return sizeof(priv->rss.key);
 }
 
-static u32 tc956xmac_get_rxfh_indir_size(struct net_device *dev)
+static u32 stmmac_get_rxfh_indir_size(struct net_device *dev)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 
 	return ARRAY_SIZE(priv->rss.table);
 }
 
-static int tc956xmac_get_rxfh(struct net_device *dev, u32 *indir, u8 *key,
+static int stmmac_get_rxfh(struct net_device *dev, u32 *indir, u8 *key,
 			   u8 *hfunc)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
@@ -2475,7 +2475,7 @@ static int tc956xmac_get_rxfh(struct net_device *dev, u32 *indir, u8 *key,
 	return 0;
 }
 
-static int tc956xmac_set_rxfh(struct net_device *dev, const u32 *indir,
+static int stmmac_set_rxfh(struct net_device *dev, const u32 *indir,
 			   const u8 *key, const u8 hfunc)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
@@ -2492,16 +2492,16 @@ static int tc956xmac_set_rxfh(struct net_device *dev, const u32 *indir,
 	if (key)
 		memcpy(priv->rss.key, key, sizeof(priv->rss.key));
 
-	return tc956xmac_rss_configure(priv, priv->hw, &priv->rss,
+	return stmmac_rss_configure(priv, priv->hw, &priv->rss,
 				    priv->plat->rx_queues_to_use);
 }
 #endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 11, 0)
-static int tc956xmac_get_ts_info(struct net_device *dev,
+static int stmmac_get_ts_info(struct net_device *dev,
 			      struct kernel_ethtool_ts_info *info)
 #else
-static int tc956xmac_get_ts_info(struct net_device *dev,
+static int stmmac_get_ts_info(struct net_device *dev,
 			      struct ethtool_ts_info *info)
 #endif
 {
@@ -2553,7 +2553,7 @@ static int tc956xmac_get_ts_info(struct net_device *dev,
 }
 
 #ifndef TC956X
-static int tc956xmac_get_tunable(struct net_device *dev,
+static int stmmac_get_tunable(struct net_device *dev,
 			      const struct ethtool_tunable *tuna, void *data)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
@@ -2571,7 +2571,7 @@ static int tc956xmac_get_tunable(struct net_device *dev,
 	return ret;
 }
 
-static int tc956xmac_set_tunable(struct net_device *dev,
+static int stmmac_set_tunable(struct net_device *dev,
 			      const struct ethtool_tunable *tuna,
 			      const void *data)
 {
@@ -2633,52 +2633,52 @@ static int stm_get_mm(struct net_device *ndev, struct ethtool_mm_state *state)
 #endif
 #endif
 
-static const struct ethtool_ops tc956xmac_ethtool_ops = {
+static const struct ethtool_ops stmmac_ethtool_ops = {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 7, 0)
 	.supported_coalesce_params = ETHTOOL_COALESCE_USECS |
 	    ETHTOOL_COALESCE_MAX_FRAMES,
 #endif
-	.begin = tc956xmac_check_if_running,
-	.get_drvinfo = tc956xmac_ethtool_getdrvinfo,
-	.get_msglevel = tc956xmac_ethtool_getmsglevel,
-	.set_msglevel = tc956xmac_ethtool_setmsglevel,
-	.get_regs = tc956xmac_ethtool_gregs,
-	.get_regs_len = tc956xmac_ethtool_get_regs_len,
+	.begin = stmmac_check_if_running,
+	.get_drvinfo = stmmac_ethtool_getdrvinfo,
+	.get_msglevel = stmmac_ethtool_getmsglevel,
+	.set_msglevel = stmmac_ethtool_setmsglevel,
+	.get_regs = stmmac_ethtool_gregs,
+	.get_regs_len = stmmac_ethtool_get_regs_len,
 	.get_link = ethtool_op_get_link,
 #ifndef TC956X_SRIOV_VF
 #ifdef TC956X_UNSUPPORTED_UNTESTED_FEATURE
-	.nway_reset = tc956xmac_nway_reset,
+	.nway_reset = stmmac_nway_reset,
 #endif
 #endif  /* TC956X_SRIOV_VF */
-	.get_pauseparam = tc956xmac_get_pauseparam,
-	.set_pauseparam = tc956xmac_set_pauseparam,
-	.self_test = tc956xmac_selftest_run,
-	.get_ethtool_stats = tc956xmac_get_ethtool_stats,
-	.get_strings = tc956xmac_get_strings,
+	.get_pauseparam = stmmac_get_pauseparam,
+	.set_pauseparam = stmmac_set_pauseparam,
+	.self_test = stmmac_selftest_run,
+	.get_ethtool_stats = stmmac_get_ethtool_stats,
+	.get_strings = stmmac_get_strings,
 #ifndef TC956X_SRIOV_VF
-	.get_wol = tc956xmac_get_wol,
-	.set_wol = tc956xmac_set_wol,
+	.get_wol = stmmac_get_wol,
+	.set_wol = stmmac_set_wol,
 #endif
-	.get_eee = tc956xmac_ethtool_op_get_eee,
-	.set_eee = tc956xmac_ethtool_op_set_eee,
-	.get_sset_count	= tc956xmac_get_sset_count,
+	.get_eee = stmmac_ethtool_op_get_eee,
+	.set_eee = stmmac_ethtool_op_set_eee,
+	.get_sset_count	= stmmac_get_sset_count,
 #ifndef TC956X
-	.get_rxnfc = tc956xmac_get_rxnfc,
-	.get_rxfh_key_size = tc956xmac_get_rxfh_key_size,
-	.get_rxfh_indir_size = tc956xmac_get_rxfh_indir_size,
-	.get_rxfh = tc956xmac_get_rxfh,
-	.set_rxfh = tc956xmac_set_rxfh,
+	.get_rxnfc = stmmac_get_rxnfc,
+	.get_rxfh_key_size = stmmac_get_rxfh_key_size,
+	.get_rxfh_indir_size = stmmac_get_rxfh_indir_size,
+	.get_rxfh = stmmac_get_rxfh,
+	.set_rxfh = stmmac_set_rxfh,
 #endif
-	.get_ts_info = tc956xmac_get_ts_info,
-	.get_coalesce = tc956xmac_get_coalesce,
-	.set_coalesce = tc956xmac_set_coalesce,
+	.get_ts_info = stmmac_get_ts_info,
+	.get_coalesce = stmmac_get_coalesce,
+	.set_coalesce = stmmac_set_coalesce,
 #ifndef TC956X
-	.get_tunable = tc956xmac_get_tunable,
-	.set_tunable = tc956xmac_set_tunable,
+	.get_tunable = stmmac_get_tunable,
+	.set_tunable = stmmac_set_tunable,
 #endif
 #ifndef TC956X_SRIOV_VF
-	.get_link_ksettings = tc956xmac_ethtool_get_link_ksettings,
-	.set_link_ksettings = tc956xmac_ethtool_set_link_ksettings,
+	.get_link_ksettings = stmmac_ethtool_get_link_ksettings,
+	.set_link_ksettings = stmmac_ethtool_set_link_ksettings,
 #endif  /* TC956X_SRIOV_VF */
 #ifdef TC956X
 	.set_priv_flags = stm_set_priv_flag,
@@ -2689,7 +2689,7 @@ static const struct ethtool_ops tc956xmac_ethtool_ops = {
 #endif
 };
 
-void tc956xmac_set_ethtool_ops(struct net_device *netdev)
+void stmmac_set_ethtool_ops(struct net_device *netdev)
 {
-	netdev->ethtool_ops = &tc956xmac_ethtool_ops;
+	netdev->ethtool_ops = &stmmac_ethtool_ops;
 }

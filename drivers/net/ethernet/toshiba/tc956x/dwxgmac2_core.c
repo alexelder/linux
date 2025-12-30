@@ -1445,7 +1445,7 @@ static int dwxgmac2_rss_write_reg(struct stmmac_priv *priv, void __iomem *ioaddr
 
 static int dwxgmac2_rss_configure(struct stmmac_priv *priv,
 				  struct mac_device_info *hw,
-				  struct tc956xmac_rss *cfg, u32 num_rxq)
+				  struct stmmac_rss *cfg, u32 num_rxq)
 {
 	void __iomem *ioaddr = hw->pcsr;
 	u32 value, *key;
@@ -2158,7 +2158,7 @@ static void dwxgmac3_rxp_enable(struct stmmac_priv *priv, void __iomem *ioaddr)
 }
 
 static int dwxgmac3_rxp_update_single_entry(struct stmmac_priv *priv, void __iomem *ioaddr,
-					    struct tc956xmac_tc_entry *entry,
+					    struct stmmac_tc_entry *entry,
 					    int pos)
 {
 	int ret, i;
@@ -2199,11 +2199,11 @@ static int dwxgmac3_rxp_update_single_entry(struct stmmac_priv *priv, void __iom
 	return 0;
 }
 
-static struct tc956xmac_tc_entry *
-dwxgmac3_rxp_get_next_entry(struct tc956xmac_tc_entry *entries,
+static struct stmmac_tc_entry *
+dwxgmac3_rxp_get_next_entry(struct stmmac_tc_entry *entries,
 			    unsigned int count, u32 curr_prio)
 {
-	struct tc956xmac_tc_entry *entry;
+	struct stmmac_tc_entry *entry;
 	u32 min_prio = ~0x0;
 	int i, min_prio_idx;
 	bool found = false;
@@ -2240,7 +2240,7 @@ dwxgmac3_rxp_get_next_entry(struct tc956xmac_tc_entry *entries,
 }
 
 static int dwxgmac2_rx_parser_write_entry(struct stmmac_priv *priv, struct mac_device_info *hw,
-		struct tc956xmac_rx_parser_entry *entry, int entry_pos)
+		struct stmmac_rx_parser_entry *entry, int entry_pos)
 {
 	void __iomem *ioaddr = hw->pcsr;
 	int limit;
@@ -2288,7 +2288,7 @@ static int dwxgmac2_rx_parser_write_entry(struct stmmac_priv *priv, struct mac_d
 }
 
 static int dwxgmac2_rx_parser_config(struct stmmac_priv *priv, struct mac_device_info *hw,
-				     struct tc956xmac_rx_parser_cfg *cfg)
+				     struct stmmac_rx_parser_cfg *cfg)
 {
 	void __iomem *ioaddr = hw->pcsr;
 	int i, ret;
@@ -2314,7 +2314,7 @@ static int dwxgmac2_rx_parser_config(struct stmmac_priv *priv, struct mac_device
 static int dwxgmac2_rx_parser_init(struct stmmac_priv *priv,
 			struct net_device *ndev, struct mac_device_info *hw,
 			unsigned int spram, unsigned int frpsel, unsigned int frpes,
-			struct tc956xmac_rx_parser_cfg *cfg)
+			struct stmmac_rx_parser_cfg *cfg)
 {
 	void __iomem *ioaddr = hw->pcsr;
 	u32 value, old_value = readl(ioaddr + XGMAC_RX_CONFIG);
@@ -2362,10 +2362,10 @@ static int dwxgmac2_rx_parser_init(struct stmmac_priv *priv,
 	return 0;
 }
 static int dwxgmac3_rxp_config(struct stmmac_priv *priv, void __iomem *ioaddr,
-			       struct tc956xmac_tc_entry *entries,
+			       struct stmmac_tc_entry *entries,
 			       unsigned int count)
 {
-	struct tc956xmac_tc_entry *entry, *frag;
+	struct stmmac_tc_entry *entry, *frag;
 	int i, ret, nve = 0;
 	u32 curr_prio = 0;
 	u32 old_val, val;
@@ -2467,7 +2467,7 @@ static int dwxgmac2_get_mac_tx_timestamp(struct stmmac_priv *priv,
 #ifdef TC956X_UNSUPPORTED_UNTESTED_FEATURE
 static int dwxgmac2_flex_pps_config(struct stmmac_priv *priv,
 				    void __iomem *ioaddr, int index,
-				    struct tc956xmac_pps_cfg *cfg, bool enable,
+				    struct stmmac_pps_cfg *cfg, bool enable,
 				    u32 sub_second_inc, u32 systime_flags)
 {
 	u32 tnsec = readl(ioaddr + XGMAC_PPSx_TARGET_TIME_NSEC(index));
@@ -2975,7 +2975,7 @@ static int dwxgmac3_est_write(struct stmmac_priv *priv, void __iomem *ioaddr, u3
 }
 
 static int dwxgmac3_est_configure(struct stmmac_priv *priv,
-				  void __iomem *ioaddr, struct tc956xmac_est *cfg,
+				  void __iomem *ioaddr, struct stmmac_est *cfg,
 				  unsigned int ptp_rate)
 {
 	int i, ret = 0x0;

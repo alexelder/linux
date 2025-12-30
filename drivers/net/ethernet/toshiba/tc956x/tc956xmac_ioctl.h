@@ -285,7 +285,7 @@ struct stm_config_ost {
 	bool en_dis; /* Enable/Disable OST */
 };
 
-struct tc956xmac_ioctl_qmode_cfg {
+struct stmmac_ioctl_qmode_cfg {
 	__u32 cmd;
 	__u32 queue_idx;
 	__u32 queue_mode;
@@ -305,7 +305,7 @@ struct stm_config_ost {
 	int en_dis;
 };
 #endif
-struct tc956xmac_ioctl_cbs_params {
+struct stmmac_ioctl_cbs_params {
 	__u32 send_slope; /* Send Slope value supported 15 bits */
 	__u32 idle_slope; /* Idle Slope value supported 20 bits */
 	__u32 high_credit; /* High Credit value supported 28 bits */
@@ -313,23 +313,23 @@ struct tc956xmac_ioctl_cbs_params {
 	__u32 percentage; /* Dummy */
 };
 
-struct tc956xmac_ioctl_cbs_cfg {
+struct stmmac_ioctl_cbs_cfg {
 	__u32 cmd;
 	__u32 queue_idx;
-	struct tc956xmac_ioctl_cbs_params speed100cfg;
-	struct tc956xmac_ioctl_cbs_params speed1000cfg;
-	struct tc956xmac_ioctl_cbs_params speed10000cfg;
-	struct tc956xmac_ioctl_cbs_params speed5000cfg;
-	struct tc956xmac_ioctl_cbs_params speed2500cfg;
+	struct stmmac_ioctl_cbs_params speed100cfg;
+	struct stmmac_ioctl_cbs_params speed1000cfg;
+	struct stmmac_ioctl_cbs_params speed10000cfg;
+	struct stmmac_ioctl_cbs_params speed5000cfg;
+	struct stmmac_ioctl_cbs_params speed2500cfg;
 
 };
 
-struct tc956xmac_ioctl_speed {
+struct stmmac_ioctl_speed {
 	__u32 cmd;
 	__u32 queue_idx;
 	__u32 connected_speed;
 };
-struct tc956xmac_ioctl_l2_da_filter {
+struct stmmac_ioctl_l2_da_filter {
 	unsigned int cmd;
 	unsigned int chInx;
 	int command_error;
@@ -339,7 +339,7 @@ struct tc956xmac_ioctl_l2_da_filter {
 	int perfect_inverse_match;
 };
 
-struct tc956xmac_ioctl_vlan_filter {
+struct stmmac_ioctl_vlan_filter {
 	__u32 cmd;
 	/* 0 - disable and 1 - enable */
 	/* Please note 0 - disable is not supported */
@@ -350,13 +350,13 @@ struct tc956xmac_ioctl_vlan_filter {
 	int perfect_inverse_match;
 };
 
-struct tc956xmac_ioctl_free_desc {
+struct stmmac_ioctl_free_desc {
 	__u32 cmd;
 	__u32 queue_idx;
 	void *ptr;
 };
 
-struct tc956xmac_PPS_Config {
+struct stmmac_PPS_Config {
 	__u32 cmd;
 	unsigned int ptpclk_freq; /* Maximum 250MHz */
 	unsigned int ppsout_freq; /* PPS Output Frequency */
@@ -366,7 +366,7 @@ struct tc956xmac_PPS_Config {
 	bool ppsout_align; /* first output align */
 };
 
-struct tc956xmac_ioctl_reg_rd_wr {
+struct stmmac_ioctl_reg_rd_wr {
 	__u32 cmd;
 	__u32 queue_idx;
 	__u32 bar_num;
@@ -374,18 +374,18 @@ struct tc956xmac_ioctl_reg_rd_wr {
 	void *ptr;
 };
 
-struct tc956xmac_ioctl_loopback {
+struct stmmac_ioctl_loopback {
 	__u32 cmd;
 	__u32 flags;
 };
-struct tc956xmac_ioctl_phy_loopback {
+struct stmmac_ioctl_phy_loopback {
 	__u32 cmd;
 	__u32 flags;
 	__u32 phy_reg;
 	__u32 bit;
 };
 
-struct tc956xmac_rx_parser_entry {
+struct stmmac_rx_parser_entry {
 	__le32 match_data;
 	__le32 match_en;
 	__u8 af:1;
@@ -401,7 +401,7 @@ struct tc956xmac_rx_parser_entry {
 	__u16 res4;
 } __packed;
 
-struct tc956xmac_ioctl_rxp_entry {
+struct stmmac_ioctl_rxp_entry {
 	__u32 match_data;
 	__u32 match_en;
 	__u8 af:1;
@@ -419,25 +419,25 @@ struct tc956xmac_ioctl_rxp_entry {
 
 #define TC956XMAC_RX_PARSER_MAX_ENTRIES		128
 
-struct tc956xmac_rx_parser_cfg {
+struct stmmac_rx_parser_cfg {
 	bool enable;
 	__u32 nve;
 	__u32 npe;
-	struct tc956xmac_rx_parser_entry entries[TC956XMAC_RX_PARSER_MAX_ENTRIES];
+	struct stmmac_rx_parser_entry entries[TC956XMAC_RX_PARSER_MAX_ENTRIES];
 };
 
-struct tc956xmac_ioctl_rxp_cfg {
+struct stmmac_ioctl_rxp_cfg {
 	__u32 cmd;
 	__u32 frpes;
 	__u32 enabled;
 	__u32 nve;
 	__u32 npe;
-	struct tc956xmac_ioctl_rxp_entry entries[TC956XMAC_RX_PARSER_MAX_ENTRIES];
+	struct stmmac_ioctl_rxp_entry entries[TC956XMAC_RX_PARSER_MAX_ENTRIES];
 };
 
 #define TC956XMAC_IOCTL_EST_GCL_MAX_ENTRIES		128
 
-struct tc956xmac_ioctl_est_cfg {
+struct stmmac_ioctl_est_cfg {
 	__u32 cmd;
 	__u32 enabled;
 	__u32 estwid;		/* parameter used to get the value and not used in set */
@@ -449,7 +449,7 @@ struct tc956xmac_ioctl_est_cfg {
 	__u32 gcl_size;
 };
 
-struct tc956xmac_ioctl_fpe_cfg {
+struct stmmac_ioctl_fpe_cfg {
 	__u32 cmd;
 	__u32 enabled;
 	__u32 pec;
@@ -458,26 +458,26 @@ struct tc956xmac_ioctl_fpe_cfg {
 	__u32 HA_time;
 };
 
-struct tc956xmac_ioctl_sa_ins_cfg {
+struct stmmac_ioctl_sa_ins_cfg {
 	__u32 cmd;
 	unsigned int control_flag;
 	unsigned char mac_addr[ETH_ALEN];
 
 };
 
-struct tc956xmac_ioctl_tx_qcnt {
+struct stmmac_ioctl_tx_qcnt {
 	__u32 cmd;
 	__u32 queue_idx;
 	void *ptr;
 };
 
-struct tc956xmac_ioctl_rx_qcnt {
+struct stmmac_ioctl_rx_qcnt {
 	__u32 cmd;
 	__u32 queue_idx;
 	void *ptr;
 };
 
-struct tc956xmac_ioctl_pcie_reg_rd_wr {
+struct stmmac_ioctl_pcie_reg_rd_wr {
 	__u32 cmd;
 	__u32 addr;
 	void *ptr;
@@ -490,7 +490,7 @@ struct stm_ioctl_fwstatus {
 	__u32 fw_status;
 };
 
-struct tc956xmac_ioctl_vlan_strip_cfg {
+struct stmmac_ioctl_vlan_strip_cfg {
 	__u32 cmd;
 	__u32 enabled; /* 1 to enable stripping, 0 to disable stripping */
 };

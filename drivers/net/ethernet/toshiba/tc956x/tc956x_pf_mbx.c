@@ -233,10 +233,10 @@ void stm_pf_parse_mbx(struct stmmac_priv *priv,
 	/* Get the function id information and read the mailbox.
 	 * Function id can be get earlier too
 	 */
-	if (!tc956xmac_rsc_mng_get_fn_id(priv,
+	if (!stmmac_rsc_mng_get_fn_id(priv,
 		priv->stm_BRIDGE_CFG_pci_base_addr, &priv->fn_id_info)) {
 		/* Read and acknowledge the mailbox */
-		tc956xmac_mbx_read(priv, msg_buff, msg_src,
+		stmmac_mbx_read(priv, msg_buff, msg_src,
 				   &priv->fn_id_info);
 	}
 }
@@ -456,11 +456,11 @@ static int stm_pf_mbx_write(struct stmmac_priv *priv, u8 *msg_buff,
 	stm_pf_trigger_interrupt(priv, msg_dst);
 
 	/*poll for ack/nack from the VF/MCU/Other PF*/
-	ret = tc956xmac_mbx_poll_for_ack(priv, msg_dst);
+	ret = stmmac_mbx_poll_for_ack(priv, msg_dst);
 
 	/* Read for ACK message */
 	if (ret > 0) {
-		tc956xmac_mbx_read(priv, msg_buff, msg_dst,
+		stmmac_mbx_read(priv, msg_buff, msg_dst,
 				   &priv->fn_id_info);
 	}
 
@@ -539,22 +539,22 @@ static int stm_pf_mbx_read(struct stmmac_priv *priv, u8 *msg_buff,
 		ret_val = stm_mbx_wrap_get_link_status(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0]);
 		break;
 	case OPCODE_MBX_VF_IOCTL:
-		ret_val = tc956xmac_mbx_ioctl_interface(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0], vf_no);
+		ret_val = stmmac_mbx_ioctl_interface(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0], vf_no);
 		break;
 	case OPCODE_MBX_VF_ETHTOOL:
-		ret_val = tc956xmac_mbx_ethtool_interface(priv, priv->dev, &msg_buff[MBX_MSG_OFST], &ack_msg[0]);
+		ret_val = stmmac_mbx_ethtool_interface(priv, priv->dev, &msg_buff[MBX_MSG_OFST], &ack_msg[0]);
 		break;
 	case OPCODE_MBX_VF_ADD_MAC:
-		ret_val = tc956xmac_mbx_add_mac(priv, priv->dev, &msg_buff[MBX_MSG_OFST], &ack_msg[0], vf_no);
+		ret_val = stmmac_mbx_add_mac(priv, priv->dev, &msg_buff[MBX_MSG_OFST], &ack_msg[0], vf_no);
 		break;
 	case OPCODE_MBX_VF_DELETE_MAC:
-		ret_val = tc956xmac_mbx_delete_mac(priv, priv->dev, &msg_buff[MBX_MSG_OFST], &ack_msg[0], vf_no);
+		ret_val = stmmac_mbx_delete_mac(priv, priv->dev, &msg_buff[MBX_MSG_OFST], &ack_msg[0], vf_no);
 		break;
 	case OPCODE_MBX_VF_ADD_VLAN:
-		ret_val = tc956xmac_mbx_add_vlan(priv, priv->dev, &msg_buff[MBX_MSG_OFST], &ack_msg[0], vf_no);
+		ret_val = stmmac_mbx_add_vlan(priv, priv->dev, &msg_buff[MBX_MSG_OFST], &ack_msg[0], vf_no);
 		break;
 	case OPCODE_MBX_VF_DELETE_VLAN:
-		ret_val = tc956xmac_mbx_delete_vlan(priv, priv->dev, &msg_buff[MBX_MSG_OFST], &ack_msg[0], vf_no);
+		ret_val = stmmac_mbx_delete_vlan(priv, priv->dev, &msg_buff[MBX_MSG_OFST], &ack_msg[0], vf_no);
 		break;
 	case OPCODE_MBX_DRV_CAP:
 		ret_val = stm_mbx_wrap_get_drv_cap(priv, &msg_buff[MBX_MSG_OFST], &ack_msg[0]);
@@ -596,13 +596,13 @@ static int stm_pf_mbx_read(struct stmmac_priv *priv, u8 *msg_buff,
 		/* After successful parsing, ACK/NACK the functions which
 		 * originated the message
 		 */
-		tc956xmac_mbx_send_ack(priv, msg_buff, msg_dst,
+		stmmac_mbx_send_ack(priv, msg_buff, msg_dst,
 				       fn_id_info);
 	}
 	return 0;
 }
 
-const struct mac_mbx_ops tc956xmac_mbx_ops = {
+const struct mac_mbx_ops stmmac_mbx_ops = {
 	.init = stm_pf_mbx_init,
 	.read = stm_pf_mbx_read,
 	.write = stm_pf_mbx_write,

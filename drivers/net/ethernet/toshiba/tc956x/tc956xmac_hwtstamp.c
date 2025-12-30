@@ -1,7 +1,7 @@
 /*
  * TC956X ethernet driver.
  *
- * tc956xmac_hwtstamp.c - This implements all the API for managing
+ * stmmac_hwtstamp.c - This implements all the API for managing
  *                        HW timestamp & PTP.
  *
  * Copyright (C) 2013  Vayavya Labs Pvt Ltd
@@ -47,8 +47,8 @@
 #endif
 
 #ifdef TC956X_SRIOV_PF
-static u32 tc956xmac_get_ptp_subperiod(struct stmmac_priv *priv, void __iomem *ioaddr, u32 ptp_clock);
-static u32 tc956xmac_get_ptp_period(struct stmmac_priv *priv, void __iomem *ioaddr, u32 ptp_clock);
+static u32 stmmac_get_ptp_subperiod(struct stmmac_priv *priv, void __iomem *ioaddr, u32 ptp_clock);
+static u32 stmmac_get_ptp_period(struct stmmac_priv *priv, void __iomem *ioaddr, u32 ptp_clock);
 
 static void config_hw_tstamping(struct stmmac_priv *priv, void __iomem *ioaddr,
 					u32 data)
@@ -69,8 +69,8 @@ static void config_sub_second_increment(struct stmmac_priv *priv,
 	u32 temp_rem;
 #endif
 
-	ns = tc956xmac_get_ptp_period(priv, ioaddr, ptp_clock);
-	subns = tc956xmac_get_ptp_subperiod(priv, ioaddr, ptp_clock);
+	ns = stmmac_get_ptp_period(priv, ioaddr, ptp_clock);
+	subns = stmmac_get_ptp_subperiod(priv, ioaddr, ptp_clock);
 
 	/*  TSCTRLSSR always Enabled */
 	/* 0.465ns accuracy */
@@ -231,7 +231,7 @@ static void get_systime(struct stmmac_priv *priv, void __iomem *ioaddr, u64 *sys
 
 }
 #ifdef TC956X_SRIOV_PF
-static u32 tc956xmac_get_ptp_period(struct stmmac_priv *priv, void __iomem *ioaddr, u32 ptp_clock)
+static u32 stmmac_get_ptp_period(struct stmmac_priv *priv, void __iomem *ioaddr, u32 ptp_clock)
 {
 	u32 value = readl(ioaddr + PTP_TCR);
 	u64 data;
@@ -261,7 +261,7 @@ static u32 tc956xmac_get_ptp_period(struct stmmac_priv *priv, void __iomem *ioad
 	return (u32)data;
 }
 
-static u32 tc956xmac_get_ptp_subperiod(struct stmmac_priv *priv, void __iomem *ioaddr, u32 ptp_clock)
+static u32 stmmac_get_ptp_subperiod(struct stmmac_priv *priv, void __iomem *ioaddr, u32 ptp_clock)
 {
 	u32 value = readl(ioaddr + PTP_TCR);
 	u64 data;
@@ -287,7 +287,7 @@ static u32 tc956xmac_get_ptp_subperiod(struct stmmac_priv *priv, void __iomem *i
 		data = (1000000000ULL * 1000ULL / 250000000);
 #endif
 
-	return  data - tc956xmac_get_ptp_period(priv, ioaddr, ptp_clock) * 1000;
+	return  data - stmmac_get_ptp_period(priv, ioaddr, ptp_clock) * 1000;
 }
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 13, 0)
@@ -339,7 +339,7 @@ static void timestamp_interrupt(struct stmmac_priv *priv, void __iomem *ioaddr)
 }
 #endif
 
-const struct stmmac_hwtimestamp tc956xmac_ptp = {
+const struct stmmac_hwtimestamp stmmac_ptp = {
 	.config_hw_tstamping = config_hw_tstamping,
 	.init_systime = init_systime,
 	.config_sub_second_increment = config_sub_second_increment,
@@ -353,7 +353,7 @@ const struct stmmac_hwtimestamp tc956xmac_ptp = {
 	.get_systime = get_systime,
 };
 #else
-const struct stmmac_hwtimestamp tc956xmac_ptp = {
+const struct stmmac_hwtimestamp stmmac_ptp = {
 	.config_hw_tstamping = NULL,
 	.init_systime = NULL,
 	.config_sub_second_increment = NULL,

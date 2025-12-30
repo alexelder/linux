@@ -81,7 +81,7 @@ static u8 mac_addr_default[6] = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
 
 static DEFINE_SPINLOCK(cm3_tamap_lock);
 
-extern int tc956xmac_rx_parser_configuration(struct stmmac_priv *priv);
+extern int stmmac_rx_parser_configuration(struct stmmac_priv *priv);
 
 /*!
  * \brief This API will return the version of IPA I/F maintained by Toshiba
@@ -177,7 +177,7 @@ EXPORT_SYMBOL_GPL(get_client_priv_data);
 static void free_ipa_tx_resources(struct net_device *ndev, struct channel_info *channel)
 {
 	struct stmmac_priv *priv = netdev_priv(ndev);
-	struct tc956xmac_tx_queue *tx_q = &priv->tx_queue[channel->channel_num];
+	struct stmmac_tx_queue *tx_q = &priv->tx_queue[channel->channel_num];
 	u32 i;
 
 	if (channel->ch_flags == TC956X_CONTIG_BUFS) {
@@ -212,7 +212,7 @@ static void free_ipa_tx_resources(struct net_device *ndev, struct channel_info *
 static void free_ipa_rx_resources(struct net_device *ndev, struct channel_info *channel)
 {
 	struct stmmac_priv *priv = netdev_priv(ndev);
-	struct tc956xmac_rx_queue *rx_q = &priv->rx_queue[channel->channel_num];
+	struct stmmac_rx_queue *rx_q = &priv->rx_queue[channel->channel_num];
 	u32 i;
 
 	if (channel->ch_flags == TC956X_CONTIG_BUFS) {
@@ -248,7 +248,7 @@ static int find_free_tx_channel(struct net_device *ndev, struct channel_info *ch
 {
 	struct stmmac_priv *priv = netdev_priv(ndev);
 	u32 ch;
-	struct tc956xmac_tx_queue *tx_q;
+	struct stmmac_tx_queue *tx_q;
 
 	for (ch = 0; ch < MAX_TX_QUEUES_TO_USE; ch++) {
 		/* Find a free channel to use for IPA */
@@ -275,7 +275,7 @@ static int find_free_rx_channel(struct net_device *ndev, struct channel_info *ch
 {
 	struct stmmac_priv *priv = netdev_priv(ndev);
 	u32 ch;
-	struct tc956xmac_rx_queue *rx_q;
+	struct stmmac_rx_queue *rx_q;
 
 	for (ch = 0; ch < MAX_RX_QUEUES_TO_USE; ch++) {
 		/* Find a free channel to use for IPA */
@@ -301,7 +301,7 @@ static int find_free_rx_channel(struct net_device *ndev, struct channel_info *ch
 static int alloc_ipa_tx_resources(struct net_device *ndev, struct channel_info *channel, gfp_t flags)
 {
 	struct stmmac_priv *priv = netdev_priv(ndev);
-	struct tc956xmac_tx_queue *tx_q;
+	struct stmmac_tx_queue *tx_q;
 	struct sk_buff *skb;
 	u32 i;
 	int ret = -EINVAL;
@@ -385,7 +385,7 @@ err_mem:
 static int alloc_ipa_rx_resources(struct net_device *ndev, struct channel_info *channel, gfp_t flags)
 {
 	struct stmmac_priv *priv = netdev_priv(ndev);
-	struct tc956xmac_rx_queue *rx_q;
+	struct stmmac_rx_queue *rx_q;
 	struct sk_buff *skb;
 	u32 i;
 	int ret = -EINVAL;
@@ -466,11 +466,11 @@ err_mem:
 	return -ENOMEM;
 }
 
-static void tc956xmac_init_ipa_tx_ch(struct stmmac_priv *priv, struct channel_info *channel)
+static void stmmac_init_ipa_tx_ch(struct stmmac_priv *priv, struct channel_info *channel)
 {
 	u32 i;
 	u32 chan = channel->channel_num;
-	struct tc956xmac_tx_queue *tx_q = &priv->tx_queue[chan];
+	struct stmmac_tx_queue *tx_q = &priv->tx_queue[chan];
 
 	for (i = 0; i < channel->desc_cnt; i++) {
 
@@ -478,69 +478,69 @@ static void tc956xmac_init_ipa_tx_ch(struct stmmac_priv *priv, struct channel_in
 
 		p = tx_q->dma_tx + i;
 
-		tc956xmac_clear_desc(priv, p);
+		stmmac_clear_desc(priv, p);
 		if (channel->ch_flags == TC956X_CONTIG_BUFS) {
-			tc956xmac_set_desc_addr(priv, p, (tx_q->buff_tx_phy + (i * channel->buf_size)));
+			stmmac_set_desc_addr(priv, p, (tx_q->buff_tx_phy + (i * channel->buf_size)));
 		} else {
-			tc956xmac_set_desc_addr(priv, p, channel->buff_pool_addr.buff_pool_dma_addrs_base[i]);
+			stmmac_set_desc_addr(priv, p, channel->buff_pool_addr.buff_pool_dma_addrs_base[i]);
 		}
 	}
 
-	tc956xmac_init_chan(priv, priv->ioaddr, priv->plat->dma_cfg, chan);
-	tc956xmac_init_tx_chan(priv, priv->ioaddr, priv->plat->dma_cfg,
+	stmmac_init_chan(priv, priv->ioaddr, priv->plat->dma_cfg, chan);
+	stmmac_init_tx_chan(priv, priv->ioaddr, priv->plat->dma_cfg,
 				tx_q->dma_tx_phy, chan);
 
 	tx_q->tx_tail_addr = tx_q->dma_tx_phy;
-	tc956xmac_set_tx_tail_ptr(priv, priv->ioaddr,
+	stmmac_set_tx_tail_ptr(priv, priv->ioaddr,
 				       tx_q->tx_tail_addr, chan);
 
-	tc956xmac_set_tx_ring_len(priv, priv->ioaddr, channel->desc_cnt - 1, chan);
+	stmmac_set_tx_ring_len(priv, priv->ioaddr, channel->desc_cnt - 1, chan);
 
-	tc956xmac_set_mtl_tx_queue_weight(priv, priv->hw,
+	stmmac_set_mtl_tx_queue_weight(priv, priv->hw,
 					priv->plat->tx_queues_cfg[chan].weight, chan);
 
 }
 
-static void tc956xmac_init_ipa_rx_ch(struct stmmac_priv *priv, struct channel_info *channel)
+static void stmmac_init_ipa_rx_ch(struct stmmac_priv *priv, struct channel_info *channel)
 {
 	u32 i;
 	u32 chan = channel->channel_num;
-	struct tc956xmac_rx_queue *rx_q = &priv->rx_queue[chan];
+	struct stmmac_rx_queue *rx_q = &priv->rx_queue[chan];
 
 	for (i = 0; i < channel->desc_cnt; i++) {
 		struct dma_desc *p;
 
 		p = rx_q->dma_rx + i;
 
-		tc956xmac_init_rx_desc(priv, &rx_q->dma_rx[i],
+		stmmac_init_rx_desc(priv, &rx_q->dma_rx[i],
 					priv->use_riwt, priv->mode,
 					(i == channel->desc_cnt - 1),
 					channel->buf_size);
 
 		if (channel->ch_flags == TC956X_CONTIG_BUFS) {
-			tc956xmac_set_desc_addr(priv, p, (rx_q->buff_rx_phy + (i * channel->buf_size)));
+			stmmac_set_desc_addr(priv, p, (rx_q->buff_rx_phy + (i * channel->buf_size)));
 		} else {
-			tc956xmac_set_desc_addr(priv, p, channel->buff_pool_addr.buff_pool_dma_addrs_base[i]);
+			stmmac_set_desc_addr(priv, p, channel->buff_pool_addr.buff_pool_dma_addrs_base[i]);
 		}
 	}
 
-	tc956xmac_init_chan(priv, priv->ioaddr, priv->plat->dma_cfg, chan);
-	tc956xmac_init_rx_chan(priv, priv->ioaddr, priv->plat->dma_cfg,
+	stmmac_init_chan(priv, priv->ioaddr, priv->plat->dma_cfg, chan);
+	stmmac_init_rx_chan(priv, priv->ioaddr, priv->plat->dma_cfg,
 				    rx_q->dma_rx_phy, chan);
 
 	rx_q->rx_tail_addr = rx_q->dma_rx_phy +
 				 (channel->desc_cnt * sizeof(struct dma_desc));
-	tc956xmac_set_rx_tail_ptr(priv, priv->ioaddr, rx_q->rx_tail_addr, chan);
+	stmmac_set_rx_tail_ptr(priv, priv->ioaddr, rx_q->rx_tail_addr, chan);
 
-	tc956xmac_set_rx_ring_len(priv, priv->ioaddr, (channel->desc_cnt - 1), chan);
-	tc956xmac_set_dma_bfsize(priv, priv->ioaddr, channel->buf_size, chan);
+	stmmac_set_rx_ring_len(priv, priv->ioaddr, (channel->desc_cnt - 1), chan);
+	stmmac_set_dma_bfsize(priv, priv->ioaddr, channel->buf_size, chan);
 
 }
 
 static void dealloc_ipa_tx_resources(struct net_device *ndev, struct channel_info *channel)
 {
 	struct stmmac_priv *priv = netdev_priv(ndev);
-	struct tc956xmac_tx_queue *tx_q;
+	struct stmmac_tx_queue *tx_q;
 	u32 ch = channel->channel_num;
 
 	priv->plat->tx_dma_ch_owner[ch] = NOT_USED;
@@ -557,7 +557,7 @@ static void dealloc_ipa_tx_resources(struct net_device *ndev, struct channel_inf
 static void dealloc_ipa_rx_resources(struct net_device *ndev, struct channel_info *channel)
 {
 	struct stmmac_priv *priv = netdev_priv(ndev);
-	struct tc956xmac_rx_queue *rx_q;
+	struct stmmac_rx_queue *rx_q;
 	u32 ch = channel->channel_num;
 
 	priv->plat->rx_dma_ch_owner[ch] = NOT_USED;
@@ -591,8 +591,8 @@ struct channel_info* request_channel(struct request_channel_input *channel_input
 {
 	struct channel_info *channel;
 	struct stmmac_priv *priv;
-	struct tc956xmac_tx_queue *tx_q;
-	struct tc956xmac_rx_queue *rx_q;
+	struct stmmac_tx_queue *tx_q;
+	struct stmmac_rx_queue *rx_q;
 
 	if (!channel_input) {
 		pr_err("%s: ERROR: Invalid channel_input pointer\n", __func__);
@@ -723,12 +723,12 @@ struct channel_info* request_channel(struct request_channel_input *channel_input
 
 	/* Configure DMA registers */
 	if (channel_input->ch_dir == CH_DIR_TX) {
-		tc956xmac_init_ipa_tx_ch(priv, channel);
-		tc956xmac_stop_tx(priv, priv->ioaddr, channel->channel_num);
+		stmmac_init_ipa_tx_ch(priv, channel);
+		stmmac_stop_tx(priv, priv->ioaddr, channel->channel_num);
 		channel_input->tail_ptr_addr = XGMAC_DMA_CH_TxDESC_TAIL_LPTR(channel->channel_num);
 	} else if (channel_input->ch_dir == CH_DIR_RX) {
-		tc956xmac_init_ipa_rx_ch(priv, channel);
-		tc956xmac_stop_rx(priv, priv->ioaddr, channel->channel_num);
+		stmmac_init_ipa_rx_ch(priv, channel);
+		stmmac_stop_rx(priv, priv->ioaddr, channel->channel_num);
 		channel_input->tail_ptr_addr = XGMAC_DMA_CH_RxDESC_TAIL_LPTR(channel->channel_num);
 	} else {
 		netdev_err(priv->dev,
@@ -774,8 +774,8 @@ int release_channel(struct net_device *ndev, struct channel_info *channel)
 {
 	struct stmmac_priv *priv;
 	struct mem_ops *mem_ops;
-	struct tc956xmac_tx_queue *tx_q;
-	struct tc956xmac_rx_queue *rx_q;
+	struct stmmac_tx_queue *tx_q;
+	struct stmmac_rx_queue *rx_q;
 	u32 ch;
 	u32 offload_release_sts = true;
 
@@ -866,11 +866,11 @@ int release_channel(struct net_device *ndev, struct channel_info *channel)
 	} else {
 
 		if (channel->direction == CH_DIR_TX) {
-			tc956xmac_stop_tx(priv, priv->ioaddr, channel->channel_num);
+			stmmac_stop_tx(priv, priv->ioaddr, channel->channel_num);
 			dealloc_ipa_tx_resources(ndev, channel);
 			ret = 0;
 		} else if (channel->direction == CH_DIR_RX) {
-			tc956xmac_stop_rx(priv, priv->ioaddr, channel->channel_num);
+			stmmac_stop_rx(priv, priv->ioaddr, channel->channel_num);
 			dealloc_ipa_rx_resources(ndev, channel);
 			ret = 0;
 		} else {
@@ -901,7 +901,7 @@ int release_channel(struct net_device *ndev, struct channel_info *channel)
 
 	/* If all channels are freed, call API for power saving*/
 	if (priv->port_release == true && offload_release_sts == true) {
-		tc956xmac_link_change_set_power(priv, LINK_DOWN); /* Save, Assert and Disable Reset and Clock */
+		stmmac_link_change_set_power(priv, LINK_DOWN); /* Save, Assert and Disable Reset and Clock */
 	}
 	mutex_unlock(&priv->port_ld_release_lock);
 
@@ -947,7 +947,7 @@ int request_event(struct net_device *ndev, struct channel_info *channel, dma_add
 {
 	struct stmmac_priv *priv;
 	u8 table_entry = 1; /* Table entry 0 is for eMAC */
-	struct tc956xmac_cm3_tamap tamap;
+	struct stmmac_cm3_tamap tamap;
 	u32 val, cm3_target_addr;
 	dma_addr_t trsl_addr;
 	unsigned long flags;
@@ -1392,7 +1392,7 @@ EXPORT_SYMBOL_GPL(set_event_mod);
 int set_rx_filter(struct net_device *ndev, struct rx_filter_info *filter_params)
 {
 	struct stmmac_priv *priv;
-	struct tc956xmac_rx_parser_cfg *cfg;
+	struct stmmac_rx_parser_cfg *cfg;
 	u32 ret = -EINVAL;
 
 	if (!ndev) {
@@ -1426,7 +1426,7 @@ int set_rx_filter(struct net_device *ndev, struct rx_filter_info *filter_params)
 	memcpy(cfg->entries, filter_params->entries, filter_params->nve * sizeof(filter_params->entries[0]));
 
 	priv->plat->rxp_cfg.enable = true;
-	ret = tc956xmac_rx_parser_configuration(priv);
+	ret = stmmac_rx_parser_configuration(priv);
 
 	return ret;
 
@@ -1448,7 +1448,7 @@ EXPORT_SYMBOL_GPL(set_rx_filter);
 int clear_rx_filter(struct net_device *ndev)
 {
 	struct stmmac_priv *priv;
-	struct tc956xmac_rx_parser_cfg *cfg;
+	struct stmmac_rx_parser_cfg *cfg;
 	struct rxp_filter_entry filter_entries;
 	u32 ret = -EINVAL;
 
@@ -1486,7 +1486,7 @@ int clear_rx_filter(struct net_device *ndev)
 
 	memcpy(cfg->entries, &filter_entries, cfg->nve * sizeof(struct rxp_filter_entry));
 
-	ret = tc956xmac_rx_parser_configuration(priv);
+	ret = stmmac_rx_parser_configuration(priv);
 
 	return ret;
 }
@@ -1545,7 +1545,7 @@ int start_channel(struct net_device *ndev, struct channel_info *channel)
 
 	if (channel->direction == CH_DIR_TX) {
 		netdev_dbg(priv->dev, "DMA Tx process started in channel = %d\n", channel->channel_num);
-		tc956xmac_start_tx(priv, priv->ioaddr, channel->channel_num);
+		stmmac_start_tx(priv, priv->ioaddr, channel->channel_num);
 	} else if (channel->direction == CH_DIR_RX) {
 		mac_addr.ae = MAC_ADDR_AE;
 		mac_addr.mbc = MAC_ADDR_MBC;
@@ -1554,7 +1554,7 @@ int start_channel(struct net_device *ndev, struct channel_info *channel)
 		set_mac_addr(ndev, &mac_addr, MAC_ADDR_INDEX);
 
 		netdev_dbg(priv->dev, "DMA Rx process started in channel = %d\n", channel->channel_num);
-		tc956xmac_start_rx(priv, priv->ioaddr, channel->channel_num);
+		stmmac_start_rx(priv, priv->ioaddr, channel->channel_num);
 	} else {
 		netdev_err(priv->dev,
 				"%s: ERROR: Invalid channel\n", __func__);
@@ -1617,10 +1617,10 @@ int stop_channel(struct net_device *ndev, struct channel_info *channel)
 
 	if (channel->direction == CH_DIR_TX) {
 		netdev_dbg(priv->dev, "DMA Tx process stopped in channel = %d\n", channel->channel_num);
-		tc956xmac_stop_tx(priv, priv->ioaddr, channel->channel_num);
+		stmmac_stop_tx(priv, priv->ioaddr, channel->channel_num);
 	} else if (channel->direction == CH_DIR_RX) {
 		netdev_dbg(priv->dev, "DMA Rx process stopped in channel = %d\n", channel->channel_num);
-		tc956xmac_stop_rx(priv, priv->ioaddr, channel->channel_num);
+		stmmac_stop_rx(priv, priv->ioaddr, channel->channel_num);
 	} else {
 		netdev_err(priv->dev,
 				"%s: ERROR: Invalid channel\n", __func__);
@@ -1646,7 +1646,7 @@ EXPORT_SYMBOL_GPL(stop_channel);
  *
  * \remarks : Do not use the API to set register at index 0.
  *	      There is possibilty of kernel network subsytem overwriting these registers
- *	      when " tc956xmac_set_rx_mode" is invoked via "ndo_set_rx_mode" callback.
+ *	      when " stmmac_set_rx_mode" is invoked via "ndo_set_rx_mode" callback.
  */
 int set_mac_addr(struct net_device *ndev, struct mac_addr_list *mac_addr, u8 index)
 {

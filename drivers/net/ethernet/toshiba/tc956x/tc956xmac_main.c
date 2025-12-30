@@ -1,7 +1,7 @@
 /*
  * TC956X ethernet driver.
  *
- * tc956xmac_main.c
+ * stmmac_main.c
  *
  * Copyright(C) 2007-2011 STMicroelectronics Ltd
  * Copyright (C) 2025 Toshiba Electronic Devices & Storage Corporation
@@ -120,7 +120,7 @@
  *  06 Apr 2022 : 1. Dynamic MTU change supported. Max MTU supported is 2000 bytes.
  *                2. Constant buffer size of 2K used, so that during MTU change there is no buffer reconfiguration.
  *  VERSION     : 01-00-48
- *  14 Apr 2022 : 1. Ignoring error from tc956xmac_hw_setup in tc956xmac_open API.
+ *  14 Apr 2022 : 1. Ignoring error from stmmac_hw_setup in stmmac_open API.
  *  VERSION     : 01-00-49
  *  25 Apr 2022 : 1. Perform platform remove after MDIO deregistration.
  *  VERSION     : 01-00-50
@@ -335,19 +335,19 @@ static unsigned int chain_mode;
 module_param(chain_mode, int, 0444);
 MODULE_PARM_DESC(chain_mode, "To use chain instead of ring mode");
 #if defined(TC956X_SRIOV_PF)
-static irqreturn_t tc956xmac_interrupt_v0(int irq, void *dev_id);
+static irqreturn_t stmmac_interrupt_v0(int irq, void *dev_id);
 #if !defined(TC956X_AUTOMOTIVE_CONFIG) && !defined(TC956X_CPE_CONFIG)
 /* One interrupt handler for Automotive, CPE config */
-static irqreturn_t tc956xmac_interrupt_v1(int irq, void *dev_id);
+static irqreturn_t stmmac_interrupt_v1(int irq, void *dev_id);
 #endif
 #elif defined(TC956X_SRIOV_VF)
-static irqreturn_t tc956xmac_interrupt_v0(int irq, void *dev_id);
+static irqreturn_t stmmac_interrupt_v0(int irq, void *dev_id);
 #endif
 #ifdef TC956X_SRIOV_PF
 #ifdef CONFIG_DEBUG_FS
-static const struct net_device_ops tc956xmac_netdev_ops;
-static void tc956xmac_init_fs(struct net_device *dev);
-static void tc956xmac_exit_fs(struct net_device *dev);
+static const struct net_device_ops stmmac_netdev_ops;
+static void stmmac_init_fs(struct net_device *dev);
+static void stmmac_exit_fs(struct net_device *dev);
 #endif
 #endif /* TC956X_SRIOV_PF */
 #ifdef TC956X_5_G_2_5_G_EEE_SUPPORT
@@ -363,18 +363,18 @@ extern struct tx956x_shrd_mem tx956x_pci_shrd_mem[TC956X_TOT_CASCADE_DEV];
 extern void stm_pf_del_umac_addr(struct stmmac_priv *priv, int index, int vf);
 extern void stm_pf_del_mac_filter(struct net_device *dev, int vf, const u8 *mac);
 extern void stm_pf_del_vlan_filter(struct net_device *dev, u16 vf, u16 vid);
-extern void tc956xmac_get_pauseparam(struct net_device *netdev,
+extern void stmmac_get_pauseparam(struct net_device *netdev,
 									struct ethtool_pauseparam *pause);
 
-int tc956xmac_ioctl_set_cbs(struct stmmac_priv *priv, void *data);
-int tc956xmac_ioctl_get_cbs(struct stmmac_priv *priv, void *data);
-int tc956xmac_ioctl_get_est(struct stmmac_priv *priv, void *data);
-int tc956xmac_ioctl_set_est(struct stmmac_priv *priv, void *data);
-int tc956xmac_ioctl_get_fpe(struct stmmac_priv *priv, void *data);
-int tc956xmac_ioctl_set_fpe(struct stmmac_priv *priv, void *data);
-int tc956xmac_ioctl_get_rxp(struct stmmac_priv *priv, void *data);
-int tc956xmac_ioctl_set_rxp(struct stmmac_priv *priv, void *data);
-void tc956xmac_service_mbx_event_schedule(struct stmmac_priv *priv);
+int stmmac_ioctl_set_cbs(struct stmmac_priv *priv, void *data);
+int stmmac_ioctl_get_cbs(struct stmmac_priv *priv, void *data);
+int stmmac_ioctl_get_est(struct stmmac_priv *priv, void *data);
+int stmmac_ioctl_set_est(struct stmmac_priv *priv, void *data);
+int stmmac_ioctl_get_fpe(struct stmmac_priv *priv, void *data);
+int stmmac_ioctl_set_fpe(struct stmmac_priv *priv, void *data);
+int stmmac_ioctl_get_rxp(struct stmmac_priv *priv, void *data);
+int stmmac_ioctl_set_rxp(struct stmmac_priv *priv, void *data);
+void stmmac_service_mbx_event_schedule(struct stmmac_priv *priv);
 #ifdef TC956X_ENABLE_MAC2MAC_BRIDGE
 extern int stm_pf_set_mac_filter(struct net_device *dev, int vf, const u8 *mac);
 #endif
@@ -454,7 +454,7 @@ static const struct config_parameter_list config_param_list[] = {
 
 static uint16_t mdio_bus_id;
 #define CONFIG_PARAM_NUM ARRAY_SIZE(config_param_list)
-int tc956xmac_rx_parser_configuration(struct stmmac_priv *);
+int stmmac_rx_parser_configuration(struct stmmac_priv *);
 
 /* Source Address in Pause frame from PHY */
 static u8 phy_sa_addr[2][6] = {
@@ -465,7 +465,7 @@ static u8 phy_sa_addr[2][6] = {
 #ifndef TC956X_SRIOV_VF
 
 static int dwxgmac2_rx_parser_read_entry(struct stmmac_priv *priv,
-		struct tc956xmac_rx_parser_entry *entry, int entry_pos)
+		struct stmmac_rx_parser_entry *entry, int entry_pos)
 {
 	void __iomem *ioaddr = priv->ioaddr;
 	int limit;
@@ -517,8 +517,8 @@ int stm_dump_regs(struct net_device *net_device, struct stm_regs *regs)
 	u32 tx_queues_cnt = priv->plat->tx_queues_to_use;
 	u32 maxq = max(rx_queues_cnt, tx_queues_cnt);
 	u32 ch, queue, table_entry, reg = 0;
-	struct tc956xmac_tx_queue *tx_q;
-	struct tc956xmac_rx_queue *rx_q;
+	struct stmmac_tx_queue *tx_q;
+	struct stmmac_rx_queue *rx_q;
 	u8 fw_version_str[32];
 	struct stm_version *fw_version;
 
@@ -698,7 +698,7 @@ int stm_dump_regs(struct net_device *net_device, struct stm_regs *regs)
 	regs->m3_reg.m3_debug_cnt19 = readl(priv->stm_SRAM_pci_base_addr +
 				(TC956X_M3_SRAM_DEBUG_CNTS_OFFSET + (DB_CNT_LEN * DB_CNT19)));
 
-	regs->rxp_cfg = (struct tc956xmac_rx_parser_cfg *)&priv->plat->rxp_cfg;
+	regs->rxp_cfg = (struct stmmac_rx_parser_cfg *)&priv->plat->rxp_cfg;
 
 	/* TAMAP Information */
 	for (table_entry = 0; table_entry <= MAX_CM3_TAMAP_ENTRIES; table_entry++) {
@@ -736,7 +736,7 @@ int stm_dump_regs(struct net_device *net_device, struct stm_regs *regs)
 #endif
 
 	/* Updating statistics */
-	tc956xmac_mmc_read(priv, priv->mmcaddr, &priv->mmc);
+	stmmac_mmc_read(priv, priv->mmcaddr, &priv->mmc);
 	for (ch = 0; ch < tx_queues_cnt; ch++) {
 		regs->stats.rx_buf_unav_irq[ch] = priv->xstats.rx_buf_unav_irq[ch];
 		regs->stats.tx_pkt_n[ch] = priv->xstats.tx_pkt_n[ch];
@@ -1296,8 +1296,8 @@ static ssize_t read_stm_dma_status(struct file *file,
 	u32 tx_queues_cnt = priv->plat->tx_queues_to_use;
 	u32 maxq = max(rx_queues_cnt, tx_queues_cnt);
 	u32 ch;
-	struct tc956xmac_tx_queue *tx_q;
-	struct tc956xmac_rx_queue *rx_q;
+	struct stmmac_tx_queue *tx_q;
+	struct stmmac_rx_queue *rx_q;
 
 	if (!priv) {
 		pr_err(" %s  ERROR: Invalid private data pointer\n", __func__);
@@ -1489,7 +1489,7 @@ static ssize_t read_stm_other_status(struct file *file,
 	u32 ch, table_entry, reg = 0;
 	u8 fw_version_str[32];
 	struct stm_version *fw_version;
-	struct tc956xmac_rx_parser_cfg *rxp_cfg;
+	struct stmmac_rx_parser_cfg *rxp_cfg;
 
 	if (!priv) {
 		pr_err(" %s  ERROR: Invalid private data pointer\n", __func__);
@@ -1526,7 +1526,7 @@ static ssize_t read_stm_other_status(struct file *file,
 	printk("info.fw_version = %s\n", fw_version_str);
 
 	/* Updating statistics */
-	tc956xmac_mmc_read(priv, priv->mmcaddr, &priv->mmc);
+	stmmac_mmc_read(priv, priv->mmcaddr, &priv->mmc);
 	for (ch = 0; ch < tx_queues_cnt; ch++) {
 		printk("rx_buf_unav_irq[%d] = 0x%llx\n", ch, priv->xstats.rx_buf_unav_irq[ch]);
 		printk("tx_pkt_n[%d] = 0x%llx\n", ch, priv->xstats.tx_pkt_n[ch]);
@@ -1571,7 +1571,7 @@ static ssize_t read_stm_other_status(struct file *file,
 	printk("mmc_rx_lpi_tran_cntr = 0x%llx\n", priv->mmc.mmc_rx_lpi_tran_cntr);
 
 	/* Reading FRP Table information from Registers */
-	rxp_cfg = (struct tc956xmac_rx_parser_cfg *)&priv->plat->rxp_cfg;
+	rxp_cfg = (struct stmmac_rx_parser_cfg *)&priv->plat->rxp_cfg;
 	printk("rxp_cfg->nve = 0x%x\n", (readl(priv->ioaddr + XGMAC_MTL_RXP_CONTROL_STATUS) & 0xFF));
 	printk("rxp_cfg->npe = 0x%x\n", ((readl(priv->ioaddr + XGMAC_MTL_RXP_CONTROL_STATUS) >> 16) & 0xFF));
 	for (table_entry = 0; table_entry <= (rxp_cfg->nve); table_entry++) {
@@ -1629,14 +1629,14 @@ static const struct file_operations fops_reg_dump_stats = {
 };
 
 /**
- * tc956xmac_create_debugfs() - API to create debugfs node for debugging.
+ * stmmac_create_debugfs() - API to create debugfs node for debugging.
  *
  * @net_device: pointer to the net device structure
  *
  * IN: Network device structure: TC956x network interface structure specific to port.
  * OUT: 0 on success and -1 on failure
  */
-int tc956xmac_create_debugfs(struct net_device *net_device)
+int stmmac_create_debugfs(struct net_device *net_device)
 {
 
 	struct stmmac_priv *priv;
@@ -1739,7 +1739,7 @@ fail:
 }
 
 /**
- * tc956xmac_cleanup_debugfs() - API to cleanup debugfs node
+ * stmmac_cleanup_debugfs() - API to cleanup debugfs node
  * for debugging.
  *
  * @net_device: pointer to the net device structure
@@ -1747,7 +1747,7 @@ fail:
  * IN: Network device structure: TC956x network interface structure specific to port.
  * OUT: 0 on success and -1 on failure
  */
-int tc956xmac_cleanup_debugfs(struct net_device *net_device)
+int stmmac_cleanup_debugfs(struct net_device *net_device)
 {
 	struct stmmac_priv *priv;
 
@@ -2023,11 +2023,11 @@ int stm_gpio_restore_configuration(struct stmmac_priv *priv)
 
 #ifdef TC956X_SRIOV_PF
 /**
- *  tc956xmac_wol_interrupt - ISR to handle WoL PHY interrupt
+ *  stmmac_wol_interrupt - ISR to handle WoL PHY interrupt
  *  @irq: interrupt number.
  *  @dev_id: to pass the net device pointer.
  */
-static irqreturn_t tc956xmac_wol_interrupt(int irq, void *dev_id)
+static irqreturn_t stmmac_wol_interrupt(int irq, void *dev_id)
 {
 	struct net_device *dev = (struct net_device *)dev_id;
 	struct stmmac_priv *priv = netdev_priv(dev);
@@ -2035,17 +2035,17 @@ static irqreturn_t tc956xmac_wol_interrupt(int irq, void *dev_id)
 	/* Set flag to clear interrupt after resume */
 	DBGPR_FUNC(priv->device, "%s\n", __func__);
 	/* Set flag to indicate WOL interrupt trigger */
-	priv->tc956xmac_pm_wol_interrupt = true;
+	priv->stmmac_pm_wol_interrupt = true;
 	return IRQ_HANDLED;
 }
 #endif
 
 /**
- * tc956xmac_verify_args - verify the driver parameters.
+ * stmmac_verify_args - verify the driver parameters.
  * Description: it checks the driver parameters and set a default in case of
  * errors.
  */
-static void tc956xmac_verify_args(void)
+static void stmmac_verify_args(void)
 {
 	if (unlikely(watchdog < 0))
 		watchdog = TX_TIMEO;
@@ -2063,7 +2063,7 @@ static void tc956xmac_verify_args(void)
 
 #ifdef TC956X_SRIOV_PF
 #ifdef TC956X_DYNAMIC_LOAD_CBS
-static void tc956xmac_set_cbs_speed(struct stmmac_priv *priv)
+static void stmmac_set_cbs_speed(struct stmmac_priv *priv)
 {
 	u32 queue_idx;
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
@@ -2120,7 +2120,7 @@ static void tc956xmac_set_cbs_speed(struct stmmac_priv *priv)
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 		spin_lock_irqsave(&priv->spn_lock.cbs, flags);
 #endif
-		tc956xmac_config_cbs(priv, priv->hw, priv->plat->tx_queues_cfg[queue_idx].send_slope,
+		stmmac_config_cbs(priv, priv->hw, priv->plat->tx_queues_cfg[queue_idx].send_slope,
 					priv->plat->tx_queues_cfg[queue_idx].idle_slope,
 					priv->plat->tx_queues_cfg[queue_idx].high_credit,
 					priv->plat->tx_queues_cfg[queue_idx].low_credit,
@@ -2134,10 +2134,10 @@ static void tc956xmac_set_cbs_speed(struct stmmac_priv *priv)
 #endif /* DYNAMIC_LOAD_CBS */
 #endif
 /**
- * tc956xmac_disable_all_queues - Disable all queues
+ * stmmac_disable_all_queues - Disable all queues
  * @priv: driver private structure
  */
-static void tc956xmac_disable_all_queues(struct stmmac_priv *priv)
+static void stmmac_disable_all_queues(struct stmmac_priv *priv)
 {
 #ifdef TC956X
 	u32 rx_queues_cnt = priv->plat->rx_queues_to_use;
@@ -2148,7 +2148,7 @@ static void tc956xmac_disable_all_queues(struct stmmac_priv *priv)
 	u32 queue;
 
 	for (queue = 0; queue < maxq; queue++) {
-		struct tc956xmac_channel *ch = &priv->channel[queue];
+		struct stmmac_channel *ch = &priv->channel[queue];
 #ifdef TC956X_SRIOV_PF
 		if (priv->plat->rx_ch_in_use[queue] == TC956X_DISABLE_CHNL)
 			continue;
@@ -2179,10 +2179,10 @@ static void tc956xmac_disable_all_queues(struct stmmac_priv *priv)
 }
 
 /**
- * tc956xmac_enable_all_queues - Enable all queues
+ * stmmac_enable_all_queues - Enable all queues
  * @priv: driver private structure
  */
-static void tc956xmac_enable_all_queues(struct stmmac_priv *priv)
+static void stmmac_enable_all_queues(struct stmmac_priv *priv)
 {
 #ifdef TC956X
 	u32 rx_queues_cnt = priv->plat->rx_queues_to_use;
@@ -2193,7 +2193,7 @@ static void tc956xmac_enable_all_queues(struct stmmac_priv *priv)
 	u32 queue;
 
 	for (queue = 0; queue < maxq; queue++) {
-		struct tc956xmac_channel *ch = &priv->channel[queue];
+		struct stmmac_channel *ch = &priv->channel[queue];
 
 #ifdef TC956X_SRIOV_PF
 		if (queue < rx_queues_cnt) {
@@ -2232,10 +2232,10 @@ static void tc956xmac_enable_all_queues(struct stmmac_priv *priv)
 }
 
 /**
- * tc956xmac_stop_all_queues - Stop all queues
+ * stmmac_stop_all_queues - Stop all queues
  * @priv: driver private structure
  */
-static void tc956xmac_stop_all_queues(struct stmmac_priv *priv)
+static void stmmac_stop_all_queues(struct stmmac_priv *priv)
 {
 	u32 tx_queues_cnt = priv->plat->tx_queues_to_use;
 	u32 queue;
@@ -2257,10 +2257,10 @@ static void tc956xmac_stop_all_queues(struct stmmac_priv *priv)
 }
 
 /**
- * tc956xmac_start_all_queues - Start all queues
+ * stmmac_start_all_queues - Start all queues
  * @priv: driver private structure
  */
-static void tc956xmac_start_all_queues(struct stmmac_priv *priv)
+static void stmmac_start_all_queues(struct stmmac_priv *priv)
 {
 	u32 tx_queues_cnt = priv->plat->tx_queues_to_use;
 	u32 queue;
@@ -2282,7 +2282,7 @@ static void tc956xmac_start_all_queues(struct stmmac_priv *priv)
 }
 
 #ifdef TC956X_UNSUPPORTED_UNTESTED
-static void tc956xmac_service_event_schedule(struct stmmac_priv *priv)
+static void stmmac_service_event_schedule(struct stmmac_priv *priv)
 {
 	if (!test_bit(TC956XMAC_DOWN, &priv->state) &&
 	    !test_and_set_bit(TC956XMAC_SERVICE_SCHED, &priv->state))
@@ -2292,10 +2292,10 @@ static void tc956xmac_service_event_schedule(struct stmmac_priv *priv)
 
 #if defined(TC956X_SRIOV_PF) && !defined(TC956X_AUTOMOTIVE_CONFIG) && !defined(TC956X_ENABLE_MAC2MAC_BRIDGE) && !defined(TC956X_CPE_CONFIG)
 /**
- * tc956xmac_service_mbx_event_schedule - Schedule work queue
+ * stmmac_service_mbx_event_schedule - Schedule work queue
  * @priv: driver private structure
  */
-void tc956xmac_service_mbx_event_schedule(struct stmmac_priv *priv)
+void stmmac_service_mbx_event_schedule(struct stmmac_priv *priv)
 {
 	if (!test_bit(TC956XMAC_DOWN, &priv->state) &&
 	    !test_and_set_bit(TC956XMAC_SERVICE_SCHED, &priv->state))
@@ -2304,17 +2304,17 @@ void tc956xmac_service_mbx_event_schedule(struct stmmac_priv *priv)
 #endif
 #ifdef TC956X_SRIOV_VF
 /**
- * tc956xmac_mailbox_service_event_schedule - Schedule work queue
+ * stmmac_mailbox_service_event_schedule - Schedule work queue
  * @priv: driver private structure
  */
-void tc956xmac_mailbox_service_event_schedule(struct stmmac_priv *priv)
+void stmmac_mailbox_service_event_schedule(struct stmmac_priv *priv)
 {
 	if (!test_bit(TC956XMAC_DOWN, &priv->state) &&
 	    !test_and_set_bit(TC956XMAC_SERVICE_SCHED, &priv->state))
 		queue_work(priv->mbx_wq, &priv->mbx_service_task);
 }
 #endif
-static void tc956xmac_global_err(struct stmmac_priv *priv)
+static void stmmac_global_err(struct stmmac_priv *priv)
 {
 #ifdef TC956X_SRIOV_VF
 	netdev_alert(priv->dev, "%s PF %d VF %d disabling carrier\n", __func__, priv->fn_id_info.pf_no, priv->fn_id_info.vf_no);
@@ -2322,14 +2322,14 @@ static void tc956xmac_global_err(struct stmmac_priv *priv)
 	netif_carrier_off(priv->dev);
 	set_bit(TC956XMAC_RESET_REQUESTED, &priv->state);
 #ifdef TC956X_UNSUPPORTED_UNTESTED
-	tc956xmac_service_event_schedule(priv);
+	stmmac_service_event_schedule(priv);
 #endif
 }
 
 #ifdef TC956X_UNSUPPORTED_UNTESTED_FEATURE
 #ifndef TC956X_SRIOV_VF
 /**
- * tc956xmac_clk_csr_set - dynamically set the MDC clock
+ * stmmac_clk_csr_set - dynamically set the MDC clock
  * @priv: driver private structure
  * Description: this is to dynamically set the MDC clock according to the csr
  * clock input.
@@ -2340,11 +2340,11 @@ static void tc956xmac_global_err(struct stmmac_priv *priv)
  *	documentation). Viceversa the driver will try to set the MDC
  *	clock dynamically according to the actual clock input.
  */
-static void tc956xmac_clk_csr_set(struct stmmac_priv *priv)
+static void stmmac_clk_csr_set(struct stmmac_priv *priv)
 {
 	u32 clk_rate;
 
-	clk_rate = clk_get_rate(priv->plat->tc956xmac_clk);
+	clk_rate = clk_get_rate(priv->plat->stmmac_clk);
 
 	/* Platform provided default clk_csr would be assumed valid
 	 * for all other cases except for the below mentioned ones.
@@ -2402,9 +2402,9 @@ static void print_pkt(unsigned char *buf, int len)
 	print_hex_dump_bytes("", DUMP_PREFIX_OFFSET, buf, len);
 }
 
-static inline u32 tc956xmac_tx_avail(struct stmmac_priv *priv, u32 queue)
+static inline u32 stmmac_tx_avail(struct stmmac_priv *priv, u32 queue)
 {
-	struct tc956xmac_tx_queue *tx_q = &priv->tx_queue[queue];
+	struct stmmac_tx_queue *tx_q = &priv->tx_queue[queue];
 	u32 avail;
 
 	if (tx_q->dirty_tx > tx_q->cur_tx)
@@ -2416,13 +2416,13 @@ static inline u32 tc956xmac_tx_avail(struct stmmac_priv *priv, u32 queue)
 }
 
 /**
- * tc956xmac_rx_dirty - Get RX queue dirty
+ * stmmac_rx_dirty - Get RX queue dirty
  * @priv: driver private structure
  * @queue: RX queue index
  */
-static inline u32 tc956xmac_rx_dirty(struct stmmac_priv *priv, u32 queue)
+static inline u32 stmmac_rx_dirty(struct stmmac_priv *priv, u32 queue)
 {
-	struct tc956xmac_rx_queue *rx_q = &priv->rx_queue[queue];
+	struct stmmac_rx_queue *rx_q = &priv->rx_queue[queue];
 	u32 dirty;
 
 	if (rx_q->dirty_rx <= rx_q->cur_rx)
@@ -2434,39 +2434,39 @@ static inline u32 tc956xmac_rx_dirty(struct stmmac_priv *priv, u32 queue)
 }
 
 /**
- * tc956xmac_enable_eee_mode - check and enter in LPI mode
+ * stmmac_enable_eee_mode - check and enter in LPI mode
  * @priv: driver private structure
  * Description: this function is to verify and enter in LPI mode in case of
  * EEE.
  */
-static void tc956xmac_enable_eee_mode(struct stmmac_priv *priv)
+static void stmmac_enable_eee_mode(struct stmmac_priv *priv)
 {
 #ifdef TC956X_SRIOV_PF
-	tc956xmac_set_eee_mode(priv, priv->hw,
+	stmmac_set_eee_mode(priv, priv->hw,
 			priv->plat->en_tx_lpi_clockgating);
 #endif
 }
 
 /**
- * tc956xmac_disable_eee_mode - disable and exit from LPI mode
+ * stmmac_disable_eee_mode - disable and exit from LPI mode
  * @priv: driver private structure
  * Description: this function is to exit and disable EEE in case of
  * LPI state is true. This is called by the xmit.
  */
-void tc956xmac_disable_eee_mode(struct stmmac_priv *priv)
+void stmmac_disable_eee_mode(struct stmmac_priv *priv)
 {
-	tc956xmac_reset_eee_mode(priv, priv->hw);
+	stmmac_reset_eee_mode(priv, priv->hw);
 }
 
 /**
- * tc956xmac_eee_init - init EEE
+ * stmmac_eee_init - init EEE
  * @priv: driver private structure
  * Description:
  *  if the GMAC supports the EEE (from the HW cap reg) and the phy device
  *  can also manage EEE, this function enable the LPI state and start related
  *  timer.
  */
-bool tc956xmac_eee_init(struct stmmac_priv *priv)
+bool stmmac_eee_init(struct stmmac_priv *priv)
 {
 #ifdef EEE_MAC_CONTROLLED_MODE
 	int value;
@@ -2486,9 +2486,9 @@ bool tc956xmac_eee_init(struct stmmac_priv *priv)
 
 	mutex_lock(&priv->lock);
 
-	tc956xmac_enable_eee_mode(priv);
+	stmmac_enable_eee_mode(priv);
 #ifdef EEE_MAC_CONTROLLED_MODE
-	tc956xmac_set_eee_timer(priv, priv->hw, TC956XMAC_LIT_LS, TC956XMAC_TWT_LS);
+	stmmac_set_eee_timer(priv, priv->hw, TC956XMAC_LIT_LS, TC956XMAC_TWT_LS);
 	value = readl(priv->ioaddr + XGMAC_LPI_1US_Tic_Counter);
 	value &= ~XGMAC_LPI_1US_Tic_Counter_MASK;
 	value |= (TC956XMAC_TIC_1US_CNTR & XGMAC_LPI_1US_Tic_Counter_MASK); /* Setting  bit [11...0] */
@@ -2508,7 +2508,7 @@ bool tc956xmac_eee_init(struct stmmac_priv *priv)
 	return true;
 }
 
-/* tc956xmac_get_tx_hwtstamp - get HW TX timestamps
+/* stmmac_get_tx_hwtstamp - get HW TX timestamps
  * @priv: driver private structure
  * @p : descriptor pointer
  * @skb : the socket buffer
@@ -2516,7 +2516,7 @@ bool tc956xmac_eee_init(struct stmmac_priv *priv)
  * This function will read timestamp from the descriptor & pass it to stack.
  * and also perform some sanity checks.
  */
-static void tc956xmac_get_tx_hwtstamp(struct stmmac_priv *priv,
+static void stmmac_get_tx_hwtstamp(struct stmmac_priv *priv,
 				   struct dma_desc *p, struct sk_buff *skb)
 {
 	struct skb_shared_hwtstamps shhwtstamp;
@@ -2542,10 +2542,10 @@ static void tc956xmac_get_tx_hwtstamp(struct stmmac_priv *priv,
 		return;
 #endif
 	/* check tx tstamp status */
-	if (tc956xmac_get_tx_timestamp_status(priv, p)) {
-		tc956xmac_get_timestamp(priv, p, priv->adv_ts, &ns);
+	if (stmmac_get_tx_timestamp_status(priv, p)) {
+		stmmac_get_timestamp(priv, p, priv->adv_ts, &ns);
 		found = true;
-	} else if (!tc956xmac_get_mac_tx_timestamp(priv, priv->hw, &ns)) {
+	} else if (!stmmac_get_mac_tx_timestamp(priv, priv->hw, &ns)) {
 		found = true;
 	}
 
@@ -2655,7 +2655,7 @@ static void tc956xmac_get_tx_hwtstamp(struct stmmac_priv *priv,
 
 }
 
-/* tc956xmac_get_rx_hwtstamp - get HW RX timestamps
+/* stmmac_get_rx_hwtstamp - get HW RX timestamps
  * @priv: driver private structure
  * @p : descriptor pointer
  * @np : next descriptor pointer
@@ -2666,12 +2666,12 @@ static void tc956xmac_get_tx_hwtstamp(struct stmmac_priv *priv,
  */
 
 #if defined(RX_LOGGING_TRACE)
-static void tc956xmac_get_rx_hwtstamp(struct stmmac_priv *priv, struct dma_desc *p,
+static void stmmac_get_rx_hwtstamp(struct stmmac_priv *priv, struct dma_desc *p,
 				   struct dma_desc *np, struct sk_buff *skb,
 				   u32 qno)
 
 #else
-static void tc956xmac_get_rx_hwtstamp(struct stmmac_priv *priv, struct dma_desc *p,
+static void stmmac_get_rx_hwtstamp(struct stmmac_priv *priv, struct dma_desc *p,
 				   struct dma_desc *np, struct sk_buff *skb)
 #endif
 {
@@ -2699,7 +2699,7 @@ static void tc956xmac_get_rx_hwtstamp(struct stmmac_priv *priv, struct dma_desc 
 		desc = np;
 
 	/* Check if timestamp is available */
-	if (tc956xmac_get_rx_timestamp_status(priv, p, np, priv->adv_ts)) {
+	if (stmmac_get_rx_timestamp_status(priv, p, np, priv->adv_ts)) {
 #ifdef FPE
 #if defined(RX_LOGGING_TRACE)
 		static unsigned int count;
@@ -2712,7 +2712,7 @@ static void tc956xmac_get_rx_hwtstamp(struct stmmac_priv *priv, struct dma_desc 
 		count++;
 #endif
 #endif
-		tc956xmac_get_timestamp(priv, desc, priv->adv_ts, &ns);
+		stmmac_get_timestamp(priv, desc, priv->adv_ts, &ns);
 		netdev_dbg(priv->dev, "get valid RX hw timestamp %llu\n", ns);
 		shhwtstamp = skb_hwtstamps(skb);
 		memset(shhwtstamp, 0, sizeof(struct skb_shared_hwtstamps));
@@ -2754,7 +2754,7 @@ static void tc956xmac_get_rx_hwtstamp(struct stmmac_priv *priv, struct dma_desc 
 }
 
 /**
- *  tc956xmac_hwtstamp_set - control hardware timestamping.
+ *  stmmac_hwtstamp_set - control hardware timestamping.
  *  @dev: device pointer.
  *  @ifr: An IOCTL specific structure, that can contain a pointer to
  *  a proprietary structure used to pass information to the driver.
@@ -2765,7 +2765,7 @@ static void tc956xmac_get_rx_hwtstamp(struct stmmac_priv *priv, struct dma_desc 
  *  0 on success and an appropriate -ve integer on failure.
  */
 #ifndef TC956X_SRIOV_VF
-static int tc956xmac_hwtstamp_set(struct net_device *dev, struct ifreq *ifr)
+static int stmmac_hwtstamp_set(struct net_device *dev, struct ifreq *ifr)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 	struct hwtstamp_config config;
@@ -2890,7 +2890,7 @@ static int tc956xmac_hwtstamp_set(struct net_device *dev, struct ifreq *ifr)
 	priv->hwts_tx_en = config.tx_type == HWTSTAMP_TX_ON;
 
 	if (!priv->hwts_tx_en && !priv->hwts_rx_en)
-		tc956xmac_config_hw_tstamping(priv, priv->ptpaddr, 0);
+		stmmac_config_hw_tstamping(priv, priv->ptpaddr, 0);
 	else {
 		value = readl(priv->ptpaddr + PTP_TCR);
 		/* Note : Values will never be set. "stm_ptp_configuration" function
@@ -2910,7 +2910,7 @@ static int tc956xmac_hwtstamp_set(struct net_device *dev, struct ifreq *ifr)
 }
 
 /*
- *  tc956xmac_hwtstamp_get - read hardware timestamping.
+ *  stmmac_hwtstamp_get - read hardware timestamping.
  *  @dev: device pointer.
  *  @ifr: An IOCTL specific structure, that can contain a pointer to
  *  a proprietary structure used to pass information to the driver.
@@ -2918,7 +2918,7 @@ static int tc956xmac_hwtstamp_set(struct net_device *dev, struct ifreq *ifr)
  *  This function obtain the current hardware timestamping settings
  *  as requested.
  */
-static int tc956xmac_hwtstamp_get(struct net_device *dev, struct ifreq *ifr)
+static int stmmac_hwtstamp_get(struct net_device *dev, struct ifreq *ifr)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 	struct hwtstamp_config *config = &priv->tstamp_config;
@@ -2931,13 +2931,13 @@ static int tc956xmac_hwtstamp_get(struct net_device *dev, struct ifreq *ifr)
 }
 
 /**
- * tc956xmac_init_ptp - init PTP
+ * stmmac_init_ptp - init PTP
  * @priv: driver private structure
  * Description: this is to verify if the HW supports the PTPv1 or PTPv2.
  * This is done by looking at the HW cap. register.
  * This function also registers the ptp driver.
  */
-static int tc956xmac_init_ptp(struct stmmac_priv *priv)
+static int stmmac_init_ptp(struct stmmac_priv *priv)
 {
 	bool xmac = priv->plat->has_gmac4 || priv->plat->has_xgmac;
 
@@ -2962,37 +2962,37 @@ static int tc956xmac_init_ptp(struct stmmac_priv *priv)
 	priv->hwts_tx_en = 0;
 	priv->hwts_rx_en = 0;
 
-	tc956xmac_ptp_register(priv);
+	stmmac_ptp_register(priv);
 
 	return 0;
 }
 #endif /* TC956X_SRIOV_VF */
 
-static void tc956xmac_release_ptp(struct stmmac_priv *priv)
+static void stmmac_release_ptp(struct stmmac_priv *priv)
 {
 	if (priv->plat->clk_ptp_ref)
 		clk_disable_unprepare(priv->plat->clk_ptp_ref);
-	tc956xmac_ptp_unregister(priv);
+	stmmac_ptp_unregister(priv);
 }
 #ifndef TC956X_SRIOV_VF
 /**
- *  tc956xmac_mac_flow_ctrl - Configure flow control in all queues
+ *  stmmac_mac_flow_ctrl - Configure flow control in all queues
  *
  *  @priv: driver private structure
  *  @duplex: duplex value (?)
  *
  *  Description: It is used for configuring the flow control in all queues
  */
-static void tc956xmac_mac_flow_ctrl(struct stmmac_priv *priv, u32 duplex)
+static void stmmac_mac_flow_ctrl(struct stmmac_priv *priv, u32 duplex)
 {
 	u32 tx_cnt = priv->plat->tx_queues_to_use;
 
-	tc956xmac_flow_ctrl(priv, priv->hw, duplex, priv->flow_ctrl,
+	stmmac_flow_ctrl(priv, priv->hw, duplex, priv->flow_ctrl,
 			priv->pause, tx_cnt);
 }
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 7, 0)
-static unsigned long tc956xmac_get_caps(struct phylink_config *config,
+static unsigned long stmmac_get_caps(struct phylink_config *config,
 	                    phy_interface_t interface)
 {
 	struct stmmac_priv *priv = netdev_priv(to_net_dev(config->dev));
@@ -3041,7 +3041,7 @@ static unsigned long tc956xmac_get_caps(struct phylink_config *config,
 #endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(6, 7, 0) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 7, 0)
-static void tc956xmac_validate(struct phylink_config *config,
+static void stmmac_validate(struct phylink_config *config,
 			    unsigned long *supported,
 			    struct phylink_link_state *state)
 {
@@ -3149,7 +3149,7 @@ static void tc956xmac_validate(struct phylink_config *config,
 #ifndef TC956X_SRIOV_VF
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 5, 0)
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 6, 0)
-static void tc956xmac_mac_pcs_get_state(struct phylink_config *config,
+static void stmmac_mac_pcs_get_state(struct phylink_config *config,
 					struct phylink_link_state *state)
 {
 #ifndef TC956X
@@ -3220,7 +3220,7 @@ static void tc956xmac_mac_pcs_get_state(struct phylink_config *config,
 }
 #endif
 #else	/* Required when using with Kernel v5.4 */
-static int tc956xmac_mac_link_state(struct phylink_config *config,
+static int stmmac_mac_link_state(struct phylink_config *config,
 				 struct phylink_link_state *state)
 {
 #ifndef TC956X
@@ -3301,13 +3301,13 @@ static int tc956xmac_mac_link_state(struct phylink_config *config,
 #endif
 
 /**
- *  tc956xmac_speed_change_init_mac - Initialize MAC during speed change.
+ *  stmmac_speed_change_init_mac - Initialize MAC during speed change.
  *  @priv: driver private structure
  *  @state : phy state structure
  *  Description: It is used for initializing MAC during speed change of
  *  USXGMII and SGMII.
  */
-static void tc956xmac_speed_change_init_mac(struct stmmac_priv *priv,
+static void stmmac_speed_change_init_mac(struct stmmac_priv *priv,
 					const struct phylink_link_state *state)
 {
 	/* use signal from MSPHY */
@@ -3573,7 +3573,7 @@ static void tc956xmac_speed_change_init_mac(struct stmmac_priv *priv,
 	}
 }
 
-static void tc956xmac_mac_config(struct phylink_config *config, unsigned int mode,
+static void stmmac_mac_config(struct phylink_config *config, unsigned int mode,
 				const struct phylink_link_state *state)
 {
 	struct stmmac_priv *priv = netdev_priv(to_net_dev(config->dev));
@@ -3589,7 +3589,7 @@ static void tc956xmac_mac_config(struct phylink_config *config, unsigned int mod
 
 #ifdef RBTC9563_3DB
 	if ((priv->port_num == 1) && (priv->port_link_down == true))
-		tc956xmac_link_change_set_power(priv, LINK_UP);
+		stmmac_link_change_set_power(priv, LINK_UP);
 #endif
 
 	NMSGPR_INFO(priv->device, "-->%s\n", __func__);
@@ -3618,7 +3618,7 @@ static void tc956xmac_mac_config(struct phylink_config *config, unsigned int mod
 				/* Invoke this only during speed change */
 				if ((state->speed != SPEED_UNKNOWN) && (state->speed != 0)) {
 					if (state->speed != priv->speed) {
-						tc956xmac_speed_change_init_mac(priv, state);
+						stmmac_speed_change_init_mac(priv, state);
 					}
 				} else {
 					return;
@@ -3711,7 +3711,7 @@ static void tc956xmac_mac_config(struct phylink_config *config, unsigned int mod
 			/* Invoke this only during speed change */
 			if ((state->speed != SPEED_UNKNOWN) && (state->speed != 0)) {
 				if (state->speed != priv->speed)
-					tc956xmac_speed_change_init_mac(priv, state);
+					stmmac_speed_change_init_mac(priv, state);
 			} else {
 				return;
 			}
@@ -3836,7 +3836,7 @@ static void tc956xmac_mac_config(struct phylink_config *config, unsigned int mod
 
 	/* Flow Control operation */
 	if (state->pause)
-		tc956xmac_mac_flow_ctrl(priv, state->duplex);
+		stmmac_mac_flow_ctrl(priv, state->duplex);
 
 	if (config_done) {
 		writel(ctrl, priv->ioaddr + MAC_CTRL_REG);
@@ -3846,7 +3846,7 @@ static void tc956xmac_mac_config(struct phylink_config *config, unsigned int mod
 #endif
 }
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 6, 0)
-static void tc956xmac_mac_an_restart(struct phylink_config *config)
+static void stmmac_mac_an_restart(struct phylink_config *config)
 {
 #ifdef TC956X
 	struct stmmac_priv *priv = netdev_priv(to_net_dev(config->dev));
@@ -3884,9 +3884,9 @@ static void tc956xmac_mac_an_restart(struct phylink_config *config)
 }
 #endif
 
-static int tc956xmac_open(struct net_device *dev);
-static int tc956xmac_release(struct net_device *dev);
-static void tc956xmac_mac_link_down(struct phylink_config *config,
+static int stmmac_open(struct net_device *dev);
+static int stmmac_release(struct net_device *dev);
+static void stmmac_mac_link_down(struct phylink_config *config,
 				 unsigned int mode, phy_interface_t interface)
 {
 	u32 ch;
@@ -3894,14 +3894,14 @@ static void tc956xmac_mac_link_down(struct phylink_config *config,
 	struct stmmac_priv *priv = netdev_priv(to_net_dev(config->dev));
 	struct net_device *ndev = to_net_dev(config->dev);
 
-	tc956xmac_mac_set_rx(priv, priv->ioaddr, false);
+	stmmac_mac_set_rx(priv, priv->ioaddr, false);
 	/* In SRIOV code, EEE is handled by PF driver */
 #ifndef TC956X_SRIOV_VF
 #ifdef EEE
 	priv->eee_active = false;
 	DBGPR_FUNC(priv->device, "%s Disable EEE\n", __func__);
-	tc956xmac_disable_eee_mode(priv);
-	tc956xmac_set_eee_pls(priv, priv->hw, false);
+	stmmac_disable_eee_mode(priv);
+	stmmac_set_eee_pls(priv, priv->hw, false);
 #endif
 #ifdef TC956X_PM_DEBUG
 	pm_generic_suspend(priv->device);
@@ -3914,8 +3914,8 @@ static void tc956xmac_mac_link_down(struct phylink_config *config,
 
 	KPRINT_INFO("link down1 priv->link_down_rst = %d\n", priv->link_down_rst);
 	if (priv->link_down_rst == true) {
-		tc956xmac_release(ndev);
-		tc956xmac_open(ndev);
+		stmmac_release(ndev);
+		stmmac_open(ndev);
 		priv->link_down_rst = false;
 	}
 
@@ -3940,7 +3940,7 @@ static void tc956xmac_mac_link_down(struct phylink_config *config,
 
 	/* If all channels are freed, call API for power saving*/
 	if (priv->port_link_down == false && offload_release_sts == true) {
-		tc956xmac_link_change_set_power(priv, LINK_DOWN); /* Save, Assert and Disable Reset and Clock */
+		stmmac_link_change_set_power(priv, LINK_DOWN); /* Save, Assert and Disable Reset and Clock */
 	}
 	priv->port_release = true; /* setting port release to true as link-down invoked, and clear from open or link-up */
 	mutex_unlock(&priv->port_ld_release_lock);
@@ -4157,12 +4157,12 @@ eee_exit_err:
 #endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 7, 0)
-static void tc956xmac_mac_link_up(struct phylink_config *config,
+static void stmmac_mac_link_up(struct phylink_config *config,
 				   struct phy_device *phy,
 				   unsigned int mode, phy_interface_t interface,
 			       int speed, int duplex, bool tx_pause, bool rx_pause)
 #else
-static void tc956xmac_mac_link_up(struct phylink_config *config,
+static void stmmac_mac_link_up(struct phylink_config *config,
 			       unsigned int mode, phy_interface_t interface,
 			       struct phy_device *phy)
 #endif
@@ -4208,7 +4208,7 @@ static void tc956xmac_mac_link_up(struct phylink_config *config,
 				/* Invoke this only during speed change */
 				if ((speed != SPEED_UNKNOWN) && (speed != 0)) {
 					if (speed != priv->speed)
-						tc956xmac_speed_change_init_mac(priv, &state);
+						stmmac_speed_change_init_mac(priv, &state);
 				} else {
 					return;
 				}
@@ -4300,7 +4300,7 @@ static void tc956xmac_mac_link_up(struct phylink_config *config,
 				/* Invoke this only during speed change */
 				if ((speed != SPEED_UNKNOWN) && (speed != 0)) {
 					if (speed != priv->speed)
-						tc956xmac_speed_change_init_mac(priv, &state);
+						stmmac_speed_change_init_mac(priv, &state);
 				} else {
 					return;
 				}
@@ -4438,7 +4438,7 @@ static void tc956xmac_mac_link_up(struct phylink_config *config,
 	else
 		priv->flow_ctrl = FLOW_OFF;
 
-	tc956xmac_mac_flow_ctrl(priv, duplex);
+	stmmac_mac_flow_ctrl(priv, duplex);
 
 	if (config_done) {
 		writel(ctrl, priv->ioaddr + MAC_CTRL_REG);
@@ -4446,17 +4446,17 @@ static void tc956xmac_mac_link_up(struct phylink_config *config,
 		writel(misc_ctrl, priv->ioaddr + NMISCCTL_OFFSET);
 	}
 
-	tc956xmac_mac_set(priv, priv->ioaddr, true);
+	stmmac_mac_set(priv, priv->ioaddr, true);
 #endif
 #ifndef TC956X_SRIOV_VF
 	mutex_lock(&priv->port_ld_release_lock);
 	priv->port_release = false; /* setting port release to false as link-up invoked, and set to true from release or link down */
 	if (priv->port_link_down == true) {
-		tc956xmac_link_change_set_power(priv, LINK_UP); /* Restore, De-assert and Enable Reset and Clock */
+		stmmac_link_change_set_power(priv, LINK_UP); /* Restore, De-assert and Enable Reset and Clock */
 	}
 	mutex_unlock(&priv->port_ld_release_lock);
 #endif
-	tc956xmac_mac_set_rx(priv, priv->ioaddr, true);
+	stmmac_mac_set_rx(priv, priv->ioaddr, true);
 
 	/* In SRIOV code, EEE is handled by PF driver */
 #ifndef TC956X_SRIOV_VF
@@ -4481,8 +4481,8 @@ static void tc956xmac_mac_link_up(struct phylink_config *config,
 #endif
 #endif
 		if (priv->eee_active) {
-			tc956xmac_eee_init(priv);
-			tc956xmac_set_eee_pls(priv, priv->hw, true);
+			stmmac_eee_init(priv);
+			stmmac_set_eee_pls(priv, priv->hw, true);
 		}
 	}
 #endif
@@ -4495,7 +4495,7 @@ static void tc956xmac_mac_link_up(struct phylink_config *config,
 #ifdef TC956X_SRIOV_PF
 #ifdef TC956X_DYNAMIC_LOAD_CBS
 	if (prev_speed != priv->speed) {
-		tc956xmac_set_cbs_speed(priv);
+		stmmac_set_cbs_speed(priv);
 	}
 	prev_speed = priv->speed;
 #endif
@@ -4506,37 +4506,37 @@ static void tc956xmac_mac_link_up(struct phylink_config *config,
 #endif
 }
 
-static const struct phylink_mac_ops tc956xmac_phylink_mac_ops = {
+static const struct phylink_mac_ops stmmac_phylink_mac_ops = {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 7, 0)
-	.mac_get_caps = tc956xmac_get_caps,
+	.mac_get_caps = stmmac_get_caps,
 #else
-	.validate = tc956xmac_validate,
+	.validate = stmmac_validate,
 #endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 5, 0)
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 6, 0)
-	.mac_pcs_get_state = tc956xmac_mac_pcs_get_state,
+	.mac_pcs_get_state = stmmac_mac_pcs_get_state,
 #endif
 #else	/* Required when using with Kernel v5.4 */
-	.mac_link_state = tc956xmac_mac_link_state,
+	.mac_link_state = stmmac_mac_link_state,
 #endif
-	.mac_config = tc956xmac_mac_config,
+	.mac_config = stmmac_mac_config,
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 6, 0)
-	.mac_an_restart = tc956xmac_mac_an_restart,
+	.mac_an_restart = stmmac_mac_an_restart,
 #endif
-	.mac_link_down = tc956xmac_mac_link_down,
-	.mac_link_up = tc956xmac_mac_link_up,
+	.mac_link_down = stmmac_mac_link_down,
+	.mac_link_up = stmmac_mac_link_up,
 };
 #endif  /* TC956X_SRIOV_VF */
 #ifndef TC956X_SRIOV_VF
 /**
- * tc956xmac_check_pcs_mode - verify if RGMII/SGMII is supported
+ * stmmac_check_pcs_mode - verify if RGMII/SGMII is supported
  * @priv: driver private structure
  * Description: this is to verify if the HW supports the PCS.
  * Physical Coding Sublayer (PCS) interface that can be used when the MAC is
  * configured for the TBI, RTBI, or SGMII PHY interface.
  */
-static void tc956xmac_check_pcs_mode(struct stmmac_priv *priv)
+static void stmmac_check_pcs_mode(struct stmmac_priv *priv)
 {
 	int interface = priv->plat->interface;
 
@@ -4589,10 +4589,10 @@ static void tc956xmac_check_pcs_mode(struct stmmac_priv *priv)
 }
 
 /**
- * tc956xmac_defer_phy_isr_work - Scheduled by the PHY Ext Interrupt from ISR Handler
+ * stmmac_defer_phy_isr_work - Scheduled by the PHY Ext Interrupt from ISR Handler
  *  @work: work_struct
  */
-static void tc956xmac_defer_phy_isr_work(struct work_struct *work)
+static void stmmac_defer_phy_isr_work(struct work_struct *work)
 {
 	struct phy_device *phydev = NULL;
 	int rd_val = 0;
@@ -4600,7 +4600,7 @@ static void tc956xmac_defer_phy_isr_work(struct work_struct *work)
 		container_of(work, struct stmmac_priv, emac_phy_work);
 	int addr = priv->plat->phy_addr;
 
-	DBGPR_FUNC(priv->device, "Entry: tc956xmac_defer_phy_isr_work\n");
+	DBGPR_FUNC(priv->device, "Entry: stmmac_defer_phy_isr_work\n");
 
 	if (priv->dma_cap.sma_mdio == 1)
 		phydev = mdiobus_get_phy(priv->mii, addr);
@@ -4630,18 +4630,18 @@ static void tc956xmac_defer_phy_isr_work(struct work_struct *work)
 	rd_val |= (1 << MSI_INT_EXT_PHY);
 	writel(rd_val, priv->ioaddr + TC956X_MSI_OUT_EN_OFFSET(priv->port_num, 0)); /* MSI_OUT_EN: Enable MAC Ext Interrupt */
 
-	DBGPR_FUNC(priv->device, "Exit: tc956xmac_defer_phy_isr_work\n");
+	DBGPR_FUNC(priv->device, "Exit: stmmac_defer_phy_isr_work\n");
 }
 
 /**
- * tc956xmac_init_phy - PHY initialization
+ * stmmac_init_phy - PHY initialization
  * @dev: net device structure
  * Description: it initializes the driver's PHY state, and attaches the PHY
  * to the mac driver.
  *  Return value:
  *  0 on success
  */
-static int tc956xmac_init_phy(struct net_device *dev)
+static int stmmac_init_phy(struct net_device *dev)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 	struct device_node *node;
@@ -4673,7 +4673,7 @@ static int tc956xmac_init_phy(struct net_device *dev)
 			KPRINT_INFO("PHY configured in interrupt mode\n");
 			DBGPR_FUNC(priv->device, "%s PHY configured in interrupt mode\n", __func__);
 
-			INIT_WORK(&priv->emac_phy_work, tc956xmac_defer_phy_isr_work);
+			INIT_WORK(&priv->emac_phy_work, stmmac_defer_phy_isr_work);
 		} else {
 			phydev->irq = PHY_POLL;
 			DBGPR_FUNC(priv->device, "%s [1] PHY configured in polling mode\n", __func__);
@@ -4754,9 +4754,9 @@ static int tc956xmac_init_phy(struct net_device *dev)
 	return ret;
 }
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
-static void tc956xmac_phylink_fixed_state(struct phylink_config *config, struct phylink_link_state *state)
+static void stmmac_phylink_fixed_state(struct phylink_config *config, struct phylink_link_state *state)
 #else
-static void tc956xmac_phylink_fixed_state(struct net_device *dev, struct phylink_link_state *state)
+static void stmmac_phylink_fixed_state(struct net_device *dev, struct phylink_link_state *state)
 #endif
 {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
@@ -4773,7 +4773,7 @@ static void tc956xmac_phylink_fixed_state(struct net_device *dev, struct phylink
 	return;
 }
 
-static int tc956xmac_phy_setup(struct stmmac_priv *priv)
+static int stmmac_phy_setup(struct stmmac_priv *priv)
 {
 	struct fwnode_handle *fwnode = of_fwnode_handle(priv->plat->phylink_node);
 	int mode = priv->plat->phy_interface;
@@ -4796,7 +4796,7 @@ static int tc956xmac_phy_setup(struct stmmac_priv *priv)
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 7, 0)
 	/*
 	 * These capabilities are copied (and translated) from
-	 * tc956xmac_validate().
+	 * stmmac_validate().
 	 */
 	priv->phylink_config.mac_capabilities =
 		MAC_SYM_PAUSE | MAC_ASYM_PAUSE |
@@ -4805,22 +4805,22 @@ static int tc956xmac_phy_setup(struct stmmac_priv *priv)
 #endif
 
 	phylink = phylink_create(&priv->phylink_config, fwnode, mode,
-				 &tc956xmac_phylink_mac_ops);
+				 &stmmac_phylink_mac_ops);
 	if (IS_ERR(phylink))
 		return PTR_ERR(phylink);
 
 	/* Fixed phy mode should be set using device tree, driver just registers callback here */
 	if (priv->plat->force_speed_mode == ENABLE)
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
-		priv->phylink_config.get_fixed_state = tc956xmac_phylink_fixed_state;
+		priv->phylink_config.get_fixed_state = stmmac_phylink_fixed_state;
 #else
-		phylink_fixed_state_cb(phylink, tc956xmac_phylink_fixed_state);
+		phylink_fixed_state_cb(phylink, stmmac_phylink_fixed_state);
 #endif
 	priv->phylink = phylink;
 	return 0;
 }
 #endif /*#ifdef TC956X_SRIOV_VF*/
-static void tc956xmac_display_rx_rings(struct stmmac_priv *priv)
+static void stmmac_display_rx_rings(struct stmmac_priv *priv)
 {
 	u32 rx_cnt = priv->plat->rx_queues_to_use;
 	void *head_rx;
@@ -4828,7 +4828,7 @@ static void tc956xmac_display_rx_rings(struct stmmac_priv *priv)
 
 	/* Display RX rings */
 	for (queue = 0; queue < rx_cnt; queue++) {
-		struct tc956xmac_rx_queue *rx_q = &priv->rx_queue[queue];
+		struct stmmac_rx_queue *rx_q = &priv->rx_queue[queue];
 
 #ifdef TC956X_SRIOV_PF
 		if (priv->plat->rx_ch_in_use[queue] == TC956X_DISABLE_CHNL)
@@ -4849,11 +4849,11 @@ static void tc956xmac_display_rx_rings(struct stmmac_priv *priv)
 			head_rx = (void *)rx_q->dma_rx;
 
 		/* Display RX ring */
-		tc956xmac_display_ring(priv, head_rx, DMA_RX_SIZE, true);
+		stmmac_display_ring(priv, head_rx, DMA_RX_SIZE, true);
 	}
 }
 
-static void tc956xmac_display_tx_rings(struct stmmac_priv *priv)
+static void stmmac_display_tx_rings(struct stmmac_priv *priv)
 {
 	u32 tx_cnt = priv->plat->tx_queues_to_use;
 	void *head_tx;
@@ -4861,7 +4861,7 @@ static void tc956xmac_display_tx_rings(struct stmmac_priv *priv)
 
 	/* Display TX rings */
 	for (queue = 0; queue < tx_cnt; queue++) {
-		struct tc956xmac_tx_queue *tx_q = &priv->tx_queue[queue];
+		struct stmmac_tx_queue *tx_q = &priv->tx_queue[queue];
 
 #ifdef TC956X_SRIOV_PF
 		if (priv->plat->tx_ch_in_use[queue] == TC956X_DISABLE_CHNL)
@@ -4883,20 +4883,20 @@ static void tc956xmac_display_tx_rings(struct stmmac_priv *priv)
 		else
 			head_tx = (void *)tx_q->dma_tx;
 
-		tc956xmac_display_ring(priv, head_tx, DMA_TX_SIZE, false);
+		stmmac_display_ring(priv, head_tx, DMA_TX_SIZE, false);
 	}
 }
 
-static void tc956xmac_display_rings(struct stmmac_priv *priv)
+static void stmmac_display_rings(struct stmmac_priv *priv)
 {
 	/* Display RX ring */
-	tc956xmac_display_rx_rings(priv);
+	stmmac_display_rx_rings(priv);
 
 	/* Display TX ring */
-	tc956xmac_display_tx_rings(priv);
+	stmmac_display_tx_rings(priv);
 }
 
-static int tc956xmac_set_bfsize(int mtu, int bufsize)
+static int stmmac_set_bfsize(int mtu, int bufsize)
 {
 	int ret = bufsize;
 
@@ -4915,41 +4915,41 @@ static int tc956xmac_set_bfsize(int mtu, int bufsize)
 }
 
 /**
- * tc956xmac_clear_rx_descriptors - clear RX descriptors
+ * stmmac_clear_rx_descriptors - clear RX descriptors
  * @priv: driver private structure
  * @queue: RX queue index
  * Description: this function is called to clear the RX descriptors
  * in case of both basic and extended descriptors are used.
  */
-static void tc956xmac_clear_rx_descriptors(struct stmmac_priv *priv, u32 queue)
+static void stmmac_clear_rx_descriptors(struct stmmac_priv *priv, u32 queue)
 {
-	struct tc956xmac_rx_queue *rx_q = &priv->rx_queue[queue];
+	struct stmmac_rx_queue *rx_q = &priv->rx_queue[queue];
 	int i;
 
 	/* Clear the RX descriptors */
 	for (i = 0; i < DMA_RX_SIZE; i++)
 		if (priv->extend_desc)
-			tc956xmac_init_rx_desc(priv, &rx_q->dma_erx[i].basic,
+			stmmac_init_rx_desc(priv, &rx_q->dma_erx[i].basic,
 					priv->use_riwt, priv->mode,
 					(i == DMA_RX_SIZE - 1),
 					priv->dma_buf_sz);
 		else
-			tc956xmac_init_rx_desc(priv, &rx_q->dma_rx[i],
+			stmmac_init_rx_desc(priv, &rx_q->dma_rx[i],
 					priv->use_riwt, priv->mode,
 					(i == DMA_RX_SIZE - 1),
 					priv->dma_buf_sz);
 }
 
 /**
- * tc956xmac_clear_tx_descriptors - clear tx descriptors
+ * stmmac_clear_tx_descriptors - clear tx descriptors
  * @priv: driver private structure
  * @queue: TX queue index.
  * Description: this function is called to clear the TX descriptors
  * in case of both basic and extended descriptors are used.
  */
-static void tc956xmac_clear_tx_descriptors(struct stmmac_priv *priv, u32 queue)
+static void stmmac_clear_tx_descriptors(struct stmmac_priv *priv, u32 queue)
 {
-	struct tc956xmac_tx_queue *tx_q = &priv->tx_queue[queue];
+	struct stmmac_tx_queue *tx_q = &priv->tx_queue[queue];
 	int i;
 
 	/* Clear the TX descriptors */
@@ -4964,17 +4964,17 @@ static void tc956xmac_clear_tx_descriptors(struct stmmac_priv *priv, u32 queue)
 		else
 			p = &tx_q->dma_tx[i];
 
-		tc956xmac_init_tx_desc(priv, p, priv->mode, last);
+		stmmac_init_tx_desc(priv, p, priv->mode, last);
 	}
 }
 
 /**
- * tc956xmac_clear_descriptors - clear descriptors
+ * stmmac_clear_descriptors - clear descriptors
  * @priv: driver private structure
  * Description: this function is called to clear the TX and RX descriptors
  * in case of both basic and extended descriptors are used.
  */
-static void tc956xmac_clear_descriptors(struct stmmac_priv *priv)
+static void stmmac_clear_descriptors(struct stmmac_priv *priv)
 {
 #ifdef TC956X
 	u32 rx_queue_cnt = priv->plat->rx_queues_to_use;
@@ -4996,7 +4996,7 @@ static void tc956xmac_clear_descriptors(struct stmmac_priv *priv)
 		if (priv->plat->rx_dma_ch_owner[queue] != USE_IN_TC956X_SW)
 			continue;
 #endif
-		tc956xmac_clear_rx_descriptors(priv, queue);
+		stmmac_clear_rx_descriptors(priv, queue);
 	}
 
 	/* Clear the TX descriptors */
@@ -5012,12 +5012,12 @@ static void tc956xmac_clear_descriptors(struct stmmac_priv *priv)
 		if (priv->plat->tx_dma_ch_owner[queue] != USE_IN_TC956X_SW)
 			continue;
 #endif
-		tc956xmac_clear_tx_descriptors(priv, queue);
+		stmmac_clear_tx_descriptors(priv, queue);
 	}
 }
 
 /**
- * tc956xmac_init_rx_buffers - init the RX descriptor buffer.
+ * stmmac_init_rx_buffers - init the RX descriptor buffer.
  * @priv: driver private structure
  * @p: descriptor pointer
  * @i: descriptor index
@@ -5026,11 +5026,11 @@ static void tc956xmac_clear_descriptors(struct stmmac_priv *priv)
  * Description: this function is called to allocate a receive buffer, perform
  * the DMA mapping and init the descriptor.
  */
-static int tc956xmac_init_rx_buffers(struct stmmac_priv *priv, struct dma_desc *p,
+static int stmmac_init_rx_buffers(struct stmmac_priv *priv, struct dma_desc *p,
 				  int i, gfp_t flags, u32 queue)
 {
-	struct tc956xmac_rx_queue *rx_q = &priv->rx_queue[queue];
-	struct tc956xmac_rx_buffer *buf = &rx_q->buf_pool[i];
+	struct stmmac_rx_queue *rx_q = &priv->rx_queue[queue];
+	struct stmmac_rx_buffer *buf = &rx_q->buf_pool[i];
 
 	buf->page = page_pool_dev_alloc_pages(rx_q->page_pool);
 	if (!buf->page)
@@ -5042,29 +5042,29 @@ static int tc956xmac_init_rx_buffers(struct stmmac_priv *priv, struct dma_desc *
 			return -ENOMEM;
 
 		buf->sec_addr = page_pool_get_dma_addr(buf->sec_page);
-		tc956xmac_set_desc_sec_addr(priv, p, buf->sec_addr);
+		stmmac_set_desc_sec_addr(priv, p, buf->sec_addr);
 	} else {
 		buf->sec_page = NULL;
 	}
 
 	buf->addr = page_pool_get_dma_addr(buf->page);
-	tc956xmac_set_desc_addr(priv, p, buf->addr);
+	stmmac_set_desc_addr(priv, p, buf->addr);
 	if (priv->dma_buf_sz == BUF_SIZE_16KiB)
-		tc956xmac_init_desc3(priv, p);
+		stmmac_init_desc3(priv, p);
 
 	return 0;
 }
 
 /**
- * tc956xmac_free_rx_buffer - free RX dma buffers
+ * stmmac_free_rx_buffer - free RX dma buffers
  * @priv: private structure
  * @queue: RX queue index
  * @i: buffer index.
  */
-static void tc956xmac_free_rx_buffer(struct stmmac_priv *priv, u32 queue, int i)
+static void stmmac_free_rx_buffer(struct stmmac_priv *priv, u32 queue, int i)
 {
-	struct tc956xmac_rx_queue *rx_q = &priv->rx_queue[queue];
-	struct tc956xmac_rx_buffer *buf = &rx_q->buf_pool[i];
+	struct stmmac_rx_queue *rx_q = &priv->rx_queue[queue];
+	struct stmmac_rx_buffer *buf = &rx_q->buf_pool[i];
 
 	if (buf->page)
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 7, 0)
@@ -5084,14 +5084,14 @@ static void tc956xmac_free_rx_buffer(struct stmmac_priv *priv, u32 queue, int i)
 }
 
 /**
- * tc956xmac_free_tx_buffer - free RX dma buffers
+ * stmmac_free_tx_buffer - free RX dma buffers
  * @priv: private structure
  * @queue: RX queue index
  * @i: buffer index.
  */
-static void tc956xmac_free_tx_buffer(struct stmmac_priv *priv, u32 queue, int i)
+static void stmmac_free_tx_buffer(struct stmmac_priv *priv, u32 queue, int i)
 {
-	struct tc956xmac_tx_queue *tx_q = &priv->tx_queue[queue];
+	struct stmmac_tx_queue *tx_q = &priv->tx_queue[queue];
 
 	if (tx_q->tx_skbuff_dma) {
 		if (tx_q->tx_skbuff_dma[i].buf) {
@@ -5142,7 +5142,7 @@ static int init_dma_rx_desc_rings(struct net_device *dev, gfp_t flags)
 		  "SKB addresses:\nskb\t\tskb data\tdma data\n");
 
 	for (queue = 0; queue < rx_count; queue++) {
-		struct tc956xmac_rx_queue *rx_q = &priv->rx_queue[queue];
+		struct stmmac_rx_queue *rx_q = &priv->rx_queue[queue];
 
 #ifdef TC956X_SRIOV_PF
 		if (priv->plat->rx_ch_in_use[queue] == TC956X_DISABLE_CHNL)
@@ -5159,7 +5159,7 @@ static int init_dma_rx_desc_rings(struct net_device *dev, gfp_t flags)
 			  "(%s) dma_rx_phy=0x%08x\n", __func__,
 			  (u32)rx_q->dma_rx_phy);
 
-		tc956xmac_clear_rx_descriptors(priv, queue);
+		stmmac_clear_rx_descriptors(priv, queue);
 
 		for (i = 0; i < DMA_RX_SIZE; i++) {
 			struct dma_desc *p;
@@ -5169,7 +5169,7 @@ static int init_dma_rx_desc_rings(struct net_device *dev, gfp_t flags)
 			else
 				p = rx_q->dma_rx + i;
 
-			ret = tc956xmac_init_rx_buffers(priv, p, i, flags,
+			ret = stmmac_init_rx_buffers(priv, p, i, flags,
 						     queue);
 			if (ret)
 				goto err_init_rx_buffers;
@@ -5181,10 +5181,10 @@ static int init_dma_rx_desc_rings(struct net_device *dev, gfp_t flags)
 		/* Setup the chained descriptor addresses */
 		if (priv->mode == TC956XMAC_CHAIN_MODE) {
 			if (priv->extend_desc)
-				tc956xmac_mode_init(priv, rx_q->dma_erx,
+				stmmac_mode_init(priv, rx_q->dma_erx,
 						rx_q->dma_rx_phy, DMA_RX_SIZE, 1);
 			else
-				tc956xmac_mode_init(priv, rx_q->dma_rx,
+				stmmac_mode_init(priv, rx_q->dma_rx,
 						rx_q->dma_rx_phy, DMA_RX_SIZE, 0);
 		}
 	}
@@ -5202,7 +5202,7 @@ err_init_rx_buffers:
 		}
 #endif
 		while (--i >= 0)
-			tc956xmac_free_rx_buffer(priv, queue, i);
+			stmmac_free_rx_buffer(priv, queue, i);
 
 		if (queue == 0)
 			break;
@@ -5229,7 +5229,7 @@ static int init_dma_tx_desc_rings(struct net_device *dev)
 	int i;
 
 	for (queue = 0; queue < tx_queue_cnt; queue++) {
-		struct tc956xmac_tx_queue *tx_q = &priv->tx_queue[queue];
+		struct stmmac_tx_queue *tx_q = &priv->tx_queue[queue];
 
 #ifdef TC956X_SRIOV_PF
 		if (priv->plat->tx_ch_in_use[queue] == TC956X_DISABLE_CHNL)
@@ -5250,10 +5250,10 @@ static int init_dma_tx_desc_rings(struct net_device *dev)
 		/* Setup the chained descriptor addresses */
 		if (priv->mode == TC956XMAC_CHAIN_MODE) {
 			if (priv->extend_desc)
-				tc956xmac_mode_init(priv, tx_q->dma_etx,
+				stmmac_mode_init(priv, tx_q->dma_etx,
 						tx_q->dma_tx_phy, DMA_TX_SIZE, 1);
 			else if (!(tx_q->tbs & TC956XMAC_TBS_AVAIL))
-				tc956xmac_mode_init(priv, tx_q->dma_tx,
+				stmmac_mode_init(priv, tx_q->dma_tx,
 						tx_q->dma_tx_phy, DMA_TX_SIZE, 0);
 		}
 
@@ -5267,7 +5267,7 @@ static int init_dma_tx_desc_rings(struct net_device *dev)
 			else
 				p = tx_q->dma_tx + i;
 
-			tc956xmac_clear_desc(priv, p);
+			stmmac_clear_desc(priv, p);
 
 			tx_q->tx_skbuff_dma[i].buf = 0;
 			tx_q->tx_skbuff_dma[i].map_as_page = false;
@@ -5305,10 +5305,10 @@ static int init_dma_desc_rings(struct net_device *dev, gfp_t flags)
 
 	ret = init_dma_tx_desc_rings(dev);
 
-	tc956xmac_clear_descriptors(priv);
+	stmmac_clear_descriptors(priv);
 
 	if (netif_msg_hw(priv))
-		tc956xmac_display_rings(priv);
+		stmmac_display_rings(priv);
 
 	return ret;
 }
@@ -5323,7 +5323,7 @@ static void dma_free_rx_skbufs(struct stmmac_priv *priv, u32 queue)
 	int i;
 
 	for (i = 0; i < DMA_RX_SIZE; i++)
-		tc956xmac_free_rx_buffer(priv, queue, i);
+		stmmac_free_rx_buffer(priv, queue, i);
 }
 
 /**
@@ -5336,7 +5336,7 @@ static void dma_free_tx_skbufs(struct stmmac_priv *priv, u32 queue)
 	int i;
 
 	for (i = 0; i < DMA_TX_SIZE; i++)
-		tc956xmac_free_tx_buffer(priv, queue, i);
+		stmmac_free_tx_buffer(priv, queue, i);
 }
 
 /**
@@ -5353,7 +5353,7 @@ static void free_dma_rx_desc_resources(struct stmmac_priv *priv)
 
 	/* Free RX queue resources */
 	for (queue = 0; queue < rx_count; queue++) {
-		struct tc956xmac_rx_queue *rx_q = &priv->rx_queue[queue];
+		struct stmmac_rx_queue *rx_q = &priv->rx_queue[queue];
 #ifdef TC956X_SRIOV_PF
 		if (priv->plat->rx_ch_in_use[queue] == TC956X_DISABLE_CHNL)
 			continue;
@@ -5395,7 +5395,7 @@ static void free_dma_tx_desc_resources(struct stmmac_priv *priv)
 
 	/* Free TX queue resources */
 	for (queue = 0; queue < tx_count; queue++) {
-		struct tc956xmac_tx_queue *tx_q = &priv->tx_queue[queue];
+		struct stmmac_tx_queue *tx_q = &priv->tx_queue[queue];
 		size_t size;
 		void *addr;
 
@@ -5456,7 +5456,7 @@ static int alloc_dma_rx_desc_resources(struct stmmac_priv *priv)
 
 	/* RX queues buffers and DMA */
 	for (queue = 0; queue < rx_count; queue++) {
-		struct tc956xmac_rx_queue *rx_q = &priv->rx_queue[queue];
+		struct stmmac_rx_queue *rx_q = &priv->rx_queue[queue];
 		struct page_pool_params pp_params = { 0 };
 		unsigned int num_pages;
 
@@ -5540,7 +5540,7 @@ static int alloc_dma_tx_desc_resources(struct stmmac_priv *priv)
 
 	/* TX queues buffers and DMA */
 	for (queue = 0; queue < tx_count; queue++) {
-		struct tc956xmac_tx_queue *tx_q = &priv->tx_queue[queue];
+		struct stmmac_tx_queue *tx_q = &priv->tx_queue[queue];
 		size_t size;
 		void *addr;
 
@@ -5635,11 +5635,11 @@ static void free_dma_desc_resources(struct stmmac_priv *priv)
 
 #ifndef TC956X_SRIOV_VF
 /**
- *  tc956xmac_mac_enable_rx_queues - Enable MAC rx queues
+ *  stmmac_mac_enable_rx_queues - Enable MAC rx queues
  *  @priv: driver private structure
  *  Description: It is used for enabling the rx queues in the MAC
  */
-static void tc956xmac_mac_enable_rx_queues(struct stmmac_priv *priv)
+static void stmmac_mac_enable_rx_queues(struct stmmac_priv *priv)
 {
 	u32 rx_queues_count = priv->plat->rx_queues_to_use;
 	int queue;
@@ -5651,69 +5651,69 @@ static void tc956xmac_mac_enable_rx_queues(struct stmmac_priv *priv)
 			continue;
 #endif
 		mode = priv->plat->rx_queues_cfg[queue].mode_to_use;
-		tc956xmac_rx_queue_enable(priv, priv->hw, mode, queue);
+		stmmac_rx_queue_enable(priv, priv->hw, mode, queue);
 	}
 }
 #endif /* TC956X_SRIOV_VF */
 /**
- * tc956xmac_start_rx_dma - start RX DMA channel
+ * stmmac_start_rx_dma - start RX DMA channel
  * @priv: driver private structure
  * @chan: RX channel index
  * Description:
  * This starts a RX DMA channel
  */
-static void tc956xmac_start_rx_dma(struct stmmac_priv *priv, u32 chan)
+static void stmmac_start_rx_dma(struct stmmac_priv *priv, u32 chan)
 {
 	netdev_dbg(priv->dev, "DMA RX processes started in channel %d\n", chan);
-	tc956xmac_start_rx(priv, priv->ioaddr, chan);
+	stmmac_start_rx(priv, priv->ioaddr, chan);
 }
 
 /**
- * tc956xmac_start_tx_dma - start TX DMA channel
+ * stmmac_start_tx_dma - start TX DMA channel
  * @priv: driver private structure
  * @chan: TX channel index
  * Description:
  * This starts a TX DMA channel
  */
-static void tc956xmac_start_tx_dma(struct stmmac_priv *priv, u32 chan)
+static void stmmac_start_tx_dma(struct stmmac_priv *priv, u32 chan)
 {
 	netdev_dbg(priv->dev, "DMA TX processes started in channel %d\n", chan);
-	tc956xmac_start_tx(priv, priv->ioaddr, chan);
+	stmmac_start_tx(priv, priv->ioaddr, chan);
 }
 
 /**
- * tc956xmac_stop_rx_dma - stop RX DMA channel
+ * stmmac_stop_rx_dma - stop RX DMA channel
  * @priv: driver private structure
  * @chan: RX channel index
  * Description:
  * This stops a RX DMA channel
  */
-static void tc956xmac_stop_rx_dma(struct stmmac_priv *priv, u32 chan)
+static void stmmac_stop_rx_dma(struct stmmac_priv *priv, u32 chan)
 {
 	netdev_dbg(priv->dev, "DMA RX processes stopped in channel %d\n", chan);
-	tc956xmac_stop_rx(priv, priv->ioaddr, chan);
+	stmmac_stop_rx(priv, priv->ioaddr, chan);
 }
 
 /**
- * tc956xmac_stop_tx_dma - stop TX DMA channel
+ * stmmac_stop_tx_dma - stop TX DMA channel
  * @priv: driver private structure
  * @chan: TX channel index
  * Description:
  * This stops a TX DMA channel
  */
-static void tc956xmac_stop_tx_dma(struct stmmac_priv *priv, u32 chan)
+static void stmmac_stop_tx_dma(struct stmmac_priv *priv, u32 chan)
 {
 	netdev_dbg(priv->dev, "DMA TX processes stopped in channel %d\n", chan);
-	tc956xmac_stop_tx(priv, priv->ioaddr, chan);
+	stmmac_stop_tx(priv, priv->ioaddr, chan);
 }
 
 /**
- * tc956xmac_start_all_dma - start all RX and TX DMA channels
+ * stmmac_start_all_dma - start all RX and TX DMA channels
  * @priv: driver private structure
  * Description:
  * This starts all the RX and TX DMA channels
  */
-static void tc956xmac_start_all_dma(struct stmmac_priv *priv)
+static void stmmac_start_all_dma(struct stmmac_priv *priv)
 {
 #ifdef TC956X
 	u32 rx_channels_count = priv->plat->rx_queues_to_use;
@@ -5733,7 +5733,7 @@ static void tc956xmac_start_all_dma(struct stmmac_priv *priv)
 		if (priv->plat->rx_dma_ch_owner[chan] != USE_IN_TC956X_SW)
 			continue;
 #endif
-		tc956xmac_start_rx_dma(priv, chan);
+		stmmac_start_rx_dma(priv, chan);
 	}
 
 	for (chan = 0; chan < tx_channels_count; chan++) {
@@ -5747,17 +5747,17 @@ static void tc956xmac_start_all_dma(struct stmmac_priv *priv)
 		if (priv->plat->tx_dma_ch_owner[chan] != USE_IN_TC956X_SW)
 			continue;
 #endif
-		tc956xmac_start_tx_dma(priv, chan);
+		stmmac_start_tx_dma(priv, chan);
 	}
 }
 
 /**
- * tc956xmac_stop_all_dma - stop all RX and TX DMA channels
+ * stmmac_stop_all_dma - stop all RX and TX DMA channels
  * @priv: driver private structure
  * Description:
  * This stops the RX and TX DMA channels
  */
-static void tc956xmac_stop_all_dma(struct stmmac_priv *priv)
+static void stmmac_stop_all_dma(struct stmmac_priv *priv)
 {
 #ifdef TC956X
 	u32 rx_channels_count = priv->plat->rx_queues_to_use;
@@ -5778,7 +5778,7 @@ static void tc956xmac_stop_all_dma(struct stmmac_priv *priv)
 		if (priv->plat->rx_dma_ch_owner[chan] != USE_IN_TC956X_SW)
 			continue;
 #endif
-		tc956xmac_stop_rx_dma(priv, chan);
+		stmmac_stop_rx_dma(priv, chan);
 	}
 
 	for (chan = 0; chan < tx_channels_count; chan++) {
@@ -5793,17 +5793,17 @@ static void tc956xmac_stop_all_dma(struct stmmac_priv *priv)
 		if (priv->plat->tx_dma_ch_owner[chan] != USE_IN_TC956X_SW)
 			continue;
 #endif
-		tc956xmac_stop_tx_dma(priv, chan);
+		stmmac_stop_tx_dma(priv, chan);
 	}
 }
 
 /**
- *  tc956xmac_dma_operation_mode - HW DMA operation mode
+ *  stmmac_dma_operation_mode - HW DMA operation mode
  *  @priv: driver private structure
  *  Description: it is used for configuring the DMA operation mode register in
  *  order to program the tx/rx DMA thresholds or Store-And-Forward mode.
  */
-static void tc956xmac_dma_operation_mode(struct stmmac_priv *priv)
+static void stmmac_dma_operation_mode(struct stmmac_priv *priv)
 {
 	u32 rx_channels_count = priv->plat->rx_queues_to_use;
 	u32 tx_channels_count = priv->plat->tx_queues_to_use;
@@ -5891,7 +5891,7 @@ static void tc956xmac_dma_operation_mode(struct stmmac_priv *priv)
 
 		qmode = priv->plat->rx_queues_cfg[chan].mode_to_use;
 
-		tc956xmac_dma_rx_mode(priv, priv->ioaddr, rxmode, chan,
+		stmmac_dma_rx_mode(priv, priv->ioaddr, rxmode, chan,
 				rxfifosz, qmode);
 	}
 #endif
@@ -5910,7 +5910,7 @@ static void tc956xmac_dma_operation_mode(struct stmmac_priv *priv)
 #else
 		if (priv->plat->rx_dma_ch_owner[chan] == USE_IN_TC956X_SW)
 #endif
-			tc956xmac_set_dma_bfsize(priv, priv->ioaddr, priv->dma_buf_sz,
+			stmmac_set_dma_bfsize(priv, priv->ioaddr, priv->dma_buf_sz,
 						chan);
 #endif
 	}
@@ -5974,10 +5974,10 @@ static void tc956xmac_dma_operation_mode(struct stmmac_priv *priv)
 
 		/* Use mailbox to set tx mode */
 #ifdef TC956X_SRIOV_PF
-		tc956xmac_dma_tx_mode(priv, priv->ioaddr, txmode, chan,
+		stmmac_dma_tx_mode(priv, priv->ioaddr, txmode, chan,
 				txfifosz, qmode);
 #elif defined TC956X_SRIOV_VF
-		tc956xmac_dma_tx_mode(priv, txmode, chan,
+		stmmac_dma_tx_mode(priv, txmode, chan,
 				txfifosz, qmode);
 #endif
 
@@ -5985,7 +5985,7 @@ static void tc956xmac_dma_operation_mode(struct stmmac_priv *priv)
 }
 
 /**
- * tc956xmac_tx_clean - to manage the transmission completion
+ * stmmac_tx_clean - to manage the transmission completion
  *
  * @priv: driver private structure
  * @budget: NAPI budget (?)
@@ -5993,9 +5993,9 @@ static void tc956xmac_dma_operation_mode(struct stmmac_priv *priv)
  *
  * Description: it reclaims the transmit resources after transmission completes.
  */
-static int tc956xmac_tx_clean(struct stmmac_priv *priv, int budget, u32 queue)
+static int stmmac_tx_clean(struct stmmac_priv *priv, int budget, u32 queue)
 {
-	struct tc956xmac_tx_queue *tx_q = &priv->tx_queue[queue];
+	struct stmmac_tx_queue *tx_q = &priv->tx_queue[queue];
 	unsigned int bytes_compl = 0, pkts_compl = 0;
 	unsigned int entry, count = 0;
 
@@ -6016,7 +6016,7 @@ static int tc956xmac_tx_clean(struct stmmac_priv *priv, int budget, u32 queue)
 		else
 			p = tx_q->dma_tx + entry;
 
-		status = tc956xmac_tx_status(priv, &priv->dev->stats,
+		status = stmmac_tx_status(priv, &priv->dev->stats,
 				&priv->xstats, p, priv->ioaddr);
 		/* Check if the descriptor is owned by the DMA */
 		if (unlikely(status & tx_dma_own))
@@ -6043,7 +6043,7 @@ static int tc956xmac_tx_clean(struct stmmac_priv *priv, int budget, u32 queue)
 			if (queue != skb_get_queue_mapping(skb))
 				pr_err("Tx Queue no. is different\n");
 #endif
-			tc956xmac_get_tx_hwtstamp(priv, p, skb);
+			stmmac_get_tx_hwtstamp(priv, p, skb);
 		}
 
 		if (likely(tx_q->tx_skbuff_dma[entry].buf)) {
@@ -6062,7 +6062,7 @@ static int tc956xmac_tx_clean(struct stmmac_priv *priv, int budget, u32 queue)
 			tx_q->tx_skbuff_dma[entry].map_as_page = false;
 		}
 
-		tc956xmac_clean_desc3(priv, tx_q, p);
+		stmmac_clean_desc3(priv, tx_q, p);
 
 		tx_q->tx_skbuff_dma[entry].last_segment = false;
 		tx_q->tx_skbuff_dma[entry].is_jumbo = false;
@@ -6074,7 +6074,7 @@ static int tc956xmac_tx_clean(struct stmmac_priv *priv, int budget, u32 queue)
 			tx_q->tx_skbuff[entry] = NULL;
 		}
 
-		tc956xmac_release_tx_desc(priv, p, priv->mode);
+		stmmac_release_tx_desc(priv, p, priv->mode);
 
 		entry = TC956XMAC_GET_ENTRY(entry, DMA_TX_SIZE);
 	}
@@ -6084,7 +6084,7 @@ static int tc956xmac_tx_clean(struct stmmac_priv *priv, int budget, u32 queue)
 				  pkts_compl, bytes_compl);
 
 	if (unlikely(netif_tx_queue_stopped(netdev_get_tx_queue(priv->dev, queue))) &&
-	    tc956xmac_tx_avail(priv, queue) > TC956XMAC_TX_THRESH) {
+	    stmmac_tx_avail(priv, queue) > TC956XMAC_TX_THRESH) {
 
 		netif_dbg(priv, tx_done, priv->dev,
 			  "%s: restart transmit\n", __func__);
@@ -6107,28 +6107,28 @@ static int tc956xmac_tx_clean(struct stmmac_priv *priv, int budget, u32 queue)
 }
 
 /**
- * tc956xmac_tx_err - to manage the tx error
+ * stmmac_tx_err - to manage the tx error
  * @priv: driver private structure
  * @chan: channel index
  * Description: it cleans the descriptors and restarts the transmission
  * in case of transmission errors.
  */
-static void tc956xmac_tx_err(struct stmmac_priv *priv, u32 chan)
+static void stmmac_tx_err(struct stmmac_priv *priv, u32 chan)
 {
-	struct tc956xmac_tx_queue *tx_q = &priv->tx_queue[chan];
+	struct stmmac_tx_queue *tx_q = &priv->tx_queue[chan];
 
 	netif_tx_stop_queue(netdev_get_tx_queue(priv->dev, chan));
 
-	tc956xmac_stop_tx_dma(priv, chan);
+	stmmac_stop_tx_dma(priv, chan);
 	dma_free_tx_skbufs(priv, chan);
-	tc956xmac_clear_tx_descriptors(priv, chan);
+	stmmac_clear_tx_descriptors(priv, chan);
 	tx_q->dirty_tx = 0;
 	tx_q->cur_tx = 0;
 	tx_q->mss = 0;
 	netdev_tx_reset_queue(netdev_get_tx_queue(priv->dev, chan));
-	tc956xmac_init_tx_chan(priv, priv->ioaddr, priv->plat->dma_cfg,
+	stmmac_init_tx_chan(priv, priv->ioaddr, priv->plat->dma_cfg,
 			    tx_q->dma_tx_phy, chan);
-	tc956xmac_start_tx_dma(priv, chan);
+	stmmac_start_tx_dma(priv, chan);
 
 	priv->dev->stats.tx_errors++;
 	netif_tx_wake_queue(netdev_get_tx_queue(priv->dev, chan));
@@ -6136,7 +6136,7 @@ static void tc956xmac_tx_err(struct stmmac_priv *priv, u32 chan)
 
 #ifndef TC956X_SRIOV_VF
 /**
- *  tc956xmac_set_dma_operation_mode - Set DMA operation mode by channel
+ *  stmmac_set_dma_operation_mode - Set DMA operation mode by channel
  *  @priv: driver private structure
  *  @txmode: TX operating mode
  *  @rxmode: RX operating mode
@@ -6145,7 +6145,7 @@ static void tc956xmac_tx_err(struct stmmac_priv *priv, u32 chan)
  *  runtime in order to program the tx/rx DMA thresholds or Store-And-Forward
  *  mode.
  */
-static void tc956xmac_set_dma_operation_mode(struct stmmac_priv *priv, u32 txmode,
+static void stmmac_set_dma_operation_mode(struct stmmac_priv *priv, u32 txmode,
 					  u32 rxmode, u32 chan)
 {
 	u8 rxqmode = priv->plat->rx_queues_cfg[chan].mode_to_use;
@@ -6216,27 +6216,27 @@ static void tc956xmac_set_dma_operation_mode(struct stmmac_priv *priv, u32 txmod
 	}
 #endif
 
-	tc956xmac_dma_rx_mode(priv, priv->ioaddr, rxmode, chan, rxfifosz, rxqmode);
+	stmmac_dma_rx_mode(priv, priv->ioaddr, rxmode, chan, rxfifosz, rxqmode);
 #endif /* TC956X_SRIOV_VF */
 
 	/* Use mailbox to set tx mode */
 #ifndef TC956X_SRIOV_VF
-	tc956xmac_dma_tx_mode(priv, priv->ioaddr, txmode, chan, txfifosz, txqmode);
+	stmmac_dma_tx_mode(priv, priv->ioaddr, txmode, chan, txfifosz, txqmode);
 #elif (defined TC956X_SRIOV_VF)
-	tc956xmac_dma_tx_mode(priv, priv, txmode, chan, txfifosz, txqmode);
+	stmmac_dma_tx_mode(priv, priv, txmode, chan, txfifosz, txqmode);
 #endif
 }
 #endif /*#ifdef TC956X_SRIOV_VF*/
 
 #ifndef TC956X_SRIOV_VF
-static bool tc956xmac_safety_feat_interrupt(struct stmmac_priv *priv)
+static bool stmmac_safety_feat_interrupt(struct stmmac_priv *priv)
 {
 	int ret;
 
-	ret = tc956xmac_safety_feat_irq_status(priv, priv->dev,
+	ret = stmmac_safety_feat_irq_status(priv, priv->dev,
 			priv->ioaddr, priv->dma_cap.asp, &priv->sstats);
 	if (ret && (ret != -EINVAL)) {
-		tc956xmac_global_err(priv);
+		stmmac_global_err(priv);
 		return true;
 	}
 
@@ -6244,11 +6244,11 @@ static bool tc956xmac_safety_feat_interrupt(struct stmmac_priv *priv)
 }
 #endif
 
-static int tc956xmac_napi_check(struct stmmac_priv *priv, u32 chan)
+static int stmmac_napi_check(struct stmmac_priv *priv, u32 chan)
 {
-	int status = tc956xmac_dma_interrupt_status(priv, priv->ioaddr,
+	int status = stmmac_dma_interrupt_status(priv, priv->ioaddr,
 						 &priv->xstats, chan);
-	struct tc956xmac_channel *ch = &priv->channel[chan];
+	struct stmmac_channel *ch = &priv->channel[chan];
 	unsigned long flags;
 
 #ifdef TC956X
@@ -6265,7 +6265,7 @@ static int tc956xmac_napi_check(struct stmmac_priv *priv, u32 chan)
 
 		if (napi_schedule_prep(&ch->rx_napi)) {
 			spin_lock_irqsave(&ch->lock, flags);
-			tc956xmac_disable_dma_irq(priv, priv->ioaddr, chan, 1, 0);
+			stmmac_disable_dma_irq(priv, priv->ioaddr, chan, 1, 0);
 			spin_unlock_irqrestore(&ch->lock, flags);
 			__napi_schedule_irqoff(&ch->rx_napi);
 		}
@@ -6287,7 +6287,7 @@ static int tc956xmac_napi_check(struct stmmac_priv *priv, u32 chan)
 #endif
 		if (napi_schedule_prep(&ch->tx_napi)) {
 			spin_lock_irqsave(&ch->lock, flags);
-			tc956xmac_disable_dma_irq(priv, priv->ioaddr, chan, 0, 1);
+			stmmac_disable_dma_irq(priv, priv->ioaddr, chan, 0, 1);
 			spin_unlock_irqrestore(&ch->lock, flags);
 			__napi_schedule_irqoff(&ch->tx_napi);
 		}
@@ -6297,13 +6297,13 @@ static int tc956xmac_napi_check(struct stmmac_priv *priv, u32 chan)
 }
 
 /**
- * tc956xmac_dma_interrupt - DMA ISR
+ * stmmac_dma_interrupt - DMA ISR
  * @priv: driver private structure
  * Description: this is the DMA ISR. It is called by the main ISR.
  * It calls the dwmac dma routine and schedule poll method in case of some
  * work can be done.
  */
-static void tc956xmac_dma_interrupt(struct stmmac_priv *priv)
+static void stmmac_dma_interrupt(struct stmmac_priv *priv)
 {
 	u32 tx_channel_count = priv->plat->tx_queues_to_use;
 
@@ -6328,7 +6328,7 @@ static void tc956xmac_dma_interrupt(struct stmmac_priv *priv)
 		if (priv->plat->ch_in_use[chan] == 0)
 			continue;
 #endif
-		status[chan] = tc956xmac_napi_check(priv, chan);
+		status[chan] = stmmac_napi_check(priv, chan);
 	}
 
 	for (chan = 0; chan < tx_channel_count; chan++) {
@@ -6351,12 +6351,12 @@ static void tc956xmac_dma_interrupt(struct stmmac_priv *priv)
 				// So as of now this code is not used in VF driver
 #ifndef TC956X_SRIOV_VF
 				if (priv->plat->force_thresh_dma_mode)
-					tc956xmac_set_dma_operation_mode(priv,
+					stmmac_set_dma_operation_mode(priv,
 								      tc,
 								      tc,
 								      chan);
 				else
-					tc956xmac_set_dma_operation_mode(priv,
+					stmmac_set_dma_operation_mode(priv,
 								    tc,
 								    SF_DMA_MODE,
 								    chan);
@@ -6364,26 +6364,26 @@ static void tc956xmac_dma_interrupt(struct stmmac_priv *priv)
 				priv->xstats.threshold = tc;
 			}
 		} else if (unlikely(status[chan] == tx_hard_error)) {
-			tc956xmac_tx_err(priv, chan);
+			stmmac_tx_err(priv, chan);
 		}
 	}
 }
 
 /**
- * tc956xmac_mmc_setup: setup the Mac Management Counters (MMC)
+ * stmmac_mmc_setup: setup the Mac Management Counters (MMC)
  * @priv: driver private structure
  * Description: this masks the MMC irq, in fact, the counters are managed in SW.
  */
-static void tc956xmac_mmc_setup(struct stmmac_priv *priv)
+static void stmmac_mmc_setup(struct stmmac_priv *priv)
 {
 #ifndef TC956X_SRIOV_VF //CPE_DRV
 	unsigned int mode = MMC_CNTRL_RESET_ON_READ | MMC_CNTRL_COUNTER_RESET |
 			    MMC_CNTRL_PRESET | MMC_CNTRL_FULL_HALF_PRESET;
 
-	tc956xmac_mmc_intr_all_mask(priv, priv->mmcaddr);
+	stmmac_mmc_intr_all_mask(priv, priv->mmcaddr);
 
 	if (priv->dma_cap.rmon) {
-		tc956xmac_mmc_ctrl(priv, priv->mmcaddr, mode);
+		stmmac_mmc_ctrl(priv, priv->mmcaddr, mode);
 		/* Avoid SW MMC counters reset during link down MAC reset */
 		if (priv->link_down_rst == false)
 			memset(&priv->mmc, 0, sizeof(struct stmmac_counters));
@@ -6395,7 +6395,7 @@ static void tc956xmac_mmc_setup(struct stmmac_priv *priv)
 }
 
 /**
- * tc956xmac_get_hw_features - get MAC capabilities from the HW cap. register.
+ * stmmac_get_hw_features - get MAC capabilities from the HW cap. register.
  * @priv: driver private structure
  * Description:
  *  new GMAC chip generations have a new register to indicate the
@@ -6403,20 +6403,20 @@ static void tc956xmac_mmc_setup(struct stmmac_priv *priv)
  *  This can be also used to override the value passed through the
  *  platform and necessary for old MAC10/100 and GMAC chips.
  */
-static int tc956xmac_get_hw_features(struct stmmac_priv *priv)
+static int stmmac_get_hw_features(struct stmmac_priv *priv)
 {
-	return tc956xmac_get_hw_feature(priv, priv->ioaddr, &priv->dma_cap) == 0;
+	return stmmac_get_hw_feature(priv, priv->ioaddr, &priv->dma_cap) == 0;
 }
 
 #ifdef TC956X_SRIOV_VF
 /**
- * tc956xmac_check_ether_addr - check if the MAC addr is valid
+ * stmmac_check_ether_addr - check if the MAC addr is valid
  * @priv: driver private structure
  * Description:
  * it is to verify if the MAC address is valid, in case of failures it
  * generates a random MAC address
  */
-static void tc956xmac_check_ether_addr(struct stmmac_priv *priv)
+static void stmmac_check_ether_addr(struct stmmac_priv *priv)
 {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0)
 	u8 addr[ETH_ALEN];
@@ -6432,9 +6432,9 @@ static void tc956xmac_check_ether_addr(struct stmmac_priv *priv)
 		spin_lock_irqsave(&priv->spn_lock.mac_filter, flags);
 #endif
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0)
-		tc956xmac_get_umac_addr(priv, priv->hw, addr, 0);
+		stmmac_get_umac_addr(priv, priv->hw, addr, 0);
 #else
-		tc956xmac_get_umac_addr(priv, priv->hw, priv->dev->dev_addr, 0);
+		stmmac_get_umac_addr(priv, priv->hw, priv->dev->dev_addr, 0);
 #endif
 
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
@@ -6459,14 +6459,14 @@ static void tc956xmac_check_ether_addr(struct stmmac_priv *priv)
 #endif
 
 /**
- * tc956xmac_init_dma_engine - DMA init.
+ * stmmac_init_dma_engine - DMA init.
  * @priv: driver private structure
  * Description:
  * It inits the DMA invoking the specific MAC/GMAC callback.
  * Some DMA parameters can be passed from the platform;
  * in case of these are not passed a default is kept for the MAC or GMAC.
  */
-static int tc956xmac_init_dma_engine(struct stmmac_priv *priv)
+static int stmmac_init_dma_engine(struct stmmac_priv *priv)
 {
 #ifdef TC956X
 	u32 rx_channels_count = priv->plat->rx_queues_to_use;
@@ -6474,8 +6474,8 @@ static int tc956xmac_init_dma_engine(struct stmmac_priv *priv)
 
 	u32 tx_channels_count = priv->plat->tx_queues_to_use;
 	u32 dma_csr_ch = max(rx_channels_count, tx_channels_count);
-	struct tc956xmac_rx_queue *rx_q;
-	struct tc956xmac_tx_queue *tx_q;
+	struct stmmac_rx_queue *rx_q;
+	struct stmmac_tx_queue *tx_q;
 	u32 chan = 0;
 	int atds = 0;
 	int ret = 0;
@@ -6490,17 +6490,17 @@ static int tc956xmac_init_dma_engine(struct stmmac_priv *priv)
 		atds = 1;
 
 #ifndef TC956X_SRIOV_VF
-	ret = tc956xmac_reset(priv, priv->ioaddr);
+	ret = stmmac_reset(priv, priv->ioaddr);
 	if (ret) {
 		dev_err(priv->device, "Failed to reset the dma\n");
 		return ret;
 	}
 
 	/* DMA Configuration */
-	tc956xmac_dma_init(priv, priv->ioaddr, priv->plat->dma_cfg, atds);
+	stmmac_dma_init(priv, priv->ioaddr, priv->plat->dma_cfg, atds);
 
 	if (priv->plat->axi)
-		tc956xmac_axi(priv, priv->ioaddr, priv->plat->axi);
+		stmmac_axi(priv, priv->ioaddr, priv->plat->axi);
 #endif
 
 	/* DMA CSR Channel configuration */
@@ -6514,7 +6514,7 @@ static int tc956xmac_init_dma_engine(struct stmmac_priv *priv)
 		if (priv->plat->ch_in_use[chan] == 0)
 			continue;
 #endif
-		tc956xmac_init_chan(priv, priv->ioaddr, priv->plat->dma_cfg, chan);
+		stmmac_init_chan(priv, priv->ioaddr, priv->plat->dma_cfg, chan);
 	}
 
 	/* DMA RX Channel Configuration */
@@ -6532,11 +6532,11 @@ static int tc956xmac_init_dma_engine(struct stmmac_priv *priv)
 #endif
 		rx_q = &priv->rx_queue[chan];
 
-		tc956xmac_init_rx_chan(priv, priv->ioaddr, priv->plat->dma_cfg, rx_q->dma_rx_phy, chan);
+		stmmac_init_rx_chan(priv, priv->ioaddr, priv->plat->dma_cfg, rx_q->dma_rx_phy, chan);
 
 		rx_q->rx_tail_addr = rx_q->dma_rx_phy +
 			    (DMA_RX_SIZE * sizeof(struct dma_desc));
-		tc956xmac_set_rx_tail_ptr(priv, priv->ioaddr, rx_q->rx_tail_addr, chan);
+		stmmac_set_rx_tail_ptr(priv, priv->ioaddr, rx_q->rx_tail_addr, chan);
 	}
 
 	/* DMA TX Channel Configuration */
@@ -6554,11 +6554,11 @@ static int tc956xmac_init_dma_engine(struct stmmac_priv *priv)
 #endif
 		tx_q = &priv->tx_queue[chan];
 
-		tc956xmac_init_tx_chan(priv, priv->ioaddr, priv->plat->dma_cfg,
+		stmmac_init_tx_chan(priv, priv->ioaddr, priv->plat->dma_cfg,
 				    tx_q->dma_tx_phy, chan);
 
 		tx_q->tx_tail_addr = tx_q->dma_tx_phy;
-		tc956xmac_set_tx_tail_ptr(priv, priv->ioaddr,
+		stmmac_set_tx_tail_ptr(priv, priv->ioaddr,
 				       tx_q->tx_tail_addr, chan);
 	}
 
@@ -6566,9 +6566,9 @@ static int tc956xmac_init_dma_engine(struct stmmac_priv *priv)
 }
 
 #ifdef ENABLE_TX_TIMER
-static void tc956xmac_tx_timer_arm(struct stmmac_priv *priv, u32 queue)
+static void stmmac_tx_timer_arm(struct stmmac_priv *priv, u32 queue)
 {
-	struct tc956xmac_tx_queue *tx_q = &priv->tx_queue[queue];
+	struct stmmac_tx_queue *tx_q = &priv->tx_queue[queue];
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 11, 0)
 	hrtimer_start(&tx_q->txtimer,
 		TC956XMAC_COAL_TIMER(priv->tx_coal_timer[queue]), HRTIMER_MODE_REL);
@@ -6578,26 +6578,26 @@ static void tc956xmac_tx_timer_arm(struct stmmac_priv *priv, u32 queue)
 }
 
 /**
- * tc956xmac_tx_timer - mitigation sw timer for tx.
+ * stmmac_tx_timer - mitigation sw timer for tx.
  *
  * @t: timer pointer
  *
  * Description:
- * This is the timer handler to directly invoke the tc956xmac_tx_clean.
+ * This is the timer handler to directly invoke the stmmac_tx_clean.
  */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 11, 0)
-static enum hrtimer_restart tc956xmac_tx_timer(struct hrtimer *t)
+static enum hrtimer_restart stmmac_tx_timer(struct hrtimer *t)
 #else
-static void tc956xmac_tx_timer(struct timer_list *t)
+static void stmmac_tx_timer(struct timer_list *t)
 #endif
 {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 11, 0)
-	struct tc956xmac_tx_queue *tx_q = container_of(t, struct tc956xmac_tx_queue, txtimer);
+	struct stmmac_tx_queue *tx_q = container_of(t, struct stmmac_tx_queue, txtimer);
 #else
-	struct tc956xmac_tx_queue *tx_q = from_timer(tx_q, t, txtimer);
+	struct stmmac_tx_queue *tx_q = from_timer(tx_q, t, txtimer);
 #endif
 	struct stmmac_priv *priv = tx_q->priv_data;
-	struct tc956xmac_channel *ch;
+	struct stmmac_channel *ch;
 
 	ch = &priv->channel[tx_q->queue_index];
 
@@ -6631,7 +6631,7 @@ static void tc956xmac_tx_timer(struct timer_list *t)
 		unsigned long flags;
 
 		spin_lock_irqsave(&ch->lock, flags);
-		tc956xmac_disable_dma_irq(priv, priv->ioaddr, ch->index, 0, 1);
+		stmmac_disable_dma_irq(priv, priv->ioaddr, ch->index, 0, 1);
 		spin_unlock_irqrestore(&ch->lock, flags);
 		__napi_schedule(&ch->tx_napi);
 	}
@@ -6645,14 +6645,14 @@ static void tc956xmac_tx_timer(struct timer_list *t)
 #endif
 
 /**
- * tc956xmac_init_coalesce - init mitigation options.
+ * stmmac_init_coalesce - init mitigation options.
  * @priv: driver private structure
  * Description:
  * This inits the coalesce parameters: i.e. timer rate,
  * timer handler and default threshold used for enabling the
  * interrupt on completion bit.
  */
-static void tc956xmac_init_coalesce(struct stmmac_priv *priv)
+static void stmmac_init_coalesce(struct stmmac_priv *priv)
 {
 
 #ifdef ENABLE_TX_TIMER
@@ -6690,7 +6690,7 @@ static void tc956xmac_init_coalesce(struct stmmac_priv *priv)
 
 #ifdef ENABLE_TX_TIMER
 	for (chan_no = 0; chan_no < priv->plat->tx_queues_to_use; chan_no++) {
-		struct tc956xmac_tx_queue *tx_q = &priv->tx_queue[chan_no];
+		struct stmmac_tx_queue *tx_q = &priv->tx_queue[chan_no];
 #ifdef TC956X_SRIOV_PF
 		if (priv->plat->tx_ch_in_use[chan_no] == TC956X_DISABLE_CHNL)
 			continue;
@@ -6703,19 +6703,19 @@ static void tc956xmac_init_coalesce(struct stmmac_priv *priv)
 			continue;
 #endif
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 15, 0)
-		hrtimer_setup(&tx_q->txtimer, tc956xmac_tx_timer,
+		hrtimer_setup(&tx_q->txtimer, stmmac_tx_timer,
 			      CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 #elif LINUX_VERSION_CODE >= KERNEL_VERSION(5, 11, 0)
 		hrtimer_init(&tx_q->txtimer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-		tx_q->txtimer.function = tc956xmac_tx_timer;
+		tx_q->txtimer.function = stmmac_tx_timer;
 #else
-		timer_setup(&tx_q->txtimer, tc956xmac_tx_timer, 0);
+		timer_setup(&tx_q->txtimer, stmmac_tx_timer, 0);
 #endif
 	}
 #endif
 }
 
-static void tc956xmac_set_rings_length(struct stmmac_priv *priv)
+static void stmmac_set_rings_length(struct stmmac_priv *priv)
 {
 #ifdef TC956X
 	u32 rx_channels_count = priv->plat->rx_queues_to_use;
@@ -6736,7 +6736,7 @@ static void tc956xmac_set_rings_length(struct stmmac_priv *priv)
 		if (priv->plat->tx_dma_ch_owner[chan] != USE_IN_TC956X_SW)
 			continue;
 #endif
-		tc956xmac_set_tx_ring_len(priv, priv->ioaddr,
+		stmmac_set_tx_ring_len(priv, priv->ioaddr,
 				(DMA_TX_SIZE - 1), chan);
 	}
 
@@ -6752,17 +6752,17 @@ static void tc956xmac_set_rings_length(struct stmmac_priv *priv)
 		if (priv->plat->rx_dma_ch_owner[chan] != USE_IN_TC956X_SW)
 			continue;
 #endif
-		tc956xmac_set_rx_ring_len(priv, priv->ioaddr,
+		stmmac_set_rx_ring_len(priv, priv->ioaddr,
 				(DMA_RX_SIZE - 1), chan);
 	}
 }
 
 /**
- *  tc956xmac_set_tx_queue_weight - Set TX queue weight
+ *  stmmac_set_tx_queue_weight - Set TX queue weight
  *  @priv: driver private structure
  *  Description: It is used for setting TX queues weight
  */
-static void tc956xmac_set_tx_queue_weight(struct stmmac_priv *priv)
+static void stmmac_set_tx_queue_weight(struct stmmac_priv *priv)
 {
 	u32 tx_queues_count = priv->plat->tx_queues_to_use;
 	u32 weight;
@@ -6790,20 +6790,20 @@ static void tc956xmac_set_tx_queue_weight(struct stmmac_priv *priv)
 
 		/* Use mailbox wrapper API to pass to PF for updation */
 #ifdef TC956X_SRIOV_PF
-		tc956xmac_set_mtl_tx_queue_weight(priv, priv->hw, weight, traffic_class);
+		stmmac_set_mtl_tx_queue_weight(priv, priv->hw, weight, traffic_class);
 #elif (defined TC956X_SRIOV_VF)
-		tc956xmac_set_mtl_tx_queue_weight(priv, weight, traffic_class);
+		stmmac_set_mtl_tx_queue_weight(priv, weight, traffic_class);
 #endif
 
 	}
 }
 
 /**
- *  tc956xmac_configure_cbs - Configure CBS in TX queue
+ *  stmmac_configure_cbs - Configure CBS in TX queue
  *  @priv: driver private structure
  *  Description: It is used for configuring CBS in AVB TX queues
  */
-static void tc956xmac_configure_cbs(struct stmmac_priv *priv)
+static void stmmac_configure_cbs(struct stmmac_priv *priv)
 {
 	u32 tx_queues_count = priv->plat->tx_queues_to_use;
 	u32 mode_to_use;
@@ -6831,7 +6831,7 @@ static void tc956xmac_configure_cbs(struct stmmac_priv *priv)
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 	spin_lock_irqsave(&priv->spn_lock.cbs, flags);
 #endif
-		tc956xmac_config_cbs(priv, priv->hw,
+		stmmac_config_cbs(priv, priv->hw,
 				priv->plat->tx_queues_cfg[queue].send_slope,
 				priv->plat->tx_queues_cfg[queue].idle_slope,
 				priv->plat->tx_queues_cfg[queue].high_credit,
@@ -6841,7 +6841,7 @@ static void tc956xmac_configure_cbs(struct stmmac_priv *priv)
 	spin_unlock_irqrestore(&priv->spn_lock.cbs, flags);
 #endif
 #elif (defined TC956X_SRIOV_VF)
-		tc956xmac_config_cbs(priv,
+		stmmac_config_cbs(priv,
 				priv->plat->tx_queues_cfg[queue].send_slope,
 				priv->plat->tx_queues_cfg[queue].idle_slope,
 				priv->plat->tx_queues_cfg[queue].high_credit,
@@ -6854,11 +6854,11 @@ static void tc956xmac_configure_cbs(struct stmmac_priv *priv)
 
 #ifndef TC956X_SRIOV_VF
 /**
- *  tc956xmac_rx_queue_dma_chan_map - Map RX queue to RX dma channel
+ *  stmmac_rx_queue_dma_chan_map - Map RX queue to RX dma channel
  *  @priv: driver private structure
  *  Description: It is used for mapping RX queues to RX dma channels
  */
-static void tc956xmac_rx_queue_dma_chan_map(struct stmmac_priv *priv)
+static void stmmac_rx_queue_dma_chan_map(struct stmmac_priv *priv)
 {
 	u32 rx_queues_count = priv->plat->rx_queues_to_use;
 	u32 queue;
@@ -6871,16 +6871,16 @@ static void tc956xmac_rx_queue_dma_chan_map(struct stmmac_priv *priv)
 #endif
 		/* Enable DA based Queue-Ch mapping for elabled Queues */
 		chan = priv->plat->rx_queues_cfg[queue].chan;
-		tc956xmac_map_mtl_to_dma(priv, priv->hw, queue, chan);
+		stmmac_map_mtl_to_dma(priv, priv->hw, queue, chan);
 	}
 }
 
 /**
- *  tc956xmac_mac_config_rx_queues_prio - Configure RX Queue priority
+ *  stmmac_mac_config_rx_queues_prio - Configure RX Queue priority
  *  @priv: driver private structure
  *  Description: It is used for configuring the RX Queue Priority
  */
-static void tc956xmac_mac_config_rx_queues_prio(struct stmmac_priv *priv)
+static void stmmac_mac_config_rx_queues_prio(struct stmmac_priv *priv)
 {
 	u32 rx_queues_count = priv->plat->rx_queues_to_use;
 	u32 queue;
@@ -6891,16 +6891,16 @@ static void tc956xmac_mac_config_rx_queues_prio(struct stmmac_priv *priv)
 			continue;
 
 		prio = priv->plat->rx_queues_cfg[queue].prio;
-		tc956xmac_rx_queue_prio(priv, priv->hw, prio, queue);
+		stmmac_rx_queue_prio(priv, priv->hw, prio, queue);
 	}
 }
 #endif
 /**
- *  tc956xmac_mac_config_tx_queues_prio - Configure TX Queue priority
+ *  stmmac_mac_config_tx_queues_prio - Configure TX Queue priority
  *  @priv: driver private structure
  *  Description: It is used for configuring the TX Queue Priority
  */
-static void tc956xmac_mac_config_tx_queues_prio(struct stmmac_priv *priv)
+static void stmmac_mac_config_tx_queues_prio(struct stmmac_priv *priv)
 {
 	u32 tx_queues_count = priv->plat->tx_queues_to_use;
 	u32 queue;
@@ -6921,11 +6921,11 @@ static void tc956xmac_mac_config_tx_queues_prio(struct stmmac_priv *priv)
 		traffic_class = priv->plat->tx_queues_cfg[queue].traffic_class;
 
 #ifdef TC956X_SRIOV_PF
-		tc956xmac_tx_queue_prio(priv, priv->hw, prio, traffic_class);
+		stmmac_tx_queue_prio(priv, priv->hw, prio, traffic_class);
 #elif defined TC956X_SRIOV_VF
-		tc956xmac_tx_queue_prio(priv, prio, traffic_class);
+		stmmac_tx_queue_prio(priv, prio, traffic_class);
 #else
-		tc956xmac_tx_queue_prio(priv, priv->hw, prio, queue);
+		stmmac_tx_queue_prio(priv, priv->hw, prio, queue);
 #endif
 	}
 }
@@ -6933,11 +6933,11 @@ static void tc956xmac_mac_config_tx_queues_prio(struct stmmac_priv *priv)
 #ifndef TC956X_SRIOV_VF
 
 /**
- *  tc956xmac_mac_config_rx_queues_routing - Configure RX Queue Routing
+ *  stmmac_mac_config_rx_queues_routing - Configure RX Queue Routing
  *  @priv: driver private structure
  *  Description: It is used for configuring the RX queue routing
  */
-static void tc956xmac_mac_config_rx_queues_routing(struct stmmac_priv *priv)
+static void stmmac_mac_config_rx_queues_routing(struct stmmac_priv *priv)
 {
 	u32 rx_queues_count = priv->plat->rx_queues_to_use;
 	u32 queue;
@@ -6949,11 +6949,11 @@ static void tc956xmac_mac_config_rx_queues_routing(struct stmmac_priv *priv)
 			continue;
 
 		packet = priv->plat->rx_queues_cfg[queue].pkt_route;
-		tc956xmac_rx_queue_routing(priv, priv->hw, packet, queue);
+		stmmac_rx_queue_routing(priv, priv->hw, packet, queue);
 	}
 }
 
-static void tc956xmac_mac_config_rss(struct stmmac_priv *priv)
+static void stmmac_mac_config_rss(struct stmmac_priv *priv)
 {
 	if (!priv->dma_cap.rssen || !priv->plat->rss_en) {
 		priv->rss.enable = false;
@@ -6965,17 +6965,17 @@ static void tc956xmac_mac_config_rss(struct stmmac_priv *priv)
 	else
 		priv->rss.enable = false;
 #ifdef TC956X_UNSUPPORTED_UNTESTED_FEATURE
-	tc956xmac_rss_configure(priv, priv->hw, &priv->rss,
+	stmmac_rss_configure(priv, priv->hw, &priv->rss,
 			     priv->plat->rx_queues_to_use);
 #endif /* TC956X_UNSUPPORTED_UNTESTED_FEATURE */
 }
 #endif /* TC956X_SRIOV_VF */
 /**
- *  tc956xmac_mtl_configuration - Configure MTL
+ *  stmmac_mtl_configuration - Configure MTL
  *  @priv: driver private structure
  *  Description: It is used for configurring MTL
  */
-static void tc956xmac_mtl_configuration(struct stmmac_priv *priv)
+static void stmmac_mtl_configuration(struct stmmac_priv *priv)
 {
 #ifndef TC956X_SRIOV_VF
 	u32 rx_queues_count = priv->plat->rx_queues_to_use;
@@ -6983,64 +6983,64 @@ static void tc956xmac_mtl_configuration(struct stmmac_priv *priv)
 	u32 tx_queues_count = priv->plat->tx_queues_to_use;
 
 	if (tx_queues_count > 1)
-		tc956xmac_set_tx_queue_weight(priv);
+		stmmac_set_tx_queue_weight(priv);
 
 #ifndef TC956X_SRIOV_VF
 	/* Configure MTL RX algorithms */
 	if (rx_queues_count > 1)
-		tc956xmac_prog_mtl_rx_algorithms(priv, priv->hw,
+		stmmac_prog_mtl_rx_algorithms(priv, priv->hw,
 				priv->plat->rx_sched_algorithm);
 
 	/* Configure MTL TX algorithms */
 	if (tx_queues_count > 1)
-		tc956xmac_prog_mtl_tx_algorithms(priv, priv->hw,
+		stmmac_prog_mtl_tx_algorithms(priv, priv->hw,
 				priv->plat->tx_sched_algorithm);
 #endif
 
 	/* Configure CBS in AVB TX queues */
 	if (tx_queues_count > 1)
-		tc956xmac_configure_cbs(priv);
+		stmmac_configure_cbs(priv);
 
 /* Some of Rx queue are shared among more than one VF (DMA channels),
  * so Rx queue configuration will be done by PF commonly
  */
 #ifndef TC956X_SRIOV_VF
 	/* Map RX MTL to DMA channels */
-	tc956xmac_rx_queue_dma_chan_map(priv);
+	stmmac_rx_queue_dma_chan_map(priv);
 
 	/* Enable MAC RX Queues */
-	tc956xmac_mac_enable_rx_queues(priv);
+	stmmac_mac_enable_rx_queues(priv);
 
 	/* Set RX priorities */
 	if (rx_queues_count > 1)
-		tc956xmac_mac_config_rx_queues_prio(priv);
+		stmmac_mac_config_rx_queues_prio(priv);
 
 	/* Set TX priorities */
 	if (tx_queues_count > 1)
-		tc956xmac_mac_config_tx_queues_prio(priv);
+		stmmac_mac_config_tx_queues_prio(priv);
 
 	/* Set RX routing */
 	if (rx_queues_count > 1)
-		tc956xmac_mac_config_rx_queues_routing(priv);
+		stmmac_mac_config_rx_queues_routing(priv);
 
 	/* Receive Side Scaling */
 	if (rx_queues_count > 1)
-		tc956xmac_mac_config_rss(priv);
+		stmmac_mac_config_rss(priv);
 #else
 	/* Set TX priorities */
 	if (tx_queues_count > 1)
-		tc956xmac_mac_config_tx_queues_prio(priv);
+		stmmac_mac_config_tx_queues_prio(priv);
 #endif
 }
 
 #ifndef TC956X_SRIOV_VF
 
-static void tc956xmac_safety_feat_configuration(struct stmmac_priv *priv)
+static void stmmac_safety_feat_configuration(struct stmmac_priv *priv)
 {
 	if (priv->dma_cap.asp) {
 		netdev_info(priv->dev, "Enabling Safety Features\n");
 #ifdef TC956X_UNSUPPORTED_UNTESTED_FEATURE
-		tc956xmac_safety_feat_config(priv, priv->ioaddr, priv->dma_cap.asp);
+		stmmac_safety_feat_config(priv, priv->ioaddr, priv->dma_cap.asp);
 #endif /* TC956X_UNSUPPORTED_UNTESTED_FEATURE */
 	} else {
 		netdev_info(priv->dev, "No Safety Features support found\n");
@@ -7074,7 +7074,7 @@ static void stm_rx_crc_pad_config(struct stmmac_priv *priv, u32 crc_pad)
 }
 #endif
 /**
- * tc956xmac_hw_setup - setup mac in a usable state.
+ * stmmac_hw_setup - setup mac in a usable state.
  *
  *  @dev: pointer to the device structure.
  *  @init_ptp: whether to initialize PTP
@@ -7088,7 +7088,7 @@ static void stm_rx_crc_pad_config(struct stmmac_priv *priv, u32 crc_pad)
  *  0 on success and an appropriate (-)ve integer as defined in errno.h
  *  file on failure.
  */
-static int tc956xmac_hw_setup(struct net_device *dev, bool init_ptp)
+static int stmmac_hw_setup(struct net_device *dev, bool init_ptp)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 #ifdef TC956X
@@ -7112,10 +7112,10 @@ static int tc956xmac_hw_setup(struct net_device *dev, bool init_ptp)
 
 	/* Back up MMC registers into internal SW MMC counters */
 	if (priv->link_down_rst == true)
-		tc956xmac_mmc_read(priv, priv->mmcaddr, &priv->mmc);
+		stmmac_mmc_read(priv, priv->mmcaddr, &priv->mmc);
 
 	/* DMA initialization and SW reset */
-	ret = tc956xmac_init_dma_engine(priv);
+	ret = stmmac_init_dma_engine(priv);
 	if (ret < 0) {
 		netdev_err(priv->dev,
 		"%s: DMA engine initialization failed check availability of clock if supplied from external source/PHY\n",
@@ -7128,10 +7128,10 @@ static int tc956xmac_hw_setup(struct net_device *dev, bool init_ptp)
 	spin_lock_irqsave(&priv->spn_lock.mac_filter, flags);
 #endif
 	/* Copy the MAC addr into the HW  */
-	tc956xmac_set_umac_addr(priv, priv->hw, (unsigned char *)dev->dev_addr, HOST_MAC_ADDR_OFFSET, PF_DRIVER);
+	stmmac_set_umac_addr(priv, priv->hw, (unsigned char *)dev->dev_addr, HOST_MAC_ADDR_OFFSET, PF_DRIVER);
 
 	/* Adding Broadcast address to offset 0 to divert Rx packet to PF Legacy Channel */
-	tc956xmac_set_umac_addr(priv, priv->hw, &dev_addr[0], HOST_BC_ADDR_OFFSET, PF_DRIVER);
+	stmmac_set_umac_addr(priv, priv->hw, &dev_addr[0], HOST_BC_ADDR_OFFSET, PF_DRIVER);
 
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 	spin_unlock_irqrestore(&priv->spn_lock.mac_filter, flags);
@@ -7140,10 +7140,10 @@ static int tc956xmac_hw_setup(struct net_device *dev, bool init_ptp)
 #elif defined TC956X_SRIOV_VF
 	ret = -EBUSY;
 	while (ret == -EBUSY)
-		ret = tc956xmac_set_umac_addr(priv, dev_addr, 0);
+		ret = stmmac_set_umac_addr(priv, dev_addr, 0);
 	ret = -EBUSY;
 	while (ret == -EBUSY)
-		ret = tc956xmac_set_umac_addr(priv, dev->dev_addr, HOST_MAC_ADDR_OFFSET + priv->fn_id_info.vf_no);
+		ret = stmmac_set_umac_addr(priv, dev->dev_addr, HOST_MAC_ADDR_OFFSET + priv->fn_id_info.vf_no);
 #endif
 
 #ifndef TC956X_SRIOV_VF /* No speed related and core init in VF */
@@ -7166,11 +7166,11 @@ static int tc956xmac_hw_setup(struct net_device *dev, bool init_ptp)
 	}
 
 	/* Initialize the MAC Core */
-	tc956xmac_core_init(priv, priv->hw, dev);
+	stmmac_core_init(priv, priv->hw, dev);
 #endif
 #ifndef TC956X_SRIOV_VF
 	/* Enable Jumbo Frame Support */
-	tc956xmac_jumbo_en(priv, dev, TC956X_ENABLE);
+	stmmac_jumbo_en(priv, dev, TC956X_ENABLE);
 
 #ifdef TC956X_SRIOV_PF
 	/* Update driver cap to let VF know about feature enable/disable */
@@ -7182,17 +7182,17 @@ static int tc956xmac_hw_setup(struct net_device *dev, bool init_ptp)
 #endif
 #endif
 	/* Initialize MTL*/
-	tc956xmac_mtl_configuration(priv);
+	stmmac_mtl_configuration(priv);
 
 	/* Safety feature not supported aswell not configured by VF*/
 #ifndef TC956X_SRIOV_VF
 	/* Initialize Safety Features */
-	tc956xmac_safety_feat_configuration(priv);
+	stmmac_safety_feat_configuration(priv);
 #endif
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 	spin_lock_irqsave(&priv->spn_lock.frp, flags);
 #endif
-	ret = tc956xmac_rx_parser_configuration(priv);
+	ret = stmmac_rx_parser_configuration(priv);
 
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 	spin_unlock_irqrestore(&priv->spn_lock.frp, flags);
@@ -7201,7 +7201,7 @@ static int tc956xmac_hw_setup(struct net_device *dev, bool init_ptp)
 	 * VF driver should know the status of core register configuration
 	 */
 #ifndef TC956X_SRIOV_VF
-	ret = tc956xmac_rx_ipc(priv, priv->hw);
+	ret = stmmac_rx_ipc(priv, priv->hw);
 	if (!ret) {
 #else
 	if (!priv->pf_drv_cap.csum_en) {
@@ -7222,12 +7222,12 @@ static int tc956xmac_hw_setup(struct net_device *dev, bool init_ptp)
 
 #ifndef TC956X_SRIOV_VF
 	/* Enable the MAC Rx/Tx */
-	tc956xmac_mac_set(priv, priv->ioaddr, true);
+	stmmac_mac_set(priv, priv->ioaddr, true);
 #endif
 	/* Set the HW DMA mode and the COE */
-	tc956xmac_dma_operation_mode(priv);
+	stmmac_dma_operation_mode(priv);
 
-	tc956xmac_mmc_setup(priv);
+	stmmac_mmc_setup(priv);
 
 	/* CRC & Padding Configuration */
 
@@ -7249,7 +7249,7 @@ static int tc956xmac_hw_setup(struct net_device *dev, bool init_ptp)
 		if (ret < 0)
 			netdev_warn(priv->dev, "failed to enable PTP reference clock: %d\n", ret);
 
-		ret = tc956xmac_init_ptp(priv);
+		ret = stmmac_init_ptp(priv);
 		if (ret == -EOPNOTSUPP)
 			netdev_warn(priv->dev, "PTP not supported by HW\n");
 		else if (ret)
@@ -7267,7 +7267,7 @@ static int tc956xmac_hw_setup(struct net_device *dev, bool init_ptp)
 					priv->rx_riwt[queue] = mac1_rx_watchdog_timeout;
 			}
 
-			ret = tc956xmac_rx_watchdog(priv, priv->ioaddr, priv->rx_riwt[queue], queue);
+			ret = stmmac_rx_watchdog(priv, priv->ioaddr, priv->rx_riwt[queue], queue);
 		}
 #else
 		if (!priv->rx_riwt) {
@@ -7278,7 +7278,7 @@ static int tc956xmac_hw_setup(struct net_device *dev, bool init_ptp)
 				priv->rx_riwt = mac1_rx_watchdog_timeout;
 		}
 
-		ret = tc956xmac_rx_watchdog(priv, priv->ioaddr, priv->rx_riwt, rx_cnt);
+		ret = stmmac_rx_watchdog(priv, priv->ioaddr, priv->rx_riwt, rx_cnt);
 
 #endif
 	}
@@ -7308,7 +7308,7 @@ static int tc956xmac_hw_setup(struct net_device *dev, bool init_ptp)
 	}
 #else
 	if (priv->hw->pcs)
-		tc956xmac_pcs_ctrl_ane(priv, priv->ioaddr, 1, priv->hw->ps, 0);
+		stmmac_pcs_ctrl_ane(priv, priv->ioaddr, 1, priv->hw->ps, 0);
 #endif
 	stm_ptp_configuration(priv, 0);
 #else
@@ -7317,7 +7317,7 @@ static int tc956xmac_hw_setup(struct net_device *dev, bool init_ptp)
 #endif /*#ifdef TC956X_SRIOV_VF*/
 
 	/* set TX and RX rings length */
-	tc956xmac_set_rings_length(priv);
+	stmmac_set_rings_length(priv);
 
 	/* Enable TSO */
 	if (priv->tso) {
@@ -7330,7 +7330,7 @@ static int tc956xmac_hw_setup(struct net_device *dev, bool init_ptp)
 			if (priv->plat->tx_queues_cfg[chan].tso_en)
 #endif
 
-				tc956xmac_enable_tso(priv, priv->ioaddr, 1, chan);
+				stmmac_enable_tso(priv, priv->ioaddr, 1, chan);
 		}
 	}
 
@@ -7343,7 +7343,7 @@ static int tc956xmac_hw_setup(struct net_device *dev, bool init_ptp)
 			if (priv->plat->ch_in_use[chan] == 0)
 				continue;
 #endif
-				tc956xmac_enable_sph(priv, priv->ioaddr, 1, chan);
+				stmmac_enable_sph(priv, priv->ioaddr, 1, chan);
 		}
 	}
 
@@ -7354,12 +7354,12 @@ static int tc956xmac_hw_setup(struct net_device *dev, bool init_ptp)
 #else
 	if ((priv->dma_cap.vlins) && (dev->features & NETIF_F_HW_VLAN_CTAG_TX))
 #endif
-		tc956xmac_enable_vlan(priv, priv->hw, TC956XMAC_VLAN_INSERT);
+		stmmac_enable_vlan(priv, priv->hw, TC956XMAC_VLAN_INSERT);
 #endif
 
 	/* TBS */
 	for (chan = 0; chan < tx_cnt; chan++) {
-		struct tc956xmac_tx_queue *tx_q = &priv->tx_queue[chan];
+		struct stmmac_tx_queue *tx_q = &priv->tx_queue[chan];
 		int enable = tx_q->tbs & TC956XMAC_TBS_AVAIL;
 
 #ifdef TC956X_SRIOV_PF
@@ -7372,7 +7372,7 @@ static int tc956xmac_hw_setup(struct net_device *dev, bool init_ptp)
 		if (priv->plat->ch_in_use[chan] == 0)
 			continue;
 #endif
-		tc956xmac_enable_tbs(priv, priv->ioaddr, enable, chan);
+		stmmac_enable_tbs(priv, priv->ioaddr, enable, chan);
 	}
 
 	/* PF driver to configure EST for all functions */
@@ -7381,7 +7381,7 @@ static int tc956xmac_hw_setup(struct net_device *dev, bool init_ptp)
 #endif
 #ifndef TC956X_SRIOV_VF
 	if (priv->plat->est->enable)
-		tc956xmac_est_configure(priv, priv->ioaddr, priv->plat->est,
+		stmmac_est_configure(priv, priv->ioaddr, priv->plat->est,
 				   priv->plat->clk_ptp_rate);
 #endif
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
@@ -7389,13 +7389,13 @@ static int tc956xmac_hw_setup(struct net_device *dev, bool init_ptp)
 #endif
 
 	/* Start the ball rolling... */
-	tc956xmac_start_all_dma(priv);
+	stmmac_start_all_dma(priv);
 
 	return 0;
 }
 
 #ifndef TC956X_SRIOV_VF
-static void tc956xmac_hw_teardown(struct net_device *dev)
+static void stmmac_hw_teardown(struct net_device *dev)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 
@@ -7403,7 +7403,7 @@ static void tc956xmac_hw_teardown(struct net_device *dev)
 }
 
 #if !defined(TC956X_CPE_CONFIG)
-static void tc956xmac_set_cbs_default(struct stmmac_priv *priv)
+static void stmmac_set_cbs_default(struct stmmac_priv *priv)
 {
 	u32 queue_idx;
 	u32 tx_queue_cnt = priv->plat->tx_queues_to_use;
@@ -7456,7 +7456,7 @@ static int stm_pf_vf_ch_alloc(struct net_device *ndev)
 {
 	struct stmmac_priv *priv = netdev_priv(ndev);
 
-	tc956xmac_rsc_mng_set_rscs(priv, ndev, &priv->rsc_dma_ch_alloc[0]);
+	stmmac_rsc_mng_set_rscs(priv, ndev, &priv->rsc_dma_ch_alloc[0]);
 
 	return 0;
 }
@@ -7465,7 +7465,7 @@ static int stm_pf_vf_ch_alloc(struct net_device *ndev)
 #endif
 
 /**
- *  tc956xmac_open - open entry point of the driver
+ *  stmmac_open - open entry point of the driver
  *  @dev : pointer to the device structure.
  *  Description:
  *  This function is the open entry point of the driver.
@@ -7473,7 +7473,7 @@ static int stm_pf_vf_ch_alloc(struct net_device *ndev)
  *  0 on success and an appropriate (-)ve integer as defined in errno.h
  *  file on failure.
  */
-static int tc956xmac_open(struct net_device *dev)
+static int stmmac_open(struct net_device *dev)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 	struct pci_dev *pdev = container_of(priv->device, struct pci_dev, dev);
@@ -7504,7 +7504,7 @@ static int tc956xmac_open(struct net_device *dev)
 #ifdef TC956X_SRIOV_PF
 #ifdef CONFIG_DEBUG_FS
 	if (priv->link_down_rst == false)
-		tc956xmac_create_debugfs(priv->dev);/*Creating Debugfs*/
+		stmmac_create_debugfs(priv->dev);/*Creating Debugfs*/
 #endif
 #endif /* TC956X_SRIOV_PF */
 
@@ -7513,7 +7513,7 @@ static int tc956xmac_open(struct net_device *dev)
 	mutex_lock(&priv->port_ld_release_lock);
 	priv->port_release = false; /* setting port release to false as Open invoked, and set to true from release or link down */
 	if (priv->port_link_down == true)
-		tc956xmac_link_change_set_power(priv, LINK_UP); /* Restore, De-assert and Enable Reset and Clock */
+		stmmac_link_change_set_power(priv, LINK_UP); /* Restore, De-assert and Enable Reset and Clock */
 
 	mutex_unlock(&priv->port_ld_release_lock);
 
@@ -7533,7 +7533,7 @@ static int tc956xmac_open(struct net_device *dev)
 		if (priv->hw->pcs != TC956XMAC_PCS_RGMII &&
 		    priv->hw->pcs != TC956XMAC_PCS_TBI &&
 		    priv->hw->pcs != TC956XMAC_PCS_RTBI) {
-			ret = tc956xmac_init_phy(dev);
+			ret = stmmac_init_phy(dev);
 			if (ret) {
 				netdev_err(priv->dev,
 					   "%s: Cannot attach to PHY (error: %d)\n",
@@ -7558,12 +7558,12 @@ static int tc956xmac_open(struct net_device *dev)
 		memset(&priv->xstats, 0, sizeof(struct stmmac_extra_stats));
 		priv->xstats.threshold = tc;
 
-		bfsize = tc956xmac_set_16kib_bfsize(priv, dev->mtu);
+		bfsize = stmmac_set_16kib_bfsize(priv, dev->mtu);
 		if (bfsize < 0)
 			bfsize = 0;
 
 		if (bfsize < BUF_SIZE_16KiB)
-			bfsize = tc956xmac_set_bfsize(dev->mtu, priv->dma_buf_sz);
+			bfsize = stmmac_set_bfsize(dev->mtu, priv->dma_buf_sz);
 
 #if defined(TC956X_CPE_CONFIG)
 		/* Overwrite buff size allocated to 2K, to accomodate max mtu supported of 2000 bytes,
@@ -7578,7 +7578,7 @@ static int tc956xmac_open(struct net_device *dev)
 
 		/* Earlier check for TBS */
 		for (chan = 0; chan < priv->plat->tx_queues_to_use; chan++) {
-			struct tc956xmac_tx_queue *tx_q = &priv->tx_queue[chan];
+			struct stmmac_tx_queue *tx_q = &priv->tx_queue[chan];
 			int tbs_en = priv->plat->tx_queues_cfg[chan].tbs_en;
 
 			/* Set TC956XMAC_TBS_EN by default. Later allow tc command to
@@ -7586,14 +7586,14 @@ static int tc956xmac_open(struct net_device *dev)
 			 */
 			tx_q->tbs |= tbs_en ? TC956XMAC_TBS_AVAIL | TC956XMAC_TBS_EN : 0;
 
-			if (tc956xmac_enable_tbs(priv, priv->ioaddr, tbs_en, chan))
+			if (stmmac_enable_tbs(priv, priv->ioaddr, tbs_en, chan))
 				tx_q->tbs &= ~TC956XMAC_TBS_AVAIL;
 		}
 	}
 #endif
 #ifdef TC956X_SRIOV_PF
 	/* Retrieve Function ID */
-	ret = tc956xmac_rsc_mng_get_fn_id(priv, priv->stm_BRIDGE_CFG_pci_base_addr, &priv->fn_id_info);
+	ret = stmmac_rsc_mng_get_fn_id(priv, priv->stm_BRIDGE_CFG_pci_base_addr, &priv->fn_id_info);
 	if (ret < 0) {
 		netdev_err(priv->dev, "%s: Invalid SRIOV Function ID\n",
 			   __func__);
@@ -7639,7 +7639,7 @@ static int tc956xmac_open(struct net_device *dev)
 #endif
 
 #if defined(TC956X_SRIOV_PF) && !defined(TC956X_AUTOMOTIVE_CONFIG) && !defined(TC956X_ENABLE_MAC2MAC_BRIDGE) && !defined(TC956X_CPE_CONFIG)
-	tc956xmac_mbx_init(priv, NULL);
+	stmmac_mbx_init(priv, NULL);
 #endif
 
 	/* Extra statistics */
@@ -7650,33 +7650,33 @@ static int tc956xmac_open(struct net_device *dev)
 #endif
 
 #ifdef TC956X_SRIOV_VF
-	tc956xmac_get_link_status(priv, &link_status, &speed, &duplex);
+	stmmac_get_link_status(priv, &link_status, &speed, &duplex);
 
 	while (link_status != true && state_count < 10) {
-		tc956xmac_get_link_status(priv, &link_status, &speed, &duplex);
+		stmmac_get_link_status(priv, &link_status, &speed, &duplex);
 		state_count++;
 		udelay(100);
 	}
 #endif
-	bfsize = tc956xmac_set_16kib_bfsize(priv, dev->mtu);
+	bfsize = stmmac_set_16kib_bfsize(priv, dev->mtu);
 	if (bfsize < 0)
 		bfsize = 0;
 
 	if (bfsize < BUF_SIZE_16KiB)
-		bfsize = tc956xmac_set_bfsize(dev->mtu, priv->dma_buf_sz);
+		bfsize = stmmac_set_bfsize(dev->mtu, priv->dma_buf_sz);
 
 	priv->dma_buf_sz = bfsize;
 	buf_sz = bfsize;
 
 #if defined(TC956X_SRIOV_PF) && !defined(TC956X_CPE_CONFIG)
-	tc956xmac_set_cbs_default(priv);
+	stmmac_set_cbs_default(priv);
 #endif
 
 	priv->rx_copybreak = TC956XMAC_RX_COPYBREAK;
 
 	/* Earlier check for TBS */
 	for (chan = 0; chan < priv->plat->tx_queues_to_use; chan++) {
-		struct tc956xmac_tx_queue *tx_q = &priv->tx_queue[chan];
+		struct stmmac_tx_queue *tx_q = &priv->tx_queue[chan];
 		int tbs_en = priv->plat->tx_queues_cfg[chan].tbs_en;
 #ifdef TC956X_SRIOV_PF
 			if (priv->plat->tx_ch_in_use[chan] ==
@@ -7692,7 +7692,7 @@ static int tc956xmac_open(struct net_device *dev)
 		 */
 		tx_q->tbs |= tbs_en ? TC956XMAC_TBS_AVAIL | TC956XMAC_TBS_EN : 0;
 
-		if (tc956xmac_enable_tbs(priv, priv->ioaddr, tbs_en, chan))
+		if (stmmac_enable_tbs(priv, priv->ioaddr, tbs_en, chan))
 			tx_q->tbs &= ~TC956XMAC_TBS_AVAIL;
 	}
 
@@ -7710,7 +7710,7 @@ static int tc956xmac_open(struct net_device *dev)
 		goto init_error;
 	}
 
-	ret = tc956xmac_hw_setup(dev, true);
+	ret = stmmac_hw_setup(dev, true);
 	if (ret < 0) {
 		netdev_err(priv->dev, "%s: Hw setup failed\n", __func__);
 		/*goto init_error;*/
@@ -7753,7 +7753,7 @@ static int tc956xmac_open(struct net_device *dev)
 #endif
 #endif /* TC956X */
 
-	tc956xmac_init_coalesce(priv);
+	stmmac_init_coalesce(priv);
 
 
 #ifndef TC956X_SRIOV_VF
@@ -7772,7 +7772,7 @@ static int tc956xmac_open(struct net_device *dev)
 	if (priv->link_down_rst == false) {
 
 		/* Request the IRQ lines */
-		ret = request_irq(irq_no, tc956xmac_interrupt_v0,
+		ret = request_irq(irq_no, stmmac_interrupt_v0,
 			  IRQF_NO_SUSPEND, dev->name, dev);
 		if (unlikely(ret < 0)) {
 			netdev_err(priv->dev,
@@ -7787,7 +7787,7 @@ static int tc956xmac_open(struct net_device *dev)
 			if (priv->wol_irq != dev->irq) {
 				pwol_dev_name = priv->int_name_wol;
 				snprintf(pwol_dev_name, sizeof(priv->int_name_wol), "%s_wol", dev->name);
-				ret = request_irq(priv->wol_irq, tc956xmac_wol_interrupt,
+				ret = request_irq(priv->wol_irq, stmmac_wol_interrupt,
 						  IRQF_NO_SUSPEND, pwol_dev_name, dev);
 				if (unlikely(ret < 0)) {
 					netdev_err(priv->dev,
@@ -7799,7 +7799,7 @@ static int tc956xmac_open(struct net_device *dev)
 	#ifndef TC956X
 			/* Request the IRQ lines */
 			if (priv->lpi_irq > 0) {
-				ret = request_irq(priv->lpi_irq, tc956xmac_interrupt, IRQF_SHARED,
+				ret = request_irq(priv->lpi_irq, stmmac_interrupt, IRQF_SHARED,
 						  dev->name, dev);
 				if (unlikely(ret < 0)) {
 					netdev_err(priv->dev,
@@ -7809,7 +7809,7 @@ static int tc956xmac_open(struct net_device *dev)
 				}
 			}
 	#endif
-			priv->tc956xmac_pm_wol_interrupt = false; /* Initialize flag for PHY Work queue */
+			priv->stmmac_pm_wol_interrupt = false; /* Initialize flag for PHY Work queue */
 		}
 	}
 #endif /* TC956X_SRIOV_PF */
@@ -7817,7 +7817,7 @@ static int tc956xmac_open(struct net_device *dev)
 #if defined(TC956X_SRIOV_PF) && !defined(TC956X_AUTOMOTIVE_CONFIG) && !defined(TC956X_ENABLE_MAC2MAC_BRIDGE) && !defined(TC956X_CPE_CONFIG)
 	irq_no = pci_irq_vector(pdev, TC956X_MSI_VECTOR_1);
 
-	ret = request_irq(irq_no, tc956xmac_interrupt_v1,
+	ret = request_irq(irq_no, stmmac_interrupt_v1,
 			  IRQF_SHARED, dev->name, dev);
 	if (unlikely(ret < 0)) {
 		netdev_err(priv->dev,
@@ -7839,9 +7839,9 @@ static int tc956xmac_open(struct net_device *dev)
 	/* Enable MSIGEN interrupt */
 	stm_msi_intr_en(priv, dev, TC956X_ENABLE, &priv->fn_id_info);
 #endif
-	tc956xmac_enable_all_queues(priv);
+	stmmac_enable_all_queues(priv);
 
-	tc956xmac_start_all_queues(priv);
+	stmmac_start_all_queues(priv);
 
 #ifdef TC956X_SRIOV_PF
 	if (readl_poll_timeout_atomic(priv->ioaddr +  TC956X_MSI_EVENT_OFFSET(priv->fn_id_info.pf_no, priv->fn_id_info.vf_no),
@@ -7908,7 +7908,7 @@ static int tc956xmac_open(struct net_device *dev)
 		NMSGPR_INFO(priv->device, "PHY Link : DOWN\n");
 	}
 
-	tc956xmac_vf_reset(priv, VF_UP);
+	stmmac_vf_reset(priv, VF_UP);
 #endif
 #ifdef TX_COMPLETION_WITHOUT_TIMERS
 		writel(0, priv->stm_SRAM_pci_base_addr
@@ -7950,7 +7950,7 @@ irq_error:
 	}
 #endif
 #ifndef TC956X_SRIOV_VF
-	tc956xmac_hw_teardown(dev);
+	stmmac_hw_teardown(dev);
 #endif
 
 init_error:
@@ -7965,12 +7965,12 @@ dma_desc_error:
 }
 
 /**
- *  tc956xmac_release - close entry point of the driver
+ *  stmmac_release - close entry point of the driver
  *  @dev : device pointer.
  *  Description:
  *  This is the stop entry point of the driver.
  */
-static int tc956xmac_release(struct net_device *dev)
+static int stmmac_release(struct net_device *dev)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 	struct pci_dev *pdev = container_of(priv->device, struct pci_dev, dev);
@@ -8004,7 +8004,7 @@ static int tc956xmac_release(struct net_device *dev)
 #endif
 	KPRINT_INFO("Release priv->link_down_rst = %d priv->stm_port_pm_suspend = %d\n", priv->link_down_rst, priv->stm_port_pm_suspend);
 #ifdef TC956X_SRIOV_VF
-	tc956xmac_vf_reset(priv, VF_RELEASE);
+	stmmac_vf_reset(priv, VF_RELEASE);
 #endif
 
 #ifdef TC956X_SRIOV_PF
@@ -8030,7 +8030,7 @@ static int tc956xmac_release(struct net_device *dev)
 #ifdef TC956X_SRIOV_PF
 #ifdef CONFIG_DEBUG_FS
 	if (priv->link_down_rst == false)
-		tc956xmac_cleanup_debugfs(priv->dev);
+		stmmac_cleanup_debugfs(priv->dev);
 #endif
 #endif /* TC956X_SRIOV_PF */
 
@@ -8046,13 +8046,13 @@ static int tc956xmac_release(struct net_device *dev)
 	mutex_lock(&priv->port_ld_release_lock);
 	if (priv->port_link_down == true) {
 		KPRINT_INFO("Link down happened before %s, restoring clocks to stop DMA\n", __func__);
-		tc956xmac_link_change_set_power(priv, LINK_UP); /* Restore, De-assert and Enable Reset and Clock */
+		stmmac_link_change_set_power(priv, LINK_UP); /* Restore, De-assert and Enable Reset and Clock */
 	}
 
 #endif
-	tc956xmac_stop_all_queues(priv);
+	stmmac_stop_all_queues(priv);
 
-	tc956xmac_disable_all_queues(priv);
+	stmmac_disable_all_queues(priv);
 
 	/* MSI_OUT_EN: Disable all MSI*/
 	if (priv->link_down_rst == false)
@@ -8124,20 +8124,20 @@ static int tc956xmac_release(struct net_device *dev)
 		free_irq(priv->lpi_irq, dev);
 #endif
 	/* Stop TX/RX DMA and clear the descriptors */
-	tc956xmac_stop_all_dma(priv);
+	stmmac_stop_all_dma(priv);
 
 	/* Release and free the Rx/Tx resources */
 	free_dma_desc_resources(priv);
 
 #ifndef TC956X_SRIOV_VF
 	/* Disable the MAC Rx/Tx */
-	tc956xmac_mac_set(priv, priv->ioaddr, false);
+	stmmac_mac_set(priv, priv->ioaddr, false);
 #endif
 	if (priv->link_down_rst == false)
 		netif_carrier_off(dev);
 	NMSGPR_INFO(priv->device, "PHY Link : DOWN\n");
 
-	tc956xmac_release_ptp(priv);
+	stmmac_release_ptp(priv);
 
 	/* mutex_lock(&priv->port_ld_release_lock);*/
 	/* Checking whether all offload Tx channels released or not*/
@@ -8159,7 +8159,7 @@ static int tc956xmac_release(struct net_device *dev)
 	/* If all channels are freed, call API for power saving*/
 	if (priv->port_link_down == false && offload_release_sts == true) {
 		KPRINT_INFO(" %s, Assert Reset and Disabling clock\n", __func__);
-		tc956xmac_link_change_set_power(priv, LINK_DOWN); /* Save, Assert and Disable Reset and Clock */
+		stmmac_link_change_set_power(priv, LINK_DOWN); /* Save, Assert and Disable Reset and Clock */
 	}
 	priv->port_release = true; /* setting port release to true as release invoked, and clear from open or link-up */
 	mutex_unlock(&priv->port_ld_release_lock);
@@ -8196,8 +8196,8 @@ static int tc956xmac_release(struct net_device *dev)
 	return 0;
 }
 
-static bool tc956xmac_vlan_insert(struct stmmac_priv *priv, struct sk_buff *skb,
-			       struct tc956xmac_tx_queue *tx_q)
+static bool stmmac_vlan_insert(struct stmmac_priv *priv, struct sk_buff *skb,
+			       struct stmmac_tx_queue *tx_q)
 {
 	u16 tag = 0x0, inner_tag = 0x0;
 	u32 inner_type = 0x0;
@@ -8219,16 +8219,16 @@ static bool tc956xmac_vlan_insert(struct stmmac_priv *priv, struct sk_buff *skb,
 	else
 		p = &tx_q->dma_tx[tx_q->cur_tx];
 
-	if (tc956xmac_set_desc_vlan_tag(priv, p, tag, inner_tag, inner_type))
+	if (stmmac_set_desc_vlan_tag(priv, p, tag, inner_tag, inner_type))
 		return false;
 
-	tc956xmac_set_tx_owner(priv, p);
+	stmmac_set_tx_owner(priv, p);
 	tx_q->cur_tx = TC956XMAC_GET_ENTRY(tx_q->cur_tx, DMA_TX_SIZE);
 	return true;
 }
 
 /**
- *  tc956xmac_tso_allocator - close entry point of the driver
+ *  stmmac_tso_allocator - close entry point of the driver
  *  @priv: driver private structure
  *  @des: buffer start address
  *  @total_len: total length to fill in descriptors
@@ -8238,10 +8238,10 @@ static bool tc956xmac_vlan_insert(struct stmmac_priv *priv, struct sk_buff *skb,
  *  This function fills descriptor and request new descriptors according to
  *  buffer length to fill
  */
-static void tc956xmac_tso_allocator(struct stmmac_priv *priv, dma_addr_t des,
+static void stmmac_tso_allocator(struct stmmac_priv *priv, dma_addr_t des,
 				 int total_len, bool last_segment, u32 queue)
 {
-	struct tc956xmac_tx_queue *tx_q = &priv->tx_queue[queue];
+	struct stmmac_tx_queue *tx_q = &priv->tx_queue[queue];
 	struct dma_desc *desc;
 	u32 buff_size;
 	int tmp_len;
@@ -8265,12 +8265,12 @@ static void tc956xmac_tso_allocator(struct stmmac_priv *priv, dma_addr_t des,
 			desc->des0 = cpu_to_le32(curr_addr);
 		else
 #endif
-			tc956xmac_set_desc_addr(priv, desc, curr_addr);
+			stmmac_set_desc_addr(priv, desc, curr_addr);
 
 		buff_size = tmp_len >= TSO_MAX_BUFF_SIZE ?
 			    TSO_MAX_BUFF_SIZE : tmp_len;
 
-		tc956xmac_prepare_tso_tx_desc(priv, desc, 0, buff_size,
+		stmmac_prepare_tso_tx_desc(priv, desc, 0, buff_size,
 				0, 1,
 				(last_segment) && (tmp_len <= TSO_MAX_BUFF_SIZE),
 				0, 0);
@@ -8280,7 +8280,7 @@ static void tc956xmac_tso_allocator(struct stmmac_priv *priv, dma_addr_t des,
 }
 
 /**
- *  tc956xmac_tso_xmit - Tx entry point of the driver for oversized frames (TSO)
+ *  stmmac_tso_xmit - Tx entry point of the driver for oversized frames (TSO)
  *  @skb : the socket buffer
  *  @dev : device pointer
  *  Description: this is the transmit function that is called on TSO frames
@@ -8306,7 +8306,7 @@ static void tc956xmac_tso_allocator(struct stmmac_priv *priv, dma_addr_t des,
  *
  * mss is fixed when enable tso, so w/o programming the TDES3 ctx field.
  */
-static netdev_tx_t tc956xmac_tso_xmit(struct sk_buff *skb, struct net_device *dev)
+static netdev_tx_t stmmac_tso_xmit(struct sk_buff *skb, struct net_device *dev)
 {
 	struct dma_desc *desc, *first, *mss_desc = NULL;
 	struct stmmac_priv *priv = netdev_priv(dev);
@@ -8314,7 +8314,7 @@ static netdev_tx_t tc956xmac_tso_xmit(struct sk_buff *skb, struct net_device *de
 	int nfrags = skb_shinfo(skb)->nr_frags;
 	u32 queue = skb_get_queue_mapping(skb);
 	unsigned int first_entry, tx_packets;
-	struct tc956xmac_tx_queue *tx_q;
+	struct stmmac_tx_queue *tx_q;
 	bool has_vlan, set_ic;
 	u8 proto_hdr_len, hdr;
 	u32 pay_len, mss;
@@ -8334,7 +8334,7 @@ static netdev_tx_t tc956xmac_tso_xmit(struct sk_buff *skb, struct net_device *de
 	}
 
 	/* Desc availability based on threshold should be enough safe */
-	if (unlikely(tc956xmac_tx_avail(priv, queue) <
+	if (unlikely(stmmac_tx_avail(priv, queue) <
 		(((skb->len - proto_hdr_len) / TSO_MAX_BUFF_SIZE + 1)))) {
 		if (!netif_tx_queue_stopped(netdev_get_tx_queue(dev, queue))) {
 			netif_tx_stop_queue(netdev_get_tx_queue(priv->dev,
@@ -8358,7 +8358,7 @@ static netdev_tx_t tc956xmac_tso_xmit(struct sk_buff *skb, struct net_device *de
 		else
 			mss_desc = &tx_q->dma_tx[tx_q->cur_tx];
 
-		tc956xmac_set_mss(priv, mss_desc, mss);
+		stmmac_set_mss(priv, mss_desc, mss);
 		tx_q->mss = mss;
 		tx_q->cur_tx = TC956XMAC_GET_ENTRY(tx_q->cur_tx, DMA_TX_SIZE);
 		WARN_ON(tx_q->tx_skbuff[tx_q->cur_tx]);
@@ -8372,7 +8372,7 @@ static netdev_tx_t tc956xmac_tso_xmit(struct sk_buff *skb, struct net_device *de
 	}
 
 	/* Check if VLAN can be inserted by HW */
-	has_vlan = tc956xmac_vlan_insert(priv, skb, tx_q);
+	has_vlan = stmmac_vlan_insert(priv, skb, tx_q);
 
 	first_entry = tx_q->cur_tx;
 	WARN_ON(tx_q->tx_skbuff[first_entry]);
@@ -8384,7 +8384,7 @@ static netdev_tx_t tc956xmac_tso_xmit(struct sk_buff *skb, struct net_device *de
 	first = desc;
 
 	if (has_vlan)
-		tc956xmac_set_desc_vlan(priv, first, TC956XMAC_VLAN_INSERT);
+		stmmac_set_desc_vlan(priv, first, TC956XMAC_VLAN_INSERT);
 
 	/* first descriptor: fill Headers on Buf1 */
 	des = dma_map_single(priv->device, skb->data, skb_headlen(skb),
@@ -8409,7 +8409,7 @@ static netdev_tx_t tc956xmac_tso_xmit(struct sk_buff *skb, struct net_device *de
 		tmp_pay_len = pay_len - TSO_MAX_BUFF_SIZE;
 	} else {
 #endif
-		tc956xmac_set_desc_addr(priv, first, des);
+		stmmac_set_desc_addr(priv, first, des);
 		tmp_pay_len = pay_len;
 		des += proto_hdr_len;
 		pay_len = 0;
@@ -8417,7 +8417,7 @@ static netdev_tx_t tc956xmac_tso_xmit(struct sk_buff *skb, struct net_device *de
 	}
 #endif
 
-	tc956xmac_tso_allocator(priv, des, tmp_pay_len, (nfrags == 0), queue);
+	stmmac_tso_allocator(priv, des, tmp_pay_len, (nfrags == 0), queue);
 
 	/* Prepare fragments */
 	for (i = 0; i < nfrags; i++) {
@@ -8429,7 +8429,7 @@ static netdev_tx_t tc956xmac_tso_xmit(struct sk_buff *skb, struct net_device *de
 		if (dma_mapping_error(priv->device, des))
 			goto dma_map_err;
 
-		tc956xmac_tso_allocator(priv, des, skb_frag_size(frag),
+		stmmac_tso_allocator(priv, des, skb_frag_size(frag),
 				     (i == nfrags - 1), queue);
 
 		tx_q->tx_skbuff_dma[tx_q->cur_tx].buf = des;
@@ -8475,18 +8475,18 @@ static netdev_tx_t tc956xmac_tso_xmit(struct sk_buff *skb, struct net_device *de
 			desc = &tx_q->dma_tx[tx_q->cur_tx];
 
 		tx_q->tx_count_frames = 0;
-		tc956xmac_set_tx_ic(priv, desc);
+		stmmac_set_tx_ic(priv, desc);
 		priv->xstats.tx_set_ic_bit++;
 	}
 
 	/* We've used all descriptors we need for this skb, however,
 	 * advance cur_tx so that it references a fresh descriptor.
 	 * ndo_start_xmit will fill this descriptor the next time it's
-	 * called and tc956xmac_tx_clean may clean up to this descriptor.
+	 * called and stmmac_tx_clean may clean up to this descriptor.
 	 */
 	tx_q->cur_tx = TC956XMAC_GET_ENTRY(tx_q->cur_tx, DMA_TX_SIZE);
 
-	if (unlikely(tc956xmac_tx_avail(priv, queue) <= (MAX_SKB_FRAGS + 1))) {
+	if (unlikely(stmmac_tx_avail(priv, queue) <= (MAX_SKB_FRAGS + 1))) {
 		netif_dbg(priv, hw, priv->dev, "%s: stop transmitted packets\n",
 			  __func__);
 		netif_tx_stop_queue(netdev_get_tx_queue(priv->dev, queue));
@@ -8497,7 +8497,7 @@ static netdev_tx_t tc956xmac_tso_xmit(struct sk_buff *skb, struct net_device *de
 	priv->xstats.tx_tso_nfrags[queue] += nfrags;
 
 	if (priv->sarc_type)
-		tc956xmac_set_desc_sarc(priv, first, priv->sarc_type);
+		stmmac_set_desc_sarc(priv, first, priv->sarc_type);
 
 	skb_tx_timestamp(skb);
 
@@ -8505,11 +8505,11 @@ static netdev_tx_t tc956xmac_tso_xmit(struct sk_buff *skb, struct net_device *de
 		     priv->hwts_tx_en)) {
 		/* declare that device is doing timestamping */
 		skb_shinfo(skb)->tx_flags |= SKBTX_IN_PROGRESS;
-		tc956xmac_enable_tx_timestamp(priv, first);
+		stmmac_enable_tx_timestamp(priv, first);
 	}
 
 	/* Complete the first descriptor before granting the DMA */
-	tc956xmac_prepare_tso_tx_desc(priv, first, 1,
+	stmmac_prepare_tso_tx_desc(priv, first, 1,
 			proto_hdr_len,
 			pay_len,
 			1, tx_q->tx_skbuff_dma[first_entry].last_segment,
@@ -8523,7 +8523,7 @@ static netdev_tx_t tc956xmac_tso_xmit(struct sk_buff *skb, struct net_device *de
 		 * sure that MSS's own bit is the last thing written.
 		 */
 		dma_wmb();
-		tc956xmac_set_tx_owner(priv, mss_desc);
+		stmmac_set_tx_owner(priv, mss_desc);
 	}
 
 	/* The own bit must be the latest setting done when prepare the
@@ -8548,9 +8548,9 @@ static netdev_tx_t tc956xmac_tso_xmit(struct sk_buff *skb, struct net_device *de
 		desc_size = sizeof(struct dma_desc);
 
 	tx_q->tx_tail_addr = tx_q->dma_tx_phy + (tx_q->cur_tx * desc_size);
-	tc956xmac_set_tx_tail_ptr(priv, priv->ioaddr, tx_q->tx_tail_addr, queue);
+	stmmac_set_tx_tail_ptr(priv, priv->ioaddr, tx_q->tx_tail_addr, queue);
 #ifdef ENABLE_TX_TIMER
-	tc956xmac_tx_timer_arm(priv, queue);
+	stmmac_tx_timer_arm(priv, queue);
 #endif
 
 #ifdef TX_COMPLETION_WITHOUT_TIMERS
@@ -8567,14 +8567,14 @@ dma_map_err:
 }
 
 /**
- *  tc956xmac_xmit - Tx entry point of the driver
+ *  stmmac_xmit - Tx entry point of the driver
  *  @skb : the socket buffer
  *  @dev : device pointer
  *  Description : this is the tx entry point of the driver.
  *  It programs the chain or the ring and supports oversized frames
  *  and SG feature.
  */
-static netdev_tx_t tc956xmac_xmit(struct sk_buff *skb, struct net_device *dev)
+static netdev_tx_t stmmac_xmit(struct sk_buff *skb, struct net_device *dev)
 {
 	unsigned int first_entry, tx_packets, enh_desc;
 	struct stmmac_priv *priv = netdev_priv(dev);
@@ -8586,7 +8586,7 @@ static netdev_tx_t tc956xmac_xmit(struct sk_buff *skb, struct net_device *dev)
 	struct dma_edesc *tbs_desc = NULL;
 	int entry, desc_size, first_tx;
 	struct dma_desc *desc, *first;
-	struct tc956xmac_tx_queue *tx_q;
+	struct stmmac_tx_queue *tx_q;
 	bool has_vlan, set_ic;
 	dma_addr_t des;
 	u64 ns = 0;
@@ -8603,13 +8603,13 @@ static netdev_tx_t tc956xmac_xmit(struct sk_buff *skb, struct net_device *dev)
 	if (skb_is_gso(skb) && priv->tso) {
 		KPRINT_DEBUG1("XMIT TSO IF\n");
 		if (gso & (SKB_GSO_TCPV4 | SKB_GSO_TCPV6))
-			return tc956xmac_tso_xmit(skb, dev);
+			return stmmac_tso_xmit(skb, dev);
 		if (priv->plat->has_gmac4 && (gso & SKB_GSO_UDP_L4))
-			return tc956xmac_tso_xmit(skb, dev);
+			return stmmac_tso_xmit(skb, dev);
 	}
 	KPRINT_DEBUG1("XMIT Normal\n");
 
-	if (unlikely(tc956xmac_tx_avail(priv, queue) < nfrags + 1)) {
+	if (unlikely(stmmac_tx_avail(priv, queue) < nfrags + 1)) {
 		if (!netif_tx_queue_stopped(netdev_get_tx_queue(dev, queue))) {
 			netif_tx_stop_queue(netdev_get_tx_queue(priv->dev,
 								queue));
@@ -8641,16 +8641,16 @@ static netdev_tx_t tc956xmac_xmit(struct sk_buff *skb, struct net_device *dev)
 			desc = &tx_q->dma_entx[tx_q->cur_tx].basic;
 		else
 			desc = &tx_q->dma_tx[tx_q->cur_tx];
-		tc956xmac_get_mac_tx_timestamp(priv, priv->hw, &ns);
+		stmmac_get_mac_tx_timestamp(priv, priv->hw, &ns);
 		ts_low = (u32)ns;
 		ts_high = (u32)(ns >> 32);
-		tc956xmac_set_desc_ostc(priv, desc, ts_high, ts_low);
+		stmmac_set_desc_ostc(priv, desc, ts_high, ts_low);
 		tx_q->cur_tx = TC956XMAC_GET_ENTRY(tx_q->cur_tx, DMA_TX_SIZE);
 		WARN_ON(tx_q->tx_skbuff[tx_q->cur_tx]);
 	}
 
 	/* Check if VLAN can be inserted by HW */
-	has_vlan = tc956xmac_vlan_insert(priv, skb, tx_q);
+	has_vlan = stmmac_vlan_insert(priv, skb, tx_q);
 
 	entry = tx_q->cur_tx;
 	first_entry = entry;
@@ -8680,15 +8680,15 @@ static netdev_tx_t tc956xmac_xmit(struct sk_buff *skb, struct net_device *dev)
 	first = desc;
 
 	if (has_vlan)
-		tc956xmac_set_desc_vlan(priv, first, TC956XMAC_VLAN_INSERT);
+		stmmac_set_desc_vlan(priv, first, TC956XMAC_VLAN_INSERT);
 
 	enh_desc = priv->plat->enh_desc;
 	/* To program the descriptors according to the size of the frame */
 	if (enh_desc)
-		is_jumbo = tc956xmac_is_jumbo_frm(priv, skb->len, enh_desc);
+		is_jumbo = stmmac_is_jumbo_frm(priv, skb->len, enh_desc);
 
 	if (unlikely(is_jumbo)) {
-		entry = tc956xmac_jumbo_frm(priv, tx_q, skb, csum_insertion);
+		entry = stmmac_jumbo_frm(priv, tx_q, skb, csum_insertion);
 		if (unlikely(entry < 0) && (entry != -EINVAL))
 			goto dma_map_err;
 	}
@@ -8715,14 +8715,14 @@ static netdev_tx_t tc956xmac_xmit(struct sk_buff *skb, struct net_device *dev)
 
 		tx_q->tx_skbuff_dma[entry].buf = des;
 
-		tc956xmac_set_desc_addr(priv, desc, des);
+		stmmac_set_desc_addr(priv, desc, des);
 
 		tx_q->tx_skbuff_dma[entry].map_as_page = true;
 		tx_q->tx_skbuff_dma[entry].len = len;
 		tx_q->tx_skbuff_dma[entry].last_segment = last_segment;
 
 		/* Prepare the descriptor and set the own bit too */
-		tc956xmac_prepare_tx_desc(priv, desc, 0, len, csum_insertion,
+		stmmac_prepare_tx_desc(priv, desc, 0, len, csum_insertion,
 				priv->tx_crc_pad_state,	priv->mode, 1,
 				last_segment, skb->len);
 	}
@@ -8769,14 +8769,14 @@ static netdev_tx_t tc956xmac_xmit(struct sk_buff *skb, struct net_device *dev)
 			desc = &tx_q->dma_tx[entry];
 
 		tx_q->tx_count_frames = 0;
-		tc956xmac_set_tx_ic(priv, desc);
+		stmmac_set_tx_ic(priv, desc);
 		priv->xstats.tx_set_ic_bit++;
 	}
 
 	/* We've used all descriptors we need for this skb, however,
 	 * advance cur_tx so that it references a fresh descriptor.
 	 * ndo_start_xmit will fill this descriptor the next time it's
-	 * called and tc956xmac_tx_clean may clean up to this descriptor.
+	 * called and stmmac_tx_clean may clean up to this descriptor.
 	 */
 	entry = TC956XMAC_GET_ENTRY(entry, DMA_TX_SIZE);
 	tx_q->cur_tx = entry;
@@ -8791,7 +8791,7 @@ static netdev_tx_t tc956xmac_xmit(struct sk_buff *skb, struct net_device *dev)
 		print_pkt(skb->data, skb->len);
 	}
 
-	if (unlikely(tc956xmac_tx_avail(priv, queue) <= (MAX_SKB_FRAGS + 1))) {
+	if (unlikely(stmmac_tx_avail(priv, queue) <= (MAX_SKB_FRAGS + 1))) {
 		netif_dbg(priv, hw, priv->dev, "%s: stop transmitted packets\n",
 			  __func__);
 		netif_tx_stop_queue(netdev_get_tx_queue(priv->dev, queue));
@@ -8800,7 +8800,7 @@ static netdev_tx_t tc956xmac_xmit(struct sk_buff *skb, struct net_device *dev)
 	dev->stats.tx_bytes += skb->len;
 
 	if (priv->sarc_type)
-		tc956xmac_set_desc_sarc(priv, first, priv->sarc_type);
+		stmmac_set_desc_sarc(priv, first, priv->sarc_type);
 
 	skb_tx_timestamp(skb);
 
@@ -8818,7 +8818,7 @@ static netdev_tx_t tc956xmac_xmit(struct sk_buff *skb, struct net_device *dev)
 
 		tx_q->tx_skbuff_dma[first_entry].buf = des;
 
-		tc956xmac_set_desc_addr(priv, first, des);
+		stmmac_set_desc_addr(priv, first, des);
 
 		tx_q->tx_skbuff_dma[first_entry].len = nopaged_len;
 		tx_q->tx_skbuff_dma[first_entry].last_segment = last_segment;
@@ -8827,11 +8827,11 @@ static netdev_tx_t tc956xmac_xmit(struct sk_buff *skb, struct net_device *dev)
 			     priv->hwts_tx_en)) {
 			/* declare that device is doing timestamping */
 			skb_shinfo(skb)->tx_flags |= SKBTX_IN_PROGRESS;
-			tc956xmac_enable_tx_timestamp(priv, first);
+			stmmac_enable_tx_timestamp(priv, first);
 		}
 
 		/* Prepare the first descriptor setting the OWN bit too */
-		tc956xmac_prepare_tx_desc(priv, first, 1, nopaged_len,
+		stmmac_prepare_tx_desc(priv, first, 1, nopaged_len,
 				csum_insertion, priv->tx_crc_pad_state,
 				priv->mode, 0, last_segment, skb->len);
 	}
@@ -8884,7 +8884,7 @@ static netdev_tx_t tc956xmac_xmit(struct sk_buff *skb, struct net_device *dev)
 						 Presentation_time;
 
 				spin_lock_irqsave(&priv->ptp_lock, flags);
-				tc956xmac_get_systime(priv, priv->ptpaddr, &ns);
+				stmmac_get_systime(priv, priv->ptpaddr, &ns);
 				spin_unlock_irqrestore(&priv->ptp_lock, flags);
 
 				lt = ((ns >> 32) << 32) | app_launch_time;
@@ -8904,14 +8904,14 @@ static netdev_tx_t tc956xmac_xmit(struct sk_buff *skb, struct net_device *dev)
 #endif
 			}
 			tbs_desc = &tx_q->dma_entx[first_entry];
-			tc956xmac_set_desc_tbs(priv, tbs_desc, ts.tv_sec, ts.tv_nsec, true);
+			stmmac_set_desc_tbs(priv, tbs_desc, ts.tv_sec, ts.tv_nsec, true);
 		} else {
 			tbs_desc = &tx_q->dma_entx[first_entry];
-			tc956xmac_set_desc_tbs(priv, tbs_desc, 0, 0, false);
+			stmmac_set_desc_tbs(priv, tbs_desc, 0, 0, false);
 		}
 	}
 
-	tc956xmac_set_tx_owner(priv, first);
+	stmmac_set_tx_owner(priv, first);
 
 	/* The own bit must be the latest setting done when prepare the
 	 * descriptor and then barrier is needed to make sure that
@@ -8921,7 +8921,7 @@ static netdev_tx_t tc956xmac_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	netdev_tx_sent_queue(netdev_get_tx_queue(dev, queue), skb->len);
 
-	tc956xmac_enable_dma_transmission(priv, priv->ioaddr);
+	stmmac_enable_dma_transmission(priv, priv->ioaddr);
 
 	if (likely(priv->extend_desc))
 		desc_size = sizeof(struct dma_extended_desc);
@@ -8931,10 +8931,10 @@ static netdev_tx_t tc956xmac_xmit(struct sk_buff *skb, struct net_device *dev)
 		desc_size = sizeof(struct dma_desc);
 
 	tx_q->tx_tail_addr = tx_q->dma_tx_phy + (tx_q->cur_tx * desc_size);
-	tc956xmac_set_tx_tail_ptr(priv, priv->ioaddr, tx_q->tx_tail_addr, queue);
+	stmmac_set_tx_tail_ptr(priv, priv->ioaddr, tx_q->tx_tail_addr, queue);
 
 #ifdef ENABLE_TX_TIMER
-	tc956xmac_tx_timer_arm(priv, queue);
+	stmmac_tx_timer_arm(priv, queue);
 #endif
 
 #ifdef TX_COMPLETION_WITHOUT_TIMERS
@@ -8953,13 +8953,13 @@ dma_map_err:
 
 #ifndef TC956X
 /**
- *  tc956xmac_rx_vlan - Rx VLAN Stripping Function
+ *  stmmac_rx_vlan - Rx VLAN Stripping Function
  *  @dev : device pointer
  *  @skb : the socket buffer
  *  Description : this function strips vlan id from the skb
  *  before forwarding to application.
  */
-static void tc956xmac_rx_vlan(struct net_device *dev, struct sk_buff *skb)
+static void stmmac_rx_vlan(struct net_device *dev, struct sk_buff *skb)
 {
 	struct vlan_ethhdr *veth;
 	__be16 vlan_proto;
@@ -8981,14 +8981,14 @@ static void tc956xmac_rx_vlan(struct net_device *dev, struct sk_buff *skb)
 }
 #else
 /**
- *  tc956xmac_rx_vlan - Rx VLAN Stripping Function
+ *  stmmac_rx_vlan - Rx VLAN Stripping Function
  *  @dev : device pointer
  *  @rdesc : rx descriptor
  *  @skb : the socket buffer
  *  Description : this function extracts vlan id from the descriptor
  *  stripped by MAC VLAN filter.
  */
-static void tc956xmac_rx_vlan(struct net_device *dev,
+static void stmmac_rx_vlan(struct net_device *dev,
 				struct dma_desc *rdesc,
 				struct sk_buff *skb)
 {
@@ -9017,7 +9017,7 @@ static void tc956xmac_rx_vlan(struct net_device *dev,
 #endif
 
 #ifdef TC956X_UNSUPPORTED_UNTESTED_FEATURE
-static inline int tc956xmac_rx_threshold_count(struct tc956xmac_rx_queue *rx_q)
+static inline int stmmac_rx_threshold_count(struct stmmac_rx_queue *rx_q)
 {
 	if (rx_q->rx_zeroc_thresh < TC956XMAC_RX_THRESH)
 		return 0;
@@ -9027,22 +9027,22 @@ static inline int tc956xmac_rx_threshold_count(struct tc956xmac_rx_queue *rx_q)
 #endif /* TC956X_UNSUPPORTED_UNTESTED_FEATURE */
 
 /**
- * tc956xmac_rx_refill - refill used skb preallocated buffers
+ * stmmac_rx_refill - refill used skb preallocated buffers
  * @priv: driver private structure
  * @queue: RX queue index
  * Description : this is to reallocate the skb for the reception process
  * that is based on zero-copy.
  */
-static inline void tc956xmac_rx_refill(struct stmmac_priv *priv, u32 queue)
+static inline void stmmac_rx_refill(struct stmmac_priv *priv, u32 queue)
 {
-	struct tc956xmac_rx_queue *rx_q = &priv->rx_queue[queue];
-	int len, dirty = tc956xmac_rx_dirty(priv, queue);
+	struct stmmac_rx_queue *rx_q = &priv->rx_queue[queue];
+	int len, dirty = stmmac_rx_dirty(priv, queue);
 	unsigned int entry = rx_q->dirty_rx;
 
 	len = DIV_ROUND_UP(priv->dma_buf_sz, PAGE_SIZE) * PAGE_SIZE;
 
 	while (dirty-- > 0) {
-		struct tc956xmac_rx_buffer *buf = &rx_q->buf_pool[entry];
+		struct stmmac_rx_buffer *buf = &rx_q->buf_pool[entry];
 		struct dma_desc *p;
 		bool use_rx_wd;
 
@@ -9076,9 +9076,9 @@ static inline void tc956xmac_rx_refill(struct stmmac_priv *priv, u32 queue)
 		dma_sync_single_for_device(priv->device, buf->addr, len,
 					   DMA_FROM_DEVICE);
 
-		tc956xmac_set_desc_addr(priv, p, buf->addr);
-		tc956xmac_set_desc_sec_addr(priv, p, buf->sec_addr);
-		tc956xmac_refill_desc3(priv, rx_q, p);
+		stmmac_set_desc_addr(priv, p, buf->addr);
+		stmmac_set_desc_sec_addr(priv, p, buf->sec_addr);
+		stmmac_refill_desc3(priv, rx_q, p);
 
 		rx_q->rx_count_frames++;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 13, 0)
@@ -9099,17 +9099,17 @@ static inline void tc956xmac_rx_refill(struct stmmac_priv *priv, u32 queue)
 			use_rx_wd = false;
 
 		dma_wmb();
-		tc956xmac_set_rx_owner(priv, p, use_rx_wd);
+		stmmac_set_rx_owner(priv, p, use_rx_wd);
 
 		entry = TC956XMAC_GET_ENTRY(entry, DMA_RX_SIZE);
 	}
 	rx_q->dirty_rx = entry;
 	rx_q->rx_tail_addr = rx_q->dma_rx_phy +
 			    (rx_q->dirty_rx * sizeof(struct dma_desc));
-	tc956xmac_set_rx_tail_ptr(priv, priv->ioaddr, rx_q->rx_tail_addr, queue);
+	stmmac_set_rx_tail_ptr(priv, priv->ioaddr, rx_q->rx_tail_addr, queue);
 }
 
-static unsigned int tc956xmac_rx_buf1_len(struct stmmac_priv *priv,
+static unsigned int stmmac_rx_buf1_len(struct stmmac_priv *priv,
 				       struct dma_desc *p,
 				       int status, unsigned int len)
 {
@@ -9121,7 +9121,7 @@ static unsigned int tc956xmac_rx_buf1_len(struct stmmac_priv *priv,
 		return 0;
 
 	/* First descriptor, get split header length */
-	(void)tc956xmac_get_rx_header_len(priv, p, &hlen);
+	(void)stmmac_get_rx_header_len(priv, p, &hlen);
 	if (priv->sph && hlen) {
 		priv->xstats.rx_split_hdr_pkt_n++;
 		return hlen;
@@ -9131,13 +9131,13 @@ static unsigned int tc956xmac_rx_buf1_len(struct stmmac_priv *priv,
 	if (status & rx_not_ls)
 		return priv->dma_buf_sz;
 
-	plen = tc956xmac_get_rx_frame_len(priv, p, coe);
+	plen = stmmac_get_rx_frame_len(priv, p, coe);
 
 	/* First descriptor and last descriptor and not split header */
 	return min_t(unsigned int, priv->dma_buf_sz, plen);
 }
 
-static unsigned int tc956xmac_rx_buf2_len(struct stmmac_priv *priv,
+static unsigned int stmmac_rx_buf2_len(struct stmmac_priv *priv,
 				       struct dma_desc *p,
 				       int status, unsigned int len)
 {
@@ -9152,24 +9152,24 @@ static unsigned int tc956xmac_rx_buf2_len(struct stmmac_priv *priv,
 	if (status & rx_not_ls)
 		return priv->dma_buf_sz;
 
-	plen = tc956xmac_get_rx_frame_len(priv, p, coe);
+	plen = stmmac_get_rx_frame_len(priv, p, coe);
 
 	/* Last descriptor */
 	return plen - len;
 }
 
 /**
- * tc956xmac_rx - manage the receive process
+ * stmmac_rx - manage the receive process
  * @priv: driver private structure
  * @limit: napi bugget
  * @queue: RX queue index.
  * Description :  this the function called by the napi poll method.
  * It gets all the frames inside the ring.
  */
-static int tc956xmac_rx(struct stmmac_priv *priv, int limit, u32 queue)
+static int stmmac_rx(struct stmmac_priv *priv, int limit, u32 queue)
 {
-	struct tc956xmac_rx_queue *rx_q = &priv->rx_queue[queue];
-	struct tc956xmac_channel *ch = &priv->channel[queue];
+	struct stmmac_rx_queue *rx_q = &priv->rx_queue[queue];
+	struct stmmac_channel *ch = &priv->channel[queue];
 	unsigned int count = 0, error = 0, len = 0, per_queue_count = 0;
 	int status = 0, coe = priv->hw->rx_csum;
 	unsigned int next_entry = rx_q->cur_rx;
@@ -9185,12 +9185,12 @@ static int tc956xmac_rx(struct stmmac_priv *priv, int limit, u32 queue)
 		else
 			rx_head = (void *)rx_q->dma_rx;
 
-		tc956xmac_display_ring(priv, rx_head, DMA_RX_SIZE, true);
+		stmmac_display_ring(priv, rx_head, DMA_RX_SIZE, true);
 	}
 	while (count < limit) {
 		unsigned int buf1_len = 0, buf2_len = 0;
 		enum pkt_hash_types hash_type;
-		struct tc956xmac_rx_buffer *buf;
+		struct stmmac_rx_buffer *buf;
 		struct dma_desc *np, *p;
 		int entry;
 		u32 hash;
@@ -9221,7 +9221,7 @@ read_again:
 			p = rx_q->dma_rx + entry;
 
 		/* read the status of the incoming frame */
-		status = tc956xmac_rx_status(priv, &priv->dev->stats,
+		status = stmmac_rx_status(priv, &priv->dev->stats,
 				&priv->xstats, p);
 		/* check if managed by the DMA otherwise go ahead */
 		if (unlikely(status & dma_own))
@@ -9238,7 +9238,7 @@ read_again:
 		prefetch(np);
 
 		if (priv->extend_desc)
-			tc956xmac_rx_extended_status(priv, &priv->dev->stats,
+			stmmac_rx_extended_status(priv, &priv->dev->stats,
 					&priv->xstats, rx_q->dma_erx + entry);
 		if (unlikely(status == discard_frame)) {
 			page_pool_recycle_direct(rx_q->page_pool, buf->page);
@@ -9263,9 +9263,9 @@ read_again:
 		if (buf->sec_page)
 			prefetch(page_address(buf->sec_page));
 
-		buf1_len = tc956xmac_rx_buf1_len(priv, p, status, len);
+		buf1_len = stmmac_rx_buf1_len(priv, p, status, len);
 		len += buf1_len;
-		buf2_len = tc956xmac_rx_buf2_len(priv, p, status, len);
+		buf2_len = stmmac_rx_buf2_len(priv, p, status, len);
 		len += buf2_len;
 
 		/* CRC stripping is done in MAC (CST &ACS bits) based on ethtool state*/
@@ -9327,7 +9327,7 @@ drain_data:
 
 		/* Got entire packet into SKB. Finish it. */
 #ifdef RX_LOGGING_TRACE
-		tc956xmac_get_rx_hwtstamp(priv, p, np, skb, queue);
+		stmmac_get_rx_hwtstamp(priv, p, np, skb, queue);
 #else
 		/* Pause frame counter to count link partner pause frames */
 		if (priv->plat->en_lp_pause_frame_cnt == ENABLE) {
@@ -9341,12 +9341,12 @@ drain_data:
 			}
 		}
 
-		tc956xmac_get_rx_hwtstamp(priv, p, np, skb);
+		stmmac_get_rx_hwtstamp(priv, p, np, skb);
 #endif
 #ifndef TC956X
-		tc956xmac_rx_vlan(priv->dev, skb);
+		stmmac_rx_vlan(priv->dev, skb);
 #else
-		tc956xmac_rx_vlan(priv->dev, p, skb);
+		stmmac_rx_vlan(priv->dev, p, skb);
 #endif
 		skb->protocol = eth_type_trans(skb, priv->dev);
 
@@ -9355,7 +9355,7 @@ drain_data:
 		else
 			skb->ip_summed = CHECKSUM_UNNECESSARY;
 
-		if (!tc956xmac_get_rx_hash(priv, p, &hash, &hash_type))
+		if (!stmmac_get_rx_hash(priv, p, &hash, &hash_type))
 			skb_set_hash(skb, hash, hash_type);
 
 		skb_record_rx_queue(skb, queue);
@@ -9375,7 +9375,7 @@ drain_data:
 		rx_q->state.len = len;
 	}
 
-	tc956xmac_rx_refill(priv, queue);
+	stmmac_rx_refill(priv, queue);
 
 	/* priv->xstats.rx_pkt_n[queue]+= count; */
 	/* Count only Acceptd packet */
@@ -9385,46 +9385,46 @@ drain_data:
 	return count;
 }
 
-static int tc956xmac_napi_poll_rx(struct napi_struct *napi, int budget)
+static int stmmac_napi_poll_rx(struct napi_struct *napi, int budget)
 {
-	struct tc956xmac_channel *ch =
-		container_of(napi, struct tc956xmac_channel, rx_napi);
+	struct stmmac_channel *ch =
+		container_of(napi, struct stmmac_channel, rx_napi);
 	struct stmmac_priv *priv = ch->priv_data;
 	u32 chan = ch->index;
 	int work_done;
 
 	priv->xstats.napi_poll_rx[chan]++;
 
-	work_done = tc956xmac_rx(priv, budget, chan);
+	work_done = stmmac_rx(priv, budget, chan);
 	if (work_done < budget && napi_complete_done(napi, work_done)) {
 		unsigned long flags;
 
 		spin_lock_irqsave(&ch->lock, flags);
-		tc956xmac_enable_dma_irq(priv, priv->ioaddr, chan, 1, 0);
+		stmmac_enable_dma_irq(priv, priv->ioaddr, chan, 1, 0);
 		spin_unlock_irqrestore(&ch->lock, flags);
 	}
 
 	return work_done;
 }
 
-static int tc956xmac_napi_poll_tx(struct napi_struct *napi, int budget)
+static int stmmac_napi_poll_tx(struct napi_struct *napi, int budget)
 {
-	struct tc956xmac_channel *ch =
-		container_of(napi, struct tc956xmac_channel, tx_napi);
+	struct stmmac_channel *ch =
+		container_of(napi, struct stmmac_channel, tx_napi);
 	struct stmmac_priv *priv = ch->priv_data;
 	u32 chan = ch->index;
 	int work_done;
 
 	priv->xstats.napi_poll_tx[chan]++;
 
-	work_done = tc956xmac_tx_clean(priv, DMA_TX_SIZE, chan);
+	work_done = stmmac_tx_clean(priv, DMA_TX_SIZE, chan);
 	work_done = min(work_done, budget);
 
 	if (work_done < budget && napi_complete_done(napi, work_done)) {
 		unsigned long flags;
 
 		spin_lock_irqsave(&ch->lock, flags);
-		tc956xmac_enable_dma_irq(priv, priv->ioaddr, chan, 0, 1);
+		stmmac_enable_dma_irq(priv, priv->ioaddr, chan, 0, 1);
 		spin_unlock_irqrestore(&ch->lock, flags);
 	}
 
@@ -9432,7 +9432,7 @@ static int tc956xmac_napi_poll_tx(struct napi_struct *napi, int budget)
 }
 
 /**
- *  tc956xmac_tx_timeout
+ *  stmmac_tx_timeout
  *
  *  @dev: Pointer to net device structure
  *  @txqueue: (unused; kernel 5.6+)
@@ -9443,14 +9443,14 @@ static int tc956xmac_napi_poll_tx(struct napi_struct *napi, int budget)
  *   in order to transmit a new packet.
  */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
-static void tc956xmac_tx_timeout(struct net_device *dev, unsigned int txqueue)
+static void stmmac_tx_timeout(struct net_device *dev, unsigned int txqueue)
 #else
-static void tc956xmac_tx_timeout(struct net_device *dev)
+static void stmmac_tx_timeout(struct net_device *dev)
 #endif
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 
-	tc956xmac_global_err(priv);
+	stmmac_global_err(priv);
 }
 
 #ifdef TC956X_SRIOV_VF
@@ -9459,7 +9459,7 @@ static int stm_vf_add_mac_addr(struct net_device *dev, const unsigned char *mac)
 	int ret_value;
 	struct stmmac_priv *priv = netdev_priv(dev);
 
-	ret_value = tc956xmac_add_mac(priv, mac);
+	ret_value = stmmac_add_mac(priv, mac);
 
 	return ret_value;
 }
@@ -9469,7 +9469,7 @@ static int stm_vf_delete_mac_addr(struct net_device *dev,
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 
-	tc956xmac_delete_mac(priv, mac);
+	stmmac_delete_mac(priv, mac);
 	return 0;
 }
 static void stm_vf_set_filter(struct mac_device_info *hw,
@@ -9482,7 +9482,7 @@ static void stm_vf_set_filter(struct mac_device_info *hw,
 #endif
 
 /**
- *  tc956xmac_set_rx_mode - entry point for multicast addressing
+ *  stmmac_set_rx_mode - entry point for multicast addressing
  *  @dev : pointer to the device structure
  *  Description:
  *  This function is a driver entry point which gets called by the kernel
@@ -9490,18 +9490,18 @@ static void stm_vf_set_filter(struct mac_device_info *hw,
  *  Return value:
  *  void.
  */
-static void tc956xmac_set_rx_mode(struct net_device *dev)
+static void stmmac_set_rx_mode(struct net_device *dev)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 #ifndef TC956X_SRIOV_VF
-	tc956xmac_set_filter(priv, priv->hw, dev);
+	stmmac_set_filter(priv, priv->hw, dev);
 #else
 	stm_vf_set_filter(priv->hw, dev);
 #endif
 }
 
 /**
- *  tc956xmac_change_mtu - entry point to change MTU size for the device.
+ *  stmmac_change_mtu - entry point to change MTU size for the device.
  *  @dev : device pointer.
  *  @new_mtu : the new MTU size for the device.
  *  Description: the Maximum Transfer Unit (MTU) is used by the network layer
@@ -9511,7 +9511,7 @@ static void tc956xmac_set_rx_mode(struct net_device *dev)
  *  0 on success and an appropriate (-)ve integer as defined in errno.h
  *  file on failure.
  */
-static int tc956xmac_change_mtu(struct net_device *dev, int new_mtu)
+static int stmmac_change_mtu(struct net_device *dev, int new_mtu)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 	int txfifosz = priv->plat->tx_fifo_size;
@@ -9562,7 +9562,7 @@ static int tc956xmac_change_mtu(struct net_device *dev, int new_mtu)
 	return 0;
 }
 
-static netdev_features_t tc956xmac_fix_features(struct net_device *dev,
+static netdev_features_t stmmac_fix_features(struct net_device *dev,
 					     netdev_features_t features)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
@@ -9628,7 +9628,7 @@ static netdev_features_t tc956xmac_fix_features(struct net_device *dev,
 	return features;
 }
 
-static int tc956xmac_set_features(struct net_device *netdev,
+static int stmmac_set_features(struct net_device *netdev,
 			       netdev_features_t features)
 {
 	struct stmmac_priv *priv = netdev_priv(netdev);
@@ -9671,7 +9671,7 @@ static int tc956xmac_set_features(struct net_device *netdev,
 	/* No check needed because rx_coe has been set before and it will be
 	 * fixed in case of issue.
 	 */
-	tc956xmac_rx_ipc(priv, priv->hw);
+	stmmac_rx_ipc(priv, priv->hw);
 #endif
 	/* Tx Checksum Configuration via Ethtool */
 	if ((features & NETIF_F_IP_CSUM) || (features & NETIF_F_IPV6_CSUM))
@@ -9699,7 +9699,7 @@ static int tc956xmac_set_features(struct net_device *netdev,
 
 	sph_en = (priv->hw->rx_csum > 0) && priv->sph;
 	for (chan = 0; chan < priv->plat->rx_queues_to_use; chan++)
-		tc956xmac_enable_sph(priv, priv->ioaddr, sph_en, chan);
+		stmmac_enable_sph(priv, priv->ioaddr, sph_en, chan);
 
 #elif defined TC956X_SRIOV_VF
 	/* Rx fcs Configuration via Ethtool */
@@ -9715,31 +9715,31 @@ static int tc956xmac_set_features(struct net_device *netdev,
 	for (chan = 0; chan < priv->plat->rx_queues_to_use; chan++) {
 		if (priv->plat->ch_in_use[chan] == 0)
 			continue;
-		tc956xmac_enable_sph(priv, priv->ioaddr, sph_en, chan);
+		stmmac_enable_sph(priv, priv->ioaddr, sph_en, chan);
 	}
 #endif
 #ifdef TC956X
 	if ((features & NETIF_F_HW_VLAN_CTAG_RX) && !rxvlan)
-		tc956xmac_enable_rx_vlan_stripping(priv, priv->hw);
+		stmmac_enable_rx_vlan_stripping(priv, priv->hw);
 	else if (!(features & NETIF_F_HW_VLAN_CTAG_RX) && rxvlan)
-		tc956xmac_disable_rx_vlan_stripping(priv, priv->hw);
+		stmmac_disable_rx_vlan_stripping(priv, priv->hw);
 
 	if ((features & NETIF_F_HW_VLAN_CTAG_TX) && !txvlan)
-		tc956xmac_enable_vlan(priv, priv->hw, TC956XMAC_VLAN_INSERT);
+		stmmac_enable_vlan(priv, priv->hw, TC956XMAC_VLAN_INSERT);
 	else if (!(features & NETIF_F_HW_VLAN_CTAG_TX) && txvlan)
-		tc956xmac_disable_tx_vlan(priv, priv->hw);
+		stmmac_disable_tx_vlan(priv, priv->hw);
 
 	if ((features & NETIF_F_HW_VLAN_CTAG_FILTER) && !rxvlan_filter)
-		tc956xmac_enable_rx_vlan_filtering(priv, priv->hw);
+		stmmac_enable_rx_vlan_filtering(priv, priv->hw);
 	else if (!(features & NETIF_F_HW_VLAN_CTAG_FILTER) && rxvlan_filter)
-		tc956xmac_disable_rx_vlan_filtering(priv, priv->hw);
+		stmmac_disable_rx_vlan_filtering(priv, priv->hw);
 #endif
 	return 0;
 }
 
 #if defined(TC956X_SRIOV_PF) && !defined(TC956X_AUTOMOTIVE_CONFIG) && !defined(TC956X_CPE_CONFIG) && !defined(TC956X_ENABLE_MAC2MAC_BRIDGE)
 /**
- * tc956xmac_rx_dma_error_recovery
+ * stmmac_rx_dma_error_recovery
  *
  * @priv: driver private structure
  *
@@ -9751,7 +9751,7 @@ static int tc956xmac_set_features(struct net_device *netdev,
  *
  * \return None
  */
-static void tc956xmac_rx_dma_error_recovery(struct stmmac_priv *priv)
+static void stmmac_rx_dma_error_recovery(struct stmmac_priv *priv)
 {
 	u8 ch;
 	u32 intr_status = 0;
@@ -9773,7 +9773,7 @@ static void tc956xmac_rx_dma_error_recovery(struct stmmac_priv *priv)
 #if !defined(TC956X_AUTOMOTIVE_CONFIG) && !defined(TC956X_ENABLE_MAC2MAC_BRIDGE)
 			spin_lock_irqsave(&priv->wq_lock, flags);
 			priv->mbx_wq_param.fn_id = SCH_WQ_RX_DMA_ERR;
-			tc956xmac_service_mbx_event_schedule(priv);
+			stmmac_service_mbx_event_schedule(priv);
 			spin_unlock_irqrestore(&priv->wq_lock, flags);
 #endif
 		}
@@ -9785,7 +9785,7 @@ static void tc956xmac_rx_dma_error_recovery(struct stmmac_priv *priv)
 
 
 #if defined(TC956X_SRIOV_PF) && (defined(TC956X_AUTOMOTIVE_CONFIG) || defined(TC956X_CPE_CONFIG))
-static irqreturn_t tc956xmac_interrupt_v0(int irq, void *dev_id)
+static irqreturn_t stmmac_interrupt_v0(int irq, void *dev_id)
 {
 	struct net_device *dev = (struct net_device *)dev_id;
 	struct stmmac_priv *priv = netdev_priv(dev);
@@ -9825,7 +9825,7 @@ static irqreturn_t tc956xmac_interrupt_v0(int irq, void *dev_id)
 	if (test_bit(TC956XMAC_DOWN, &priv->state))
 		return IRQ_HANDLED;
 	/* Check if a fatal error happened */
-	if (tc956xmac_safety_feat_interrupt(priv))
+	if (stmmac_safety_feat_interrupt(priv))
 		return IRQ_HANDLED;
 
 	val = readl(priv->ioaddr + TC956X_MSI_INT_STS_OFFSET(priv->fn_id_info.pf_no, priv->fn_id_info.vf_no));
@@ -9899,7 +9899,7 @@ static irqreturn_t tc956xmac_interrupt_v0(int irq, void *dev_id)
 
 /* To handle GMAC own interrupts */
 	if ((priv->plat->has_gmac) || xmac) {
-		int status = tc956xmac_host_irq_status(priv, priv->hw, &priv->xstats);
+		int status = stmmac_host_irq_status(priv, priv->hw, &priv->xstats);
 		int mtl_status;
 
 		if (unlikely(status)) {
@@ -9912,7 +9912,7 @@ static irqreturn_t tc956xmac_interrupt_v0(int irq, void *dev_id)
 
 		for (queue = 0; queue < queues_count; queue++) {
 
-			struct tc956xmac_rx_queue *rx_q;
+			struct stmmac_rx_queue *rx_q;
 
 #ifdef TC956X_SRIOV_PF
 			if (priv->plat->rx_q_in_use[queue] == TC956X_DISABLE_QUEUE)
@@ -9920,7 +9920,7 @@ static irqreturn_t tc956xmac_interrupt_v0(int irq, void *dev_id)
 
 #endif
 
-			mtl_status = tc956xmac_host_mtl_irq_status(priv, priv->hw,
+			mtl_status = stmmac_host_mtl_irq_status(priv, priv->hw,
 								queue);
 
 			if (mtl_status != -EINVAL)
@@ -9932,7 +9932,7 @@ static irqreturn_t tc956xmac_interrupt_v0(int irq, void *dev_id)
 				pf_dma_ch = priv->pf_queue_dma_map[queue];
 				rx_q = &priv->rx_queue[pf_dma_ch];
 
-				tc956xmac_set_rx_tail_ptr(priv, priv->ioaddr,
+				stmmac_set_rx_tail_ptr(priv, priv->ioaddr,
 						       rx_q->rx_tail_addr,
 						       pf_dma_ch);
 			}
@@ -9946,12 +9946,12 @@ static irqreturn_t tc956xmac_interrupt_v0(int irq, void *dev_id)
 				netif_carrier_off(dev);
 		}
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 13, 0)
-		tc956xmac_timestamp_interrupt(priv, priv->ioaddr);
+		stmmac_timestamp_interrupt(priv, priv->ioaddr);
 #endif
 	}
 
 	/* To handle DMA interrupts */
-	tc956xmac_dma_interrupt(priv);
+	stmmac_dma_interrupt(priv);
 
 
 	val = readl(priv->ioaddr + TC956X_MSI_INT_STS_OFFSET(priv->fn_id_info.pf_no, priv->fn_id_info.vf_no));
@@ -9960,12 +9960,12 @@ static irqreturn_t tc956xmac_interrupt_v0(int irq, void *dev_id)
 		NMSGPR_INFO(priv->device, "PHY Interrupt %s\n", __func__);
 #ifndef TC956X_SRIOV_VF
 		if (priv->port_link_down == true)
-			tc956xmac_link_change_set_power(priv, LINK_UP); /* Restore, De-assert and Enable Reset and Clock */
+			stmmac_link_change_set_power(priv, LINK_UP); /* Restore, De-assert and Enable Reset and Clock */
 #endif
 		/* Queue the work in system_wq */
 		if (priv->stm_port_pm_suspend == true) {
 			KPRINT_INFO("%s : (Do not queue PHY Work during suspend. Set WOL Interrupt flag)\n", __func__);
-			priv->tc956xmac_pm_wol_interrupt = true;
+			priv->stmmac_pm_wol_interrupt = true;
 		} else {
 			KPRINT_INFO("%s : (Queue PHY Work.)\n", __func__);
 			queue_work(system_wq, &priv->emac_phy_work);
@@ -9995,7 +9995,7 @@ static irqreturn_t tc956xmac_interrupt_v0(int irq, void *dev_id)
 #else
 
 /**
- *  tc956xmac_interrupt_v0 - main ISR
+ *  stmmac_interrupt_v0 - main ISR
  *  @irq: interrupt number.
  *  @dev_id: to pass the net device pointer.
  *  Description: this is the main driver interrupt service routine.
@@ -10005,7 +10005,7 @@ static irqreturn_t tc956xmac_interrupt_v0(int irq, void *dev_id)
  *  o Core interrupts to manage: remote wake-up, management counter, LPI
  *    interrupts.
  */
-static irqreturn_t tc956xmac_interrupt_v0(int irq, void *dev_id)
+static irqreturn_t stmmac_interrupt_v0(int irq, void *dev_id)
 {
 	struct net_device *dev = (struct net_device *)dev_id;
 	struct stmmac_priv *priv = netdev_priv(dev);
@@ -10081,11 +10081,11 @@ static irqreturn_t tc956xmac_interrupt_v0(int irq, void *dev_id)
 	}
 #endif
 	/* To handle DMA interrupts */
-	tc956xmac_dma_interrupt(priv);
+	stmmac_dma_interrupt(priv);
 
 
 #ifdef TC956X_SRIOV_PF
-	tc956xmac_interrupt_v1(irq, dev_id);
+	stmmac_interrupt_v1(irq, dev_id);
 
 	/* unmask MSI vector 0 */
 	stm_msi_intr_clr(priv, dev, TC956X_MSI_VECTOR_0);
@@ -10112,7 +10112,7 @@ static irqreturn_t tc956xmac_interrupt_v0(int irq, void *dev_id)
 }
 
 #ifdef TC956X_SRIOV_PF
-static irqreturn_t tc956xmac_interrupt_v1(int irq, void *dev_id)
+static irqreturn_t stmmac_interrupt_v1(int irq, void *dev_id)
 {
 	struct net_device *dev = (struct net_device *)dev_id;
 	struct stmmac_priv *priv = netdev_priv(dev);
@@ -10150,7 +10150,7 @@ static irqreturn_t tc956xmac_interrupt_v1(int irq, void *dev_id)
 	if (test_bit(TC956XMAC_DOWN, &priv->state))
 		return IRQ_HANDLED;
 	/* Check if a fatal error happened */
-	if (tc956xmac_safety_feat_interrupt(priv))
+	if (stmmac_safety_feat_interrupt(priv))
 		return IRQ_HANDLED;
 
 	val = readl(priv->ioaddr + TC956X_MSI_INT_STS_OFFSET(priv->fn_id_info.pf_no, priv->fn_id_info.vf_no));
@@ -10176,12 +10176,12 @@ static irqreturn_t tc956xmac_interrupt_v1(int irq, void *dev_id)
 		priv->xstats.sw_msi_n++;
 
 #ifdef TC956X_SRIOV_PF
-	tc956xmac_rx_dma_error_recovery(priv);
+	stmmac_rx_dma_error_recovery(priv);
 #endif
 
 	/* To handle GMAC own interrupts */
 	if ((priv->plat->has_gmac) || xmac) {
-		int status = tc956xmac_host_irq_status(priv, priv->hw, &priv->xstats);
+		int status = stmmac_host_irq_status(priv, priv->hw, &priv->xstats);
 		int mtl_status;
 
 		if (unlikely(status)) {
@@ -10194,7 +10194,7 @@ static irqreturn_t tc956xmac_interrupt_v1(int irq, void *dev_id)
 
 		for (queue = 0; queue < queues_count; queue++) {
 
-			struct tc956xmac_rx_queue *rx_q;
+			struct stmmac_rx_queue *rx_q;
 
 #ifdef TC956X_SRIOV_PF
 			if (priv->plat->rx_q_in_use[queue] == TC956X_DISABLE_QUEUE)
@@ -10205,7 +10205,7 @@ static irqreturn_t tc956xmac_interrupt_v1(int irq, void *dev_id)
 			if ((queue == TC956X_ONE) || (queue == TC956X_TWO))
 				continue;
 #endif
-			mtl_status = tc956xmac_host_mtl_irq_status(priv, priv->hw,
+			mtl_status = stmmac_host_mtl_irq_status(priv, priv->hw,
 								queue);
 
 			if (mtl_status != -EINVAL)
@@ -10222,20 +10222,20 @@ static irqreturn_t tc956xmac_interrupt_v1(int irq, void *dev_id)
 					rx_q = &priv->rx_queue[pf_dma_ch];
 #if !defined(TC956X_AUTOMOTIVE_CONFIG) && !defined(TC956X_ENABLE_MAC2MAC_BRIDGE)
 					spin_lock_irqsave(&priv->wq_lock, flags);
-					tc956xmac_service_mbx_event_schedule(priv);
+					stmmac_service_mbx_event_schedule(priv);
 					spin_unlock_irqrestore(&priv->wq_lock, flags);
 #endif
-					tc956xmac_set_rx_tail_ptr(priv, priv->ioaddr,
+					stmmac_set_rx_tail_ptr(priv, priv->ioaddr,
 										rx_q->rx_tail_addr, pf_dma_ch);
 				} else if (queue == 2 || queue == 3) {
 					pf_dma_ch = priv->pf_queue_dma_map[queue];
 					rx_q = &priv->rx_queue[pf_dma_ch];
-					tc956xmac_set_rx_tail_ptr(priv, priv->ioaddr,
+					stmmac_set_rx_tail_ptr(priv, priv->ioaddr,
 									rx_q->rx_tail_addr, pf_dma_ch);
 #if !defined(TC956X_AUTOMOTIVE_CONFIG) && !defined(TC956X_ENABLE_MAC2MAC_BRIDGE)
 				} else {
 					spin_lock_irqsave(&priv->wq_lock, flags);
-					tc956xmac_service_mbx_event_schedule(priv);
+					stmmac_service_mbx_event_schedule(priv);
 					spin_unlock_irqrestore(&priv->wq_lock, flags);
 #endif
 				}
@@ -10276,12 +10276,12 @@ static irqreturn_t tc956xmac_interrupt_v1(int irq, void *dev_id)
 		NMSGPR_INFO(priv->device, "PHY Interrupt %s\n", __func__);
 #ifndef TC956X_SRIOV_VF
 		if (priv->port_link_down == true)
-			tc956xmac_link_change_set_power(priv, LINK_UP); /* Restore, De-assert and Enable Reset and Clock */
+			stmmac_link_change_set_power(priv, LINK_UP); /* Restore, De-assert and Enable Reset and Clock */
 #endif
 		/* Queue the work in system_wq */
 		if (priv->stm_port_pm_suspend == true) {
 			KPRINT_INFO("%s : (Do not queue PHY Work during suspend. Set WOL Interrupt flag)\n", __func__);
-			priv->tc956xmac_pm_wol_interrupt = true;
+			priv->stmmac_pm_wol_interrupt = true;
 		} else {
 			struct phy_device *phydev;
 			phydev = mdiobus_get_phy(priv->mii, priv->plat->phy_addr);
@@ -10324,24 +10324,24 @@ static irqreturn_t tc956xmac_interrupt_v1(int irq, void *dev_id)
 /* Polling receive - used by NETCONSOLE and other diagnostic tools
  * to allow network I/O with interrupts disabled.
  */
-static void tc956xmac_poll_controller(struct net_device *dev)
+static void stmmac_poll_controller(struct net_device *dev)
 {
 	disable_irq(dev->irq);
 #ifdef TC956X_SRIOV_PF
-	tc956xmac_interrupt_v0(dev->irq, dev);
+	stmmac_interrupt_v0(dev->irq, dev);
 #if !defined(TC956X_AUTOMOTIVE_CONFIG) && !defined(TC956X_CPE_CONFIG)
-	tc956xmac_interrupt_v1(dev->irq, dev);
+	stmmac_interrupt_v1(dev->irq, dev);
 #endif
 #elif defined TC956X_SRIOV_VF
-	tc956xmac_interrupt_v0(dev->irq, dev);
-	//tc956xmac_interrupt_v1(dev->irq, dev);
+	stmmac_interrupt_v0(dev->irq, dev);
+	//stmmac_interrupt_v1(dev->irq, dev);
 #endif
 	enable_irq(dev->irq);
 }
 #endif
 #endif /* TC956X_UNSUPPORTED_UNTESTED_FEATURE */
 
-int tc956xmac_rx_parser_configuration(struct stmmac_priv *priv)
+int stmmac_rx_parser_configuration(struct stmmac_priv *priv)
 {
 	int ret = -EINVAL, re_init_eee = 0, dly_cnt = 0, ret_val;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 9, 0)
@@ -10372,7 +10372,7 @@ int tc956xmac_rx_parser_configuration(struct stmmac_priv *priv)
 
 			set_bit(TC956XMAC_DOWN, &priv->link_state);
 
-			tc956xmac_disable_eee_mode(priv);
+			stmmac_disable_eee_mode(priv);
 			ret_val = phylink_ethtool_set_eee(priv->phylink, &edata);
 			ret_val |= phy_ethtool_set_eee_2p5(priv->dev->phydev, &edata);
 			if (ret_val)
@@ -10393,7 +10393,7 @@ int tc956xmac_rx_parser_configuration(struct stmmac_priv *priv)
 	}
 #endif
 	if (priv->hw->mac->rx_parser_init && priv->plat->rxp_cfg.enable)
-		ret = tc956xmac_rx_parser_init(priv,
+		ret = stmmac_rx_parser_init(priv,
 			priv->dev, priv->hw, priv->dma_cap.spram,
 			priv->dma_cap.frpsel, priv->dma_cap.frpes,
 			&priv->plat->rxp_cfg);
@@ -10417,7 +10417,7 @@ int tc956xmac_rx_parser_configuration(struct stmmac_priv *priv)
 
 			set_bit(TC956XMAC_DOWN, &priv->link_state);
 
-			edata.eee_enabled = tc956xmac_eee_init(priv);
+			edata.eee_enabled = stmmac_eee_init(priv);
 			priv->eee_enabled = edata.eee_enabled;
 			if (!edata.eee_enabled)
 				KPRINT_INFO("Error in init_eee\n\r");
@@ -10451,14 +10451,14 @@ int tc956xmac_rx_parser_configuration(struct stmmac_priv *priv)
 }
 
 #ifndef TC956X_SRIOV_VF
-static int tc956xmac_est_configuration_ioctl(struct stmmac_priv *priv)
+static int stmmac_est_configuration_ioctl(struct stmmac_priv *priv)
 {
 	int ret = -EINVAL;
 
 	DBGPR_FUNC(priv->device, "-->%s\n", __func__);
 
 #ifdef TC956X
-	ret = tc956xmac_est_configure(priv, priv->ioaddr, priv->plat->est,
+	ret = stmmac_est_configure(priv, priv->ioaddr, priv->plat->est,
 				   priv->plat->clk_ptp_rate);
 #endif
 
@@ -10468,9 +10468,9 @@ static int tc956xmac_est_configuration_ioctl(struct stmmac_priv *priv)
 }
 
 /**
- * tc956xmac_ioctl_get_cbs - gets the cbs parameter
+ * stmmac_ioctl_get_cbs - gets the cbs parameter
  * @priv: driver private structure
- * @data: tc956xmac_ioctl_cbs_cfg strcuture passed by user
+ * @data: stmmac_ioctl_cbs_cfg strcuture passed by user
  * Note: percentage element is dummy parameter and is not used in code.
  * Description :  this function gets called when ioctl TC956XMAC_IOTL_GET_CBS
  * is invoked.
@@ -10478,13 +10478,13 @@ static int tc956xmac_est_configuration_ioctl(struct stmmac_priv *priv)
  *
  */
 #ifdef TC956X_SRIOV_PF
-int tc956xmac_ioctl_get_cbs(struct stmmac_priv *priv, void *data)
+int stmmac_ioctl_get_cbs(struct stmmac_priv *priv, void *data)
 #else
-static int tc956xmac_ioctl_get_cbs(struct stmmac_priv *priv, void __user *data)
+static int stmmac_ioctl_get_cbs(struct stmmac_priv *priv, void __user *data)
 #endif
 {
 	u32 tx_qcount = priv->plat->tx_queues_to_use;
-	struct tc956xmac_ioctl_cbs_cfg cbs;
+	struct stmmac_ioctl_cbs_cfg cbs;
 	u8 qmode;
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 	unsigned long flags;
@@ -10550,13 +10550,13 @@ static int tc956xmac_ioctl_get_cbs(struct stmmac_priv *priv, void __user *data)
 }
 
 #ifdef TC956X_SRIOV_PF
-int tc956xmac_ioctl_set_cbs(struct stmmac_priv *priv, void *data)
+int stmmac_ioctl_set_cbs(struct stmmac_priv *priv, void *data)
 #else
-static int tc956xmac_ioctl_set_cbs(struct stmmac_priv *priv, void __user *data)
+static int stmmac_ioctl_set_cbs(struct stmmac_priv *priv, void __user *data)
 #endif
 {
 	u32 tx_qcount = priv->plat->tx_queues_to_use;
-	struct tc956xmac_ioctl_cbs_cfg cbs;
+	struct stmmac_ioctl_cbs_cfg cbs;
 	u8 qmode;
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 	unsigned long flags;
@@ -10663,13 +10663,13 @@ static int tc956xmac_ioctl_set_cbs(struct stmmac_priv *priv, void __user *data)
 								priv->cbs_speed5000_cfg[cbs.queue_idx].low_credit;
 	}
 #ifdef TC956X_SRIOV_PF
-	tc956xmac_config_cbs(priv, priv->hw, priv->plat->tx_queues_cfg[cbs.queue_idx].send_slope,
+	stmmac_config_cbs(priv, priv->hw, priv->plat->tx_queues_cfg[cbs.queue_idx].send_slope,
 				priv->plat->tx_queues_cfg[cbs.queue_idx].idle_slope,
 				priv->plat->tx_queues_cfg[cbs.queue_idx].high_credit,
 				priv->plat->tx_queues_cfg[cbs.queue_idx].low_credit,
 				cbs.queue_idx);
 #elif defined TC956X_SRIOV_VF
-			tc956xmac_config_cbs(priv,
+			stmmac_config_cbs(priv,
 			priv->plat->tx_queues_cfg[cbs.queue_idx].send_slope,
 			priv->plat->tx_queues_cfg[cbs.queue_idx].idle_slope,
 			priv->plat->tx_queues_cfg[cbs.queue_idx].high_credit,
@@ -10685,12 +10685,12 @@ static int tc956xmac_ioctl_set_cbs(struct stmmac_priv *priv, void __user *data)
 }
 
 #ifdef TC956X_SRIOV_PF
-int tc956xmac_ioctl_get_est(struct stmmac_priv *priv, void *data)
+int stmmac_ioctl_get_est(struct stmmac_priv *priv, void *data)
 #else
-static int tc956xmac_ioctl_get_est(struct stmmac_priv *priv, void __user *data)
+static int stmmac_ioctl_get_est(struct stmmac_priv *priv, void __user *data)
 #endif
 {
-	struct tc956xmac_ioctl_est_cfg *est;
+	struct stmmac_ioctl_est_cfg *est;
 	int ret = 0;
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 	unsigned long flags;
@@ -10737,13 +10737,13 @@ out_free:
 }
 
 #ifdef TC956X_SRIOV_PF
-int tc956xmac_ioctl_set_est(struct stmmac_priv *priv, void *data)
+int stmmac_ioctl_set_est(struct stmmac_priv *priv, void *data)
 #else
-static int tc956xmac_ioctl_set_est(struct stmmac_priv *priv, void __user *data)
+static int stmmac_ioctl_set_est(struct stmmac_priv *priv, void __user *data)
 #endif
 {
-	struct tc956xmac_est *cfg = priv->plat->est;
-	struct tc956xmac_ioctl_est_cfg *est;
+	struct stmmac_est *cfg = priv->plat->est;
+	struct stmmac_ioctl_est_cfg *est;
 	int ret = 0;
 	u64 system_time = 0;
 	u32 system_time_s;
@@ -10791,7 +10791,7 @@ static int tc956xmac_ioctl_set_est(struct stmmac_priv *priv, void __user *data)
 		cfg->gcl_size = est->gcl_size;
 
 		/* BTR Offset */
-		tc956xmac_get_systime(priv, priv->ptpaddr, &system_time);
+		stmmac_get_systime(priv, priv->ptpaddr, &system_time);
 #ifndef CONFIG_ARCH_DMA_ADDR_T_64BIT
 		quotient = div_u64_rem(system_time, 1000000000ULL, &reminder);
 		system_time_s = (u32)quotient;
@@ -10814,7 +10814,7 @@ static int tc956xmac_ioctl_set_est(struct stmmac_priv *priv, void __user *data)
 	}
 
 	cfg->enable = est->enabled;
-	tc956xmac_est_configuration_ioctl(priv);
+	stmmac_est_configuration_ioctl(priv);
 
 	if (!est->enabled)
 		ret = 0;
@@ -10829,12 +10829,12 @@ out_free:
 }
 
 #ifdef TC956X_SRIOV_PF
-int tc956xmac_ioctl_get_fpe(struct stmmac_priv *priv, void *data)
+int stmmac_ioctl_get_fpe(struct stmmac_priv *priv, void *data)
 #else
-static int tc956xmac_ioctl_get_fpe(struct stmmac_priv *priv, void __user *data)
+static int stmmac_ioctl_get_fpe(struct stmmac_priv *priv, void __user *data)
 #endif
 {
-	struct tc956xmac_ioctl_fpe_cfg *fpe;
+	struct stmmac_ioctl_fpe_cfg *fpe;
 	int ret = 0;
 	unsigned int control = 0;
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
@@ -10889,12 +10889,12 @@ out_free:
 }
 
 #ifdef TC956X_SRIOV_PF
-int tc956xmac_ioctl_set_fpe(struct stmmac_priv *priv, void *data)
+int stmmac_ioctl_set_fpe(struct stmmac_priv *priv, void *data)
 #else
-static int tc956xmac_ioctl_set_fpe(struct stmmac_priv *priv, void __user *data)
+static int stmmac_ioctl_set_fpe(struct stmmac_priv *priv, void __user *data)
 #endif
 {
-	struct tc956xmac_ioctl_fpe_cfg *fpe;
+	struct stmmac_ioctl_fpe_cfg *fpe;
 	int ret = 0;
 	unsigned int control = 0;
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
@@ -10958,13 +10958,13 @@ out_free:
 }
 
 #ifdef TC956X_SRIOV_PF
-int tc956xmac_ioctl_get_rxp(struct stmmac_priv *priv, void *data)
+int stmmac_ioctl_get_rxp(struct stmmac_priv *priv, void *data)
 #else
-static int tc956xmac_ioctl_get_rxp(struct stmmac_priv *priv, void __user *data)
+static int stmmac_ioctl_get_rxp(struct stmmac_priv *priv, void __user *data)
 #endif
 {
-	struct tc956xmac_rx_parser_cfg *cfg = &priv->plat->rxp_cfg;
-	struct tc956xmac_ioctl_rxp_cfg *rxp;
+	struct stmmac_rx_parser_cfg *cfg = &priv->plat->rxp_cfg;
+	struct stmmac_ioctl_rxp_cfg *rxp;
 	int ret = 0;
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 	unsigned long flags;
@@ -11007,13 +11007,13 @@ out_free:
 }
 
 #ifdef TC956X_SRIOV_PF
-int tc956xmac_ioctl_set_rxp(struct stmmac_priv *priv, void *data)
+int stmmac_ioctl_set_rxp(struct stmmac_priv *priv, void *data)
 #else
-static int tc956xmac_ioctl_set_rxp(struct stmmac_priv *priv, void __user *data)
+static int stmmac_ioctl_set_rxp(struct stmmac_priv *priv, void __user *data)
 #endif
 {
-	struct tc956xmac_rx_parser_cfg *cfg = &priv->plat->rxp_cfg;
-	struct tc956xmac_ioctl_rxp_cfg *rxp;
+	struct stmmac_rx_parser_cfg *cfg = &priv->plat->rxp_cfg;
+	struct stmmac_ioctl_rxp_cfg *rxp;
 	int ret = 0;
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 	unsigned long flags;
@@ -11051,7 +11051,7 @@ static int tc956xmac_ioctl_set_rxp(struct stmmac_priv *priv, void __user *data)
 		memset(cfg->entries, 0, sizeof(cfg->entries));
 	}
 
-	ret = tc956xmac_rx_parser_configuration(priv);
+	ret = stmmac_rx_parser_configuration(priv);
 	if (!rxp->enabled)
 		ret = 0;
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
@@ -11063,10 +11063,10 @@ out_free:
 }
 #endif
 
-static int tc956xmac_ioctl_get_tx_free_desc(struct stmmac_priv *priv, void __user *data)
+static int stmmac_ioctl_get_tx_free_desc(struct stmmac_priv *priv, void __user *data)
 {
 	u32 tx_free_desc;
-	struct tc956xmac_ioctl_free_desc ioctl_data;
+	struct stmmac_ioctl_free_desc ioctl_data;
 
 	DBGPR_FUNC(priv->device, "-->%s\n", __func__);
 
@@ -11080,7 +11080,7 @@ static int tc956xmac_ioctl_get_tx_free_desc(struct stmmac_priv *priv, void __use
 	if ((ioctl_data.queue_idx < priv->plat->tx_queues_to_use) &&
 		(priv->plat->ch_in_use[ioctl_data.queue_idx] == 1)) {
 #endif
-		tx_free_desc = tc956xmac_tx_avail(priv, ioctl_data.queue_idx);
+		tx_free_desc = stmmac_tx_avail(priv, ioctl_data.queue_idx);
 		if (copy_to_user((void __user *)ioctl_data.ptr, &tx_free_desc, sizeof(unsigned int)))
 			return -EFAULT;
 	} else {
@@ -11093,9 +11093,9 @@ static int tc956xmac_ioctl_get_tx_free_desc(struct stmmac_priv *priv, void __use
 }
 
 #ifndef TC956X_SRIOV_VF
-static int tc956xmac_ioctl_get_connected_speed(struct stmmac_priv *priv, void __user *data)
+static int stmmac_ioctl_get_connected_speed(struct stmmac_priv *priv, void __user *data)
 {
-	struct tc956xmac_ioctl_speed ioctl_data;
+	struct stmmac_ioctl_speed ioctl_data;
 
 	memset(&ioctl_data, 0, sizeof(ioctl_data));
 
@@ -11121,9 +11121,9 @@ static int tc956xmac_ioctl_get_connected_speed(struct stmmac_priv *priv, void __
  * \param[in] bar number
  * \return register value
  */
-static int tc956xmac_reg_rd(struct stmmac_priv *priv, void __user *data)
+static int stmmac_reg_rd(struct stmmac_priv *priv, void __user *data)
 {
-	struct tc956xmac_ioctl_reg_rd_wr ioctl_data;
+	struct stmmac_ioctl_reg_rd_wr ioctl_data;
 	u32 val;
 
 	DBGPR_FUNC(priv->device, "-->%s\n", __func__);
@@ -11153,9 +11153,9 @@ static int tc956xmac_reg_rd(struct stmmac_priv *priv, void __user *data)
  * \param[in] address offset as per tc956x data-sheet
  * \return register
  */
-static int tc956xmac_reg_wr(struct stmmac_priv *priv, void __user *data)
+static int stmmac_reg_wr(struct stmmac_priv *priv, void __user *data)
 {
-	struct tc956xmac_ioctl_reg_rd_wr ioctl_data;
+	struct stmmac_ioctl_reg_rd_wr ioctl_data;
 	u32 val;
 
 	DBGPR_FUNC(priv->device, "-->%s\n", __func__);
@@ -11182,9 +11182,9 @@ static int tc956xmac_reg_wr(struct stmmac_priv *priv, void __user *data)
 #endif
 
 #ifndef TC956X_SRIOV_VF
-static int tc956xmac_ioctl_set_mac_loopback(struct stmmac_priv *priv, void __user *data)
+static int stmmac_ioctl_set_mac_loopback(struct stmmac_priv *priv, void __user *data)
 {
-	struct tc956xmac_ioctl_loopback ioctl_data;
+	struct stmmac_ioctl_loopback ioctl_data;
 	u32 value = 0;
 
 	DBGPR_FUNC(priv->device, "-->%s\n", __func__);
@@ -11212,9 +11212,9 @@ static int tc956xmac_ioctl_set_mac_loopback(struct stmmac_priv *priv, void __use
 	return 0;
 }
 
-static int tc956xmac_ioctl_set_phy_loopback(struct stmmac_priv *priv, void __user *data)
+static int stmmac_ioctl_set_phy_loopback(struct stmmac_priv *priv, void __user *data)
 {
-	struct tc956xmac_ioctl_phy_loopback ioctl_data;
+	struct stmmac_ioctl_phy_loopback ioctl_data;
 #ifdef TC956X
 	int ret;
 #endif
@@ -11252,9 +11252,9 @@ static int tc956xmac_ioctl_set_phy_loopback(struct stmmac_priv *priv, void __use
 	return 0;
 }
 
-static int tc956xmac_config_l2_da_filter(struct stmmac_priv *priv, void __user *data)
+static int stmmac_config_l2_da_filter(struct stmmac_priv *priv, void __user *data)
 {
-	struct tc956xmac_ioctl_l2_da_filter ioctl_data;
+	struct stmmac_ioctl_l2_da_filter ioctl_data;
 	int ret = 0;
 	unsigned int reg_val = 0;
 
@@ -11278,9 +11278,9 @@ static int tc956xmac_config_l2_da_filter(struct stmmac_priv *priv, void __user *
 	return ret;
 }
 
-static int tc956xmac_config_vlan_filter(struct stmmac_priv *priv, void __user *data)
+static int stmmac_config_vlan_filter(struct stmmac_priv *priv, void __user *data)
 {
-	struct tc956xmac_ioctl_vlan_filter ioctl_data;
+	struct stmmac_ioctl_vlan_filter ioctl_data;
 	u32 reg_val;
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 	unsigned long flags;
@@ -11345,7 +11345,7 @@ static int tc956xmac_config_vlan_filter(struct stmmac_priv *priv, void __user *d
  * @data: user space target IOCTL data buffer
  *
  * \brief API to Check the FW status
- * \param[in] tc956xmac priv structure
+ * \param[in] stmmac priv structure
  * \param[in] An IOCTL specefic structure, that can contain a data pointer
  * \return 0 (success) or Error value (fail)
  */
@@ -11437,11 +11437,11 @@ static void stm_ptp_configuration(struct stmmac_priv *priv, u32 tcr_config)
 		control = tcr_config;
 	}
 
-	tc956xmac_config_hw_tstamping(priv, priv->ptpaddr, control);
+	stmmac_config_hw_tstamping(priv, priv->ptpaddr, control);
 
 	/* program Sub Second Increment reg */
 #ifdef TC956X
-	tc956xmac_config_sub_second_increment(priv,
+	stmmac_config_sub_second_increment(priv,
 		priv->ptpaddr, priv->plat->clk_ptp_rate,
 		priv->plat->has_xgmac,
 		&sec_inc);
@@ -11457,10 +11457,10 @@ static void stm_ptp_configuration(struct stmmac_priv *priv, u32 tcr_config)
 
 	priv->default_addend = div_u64(temp, TC956X_PTP_SYSCLOCK);
 
-	tc956xmac_config_addend(priv, priv->ptpaddr, priv->default_addend);
+	stmmac_config_addend(priv, priv->ptpaddr, priv->default_addend);
 
 	ktime_get_real_ts64(&now);
-	tc956xmac_init_systime(priv, priv->ptpaddr, (u32)now.tv_sec, now.tv_nsec);
+	stmmac_init_systime(priv, priv->ptpaddr, (u32)now.tv_sec, now.tv_nsec);
 
 	priv->hwts_tx_en = 1;
 	priv->hwts_rx_en = 1;
@@ -11468,7 +11468,7 @@ static void stm_ptp_configuration(struct stmmac_priv *priv, u32 tcr_config)
 }
 
 static int pps_configuration(struct stmmac_priv *priv,
-			 struct tc956xmac_PPS_Config *stm_pps_cfg)
+			 struct stmmac_PPS_Config *stm_pps_cfg)
 {
 	unsigned int sec, subsec, val, align_ns = 0;
 	int value, interval, width, ppscmd, trgtmodsel = 0x3;
@@ -11627,20 +11627,20 @@ static int pps_configuration(struct stmmac_priv *priv,
 
 /*!
  * \brief API to configure pps
- * \param[in] tc956xmac priv structure
+ * \param[in] stmmac priv structure
  * \param[in] An IOCTL specefic structure, that can contain a data pointer
  * \return 0 (success) or Error value (fail)
  */
-static int tc956xmac_set_ppsout(struct stmmac_priv *priv, void __user *data)
+static int stmmac_set_ppsout(struct stmmac_priv *priv, void __user *data)
 {
-	struct tc956xmac_PPS_Config *stm_pps_cfg, stm_pps_cfg_data;
+	struct stmmac_PPS_Config *stm_pps_cfg, stm_pps_cfg_data;
 
 	DBGPR_FUNC(priv->device, "--> %s\n", __func__);
 
-	if (copy_from_user(&stm_pps_cfg_data, data, sizeof(struct tc956xmac_PPS_Config)))
+	if (copy_from_user(&stm_pps_cfg_data, data, sizeof(struct stmmac_PPS_Config)))
 		return -EFAULT;
 
-	stm_pps_cfg = (struct tc956xmac_PPS_Config *)(&stm_pps_cfg_data);
+	stm_pps_cfg = (struct stmmac_PPS_Config *)(&stm_pps_cfg_data);
 
 	if (stm_pps_cfg->ppsout_duty <= 0) {
 		DBGPR_FUNC(priv->device, "PPS: PPSOut_Config: duty cycle is invalid. Using duty=1\n");
@@ -11662,14 +11662,14 @@ static int tc956xmac_set_ppsout(struct stmmac_priv *priv, void __user *data)
 
 /*!
  * \brief API to configure PTP clock
- * \param[in] tc956xmac priv structure
+ * \param[in] stmmac priv structure
  * \param[in] An IOCTL specefic structure, that can contain a data pointer
  * ptp_clock should be > 3.921568 MHz
  * \return 0 (success) or Error value (fail)
  */
-static int tc956xmac_ptp_clk_config(struct stmmac_priv *priv, void __user *data)
+static int stmmac_ptp_clk_config(struct stmmac_priv *priv, void __user *data)
 {
-	struct tc956xmac_PPS_Config *stm_pps_cfg, stm_pps_cfg_data;
+	struct stmmac_PPS_Config *stm_pps_cfg, stm_pps_cfg_data;
 	int ret = 0;
 	u32 value = 0;
 	__u64 temp = 0;
@@ -11678,12 +11678,12 @@ static int tc956xmac_ptp_clk_config(struct stmmac_priv *priv, void __user *data)
 
 	DBGPR_FUNC(priv->device, "--> %s\n", __func__);
 
-	if (copy_from_user(&stm_pps_cfg_data, data, sizeof(struct tc956xmac_PPS_Config))) {
+	if (copy_from_user(&stm_pps_cfg_data, data, sizeof(struct stmmac_PPS_Config))) {
 		DBGPR_FUNC(priv->device, "copy_from_user error: ifr data structure\n");
 		return -EFAULT;
 	}
 
-	stm_pps_cfg = (struct tc956xmac_PPS_Config *)(&stm_pps_cfg_data);
+	stm_pps_cfg = (struct stmmac_PPS_Config *)(&stm_pps_cfg_data);
 
 	/*  Update minimum functional ptpclk_freq */
 	if ((stm_pps_cfg->ptpclk_freq == 0)
@@ -11694,7 +11694,7 @@ static int tc956xmac_ptp_clk_config(struct stmmac_priv *priv, void __user *data)
 	}
 
 #ifdef TC956X
-	tc956xmac_config_sub_second_increment(priv,
+	stmmac_config_sub_second_increment(priv,
 				priv->ptpaddr, stm_pps_cfg->ptpclk_freq,
 				priv->plat->has_xgmac,
 				&sec_inc);
@@ -11707,7 +11707,7 @@ static int tc956xmac_ptp_clk_config(struct stmmac_priv *priv, void __user *data)
 
 	DBGPR_FUNC(priv->device, "priv->default_addend : %x\n", priv->default_addend);
 	/*  Add handling of config_addend return */
-	tc956xmac_config_addend(priv, priv->ptpaddr, priv->default_addend);
+	stmmac_config_addend(priv, priv->ptpaddr, priv->default_addend);
 
 	value = readl(priv->ptpaddr + PTP_TCR);
 	/* Note : TSENA never disabled. */
@@ -11715,9 +11715,9 @@ static int tc956xmac_ptp_clk_config(struct stmmac_priv *priv, void __user *data)
 		DBGPR_FUNC(priv->device, "stm_xgmac_ptp_clk_config : init systime\n");
 		/* initialize system time */
 		ktime_get_real_ts64(&now);
-		tc956xmac_init_systime(priv, priv->ptpaddr, (u32)now.tv_sec, now.tv_nsec);
+		stmmac_init_systime(priv, priv->ptpaddr, (u32)now.tv_sec, now.tv_nsec);
 		value |= PTP_TCR_TSINIT | PTP_TCR_TSENA | PTP_TCR_TSCFUPDT | PTP_TCR_TSCTRLSSR;
-		tc956xmac_config_hw_tstamping(priv, priv->ptpaddr, value);
+		stmmac_config_hw_tstamping(priv, priv->ptpaddr, value);
 	}
 
 	return ret;
@@ -11725,11 +11725,11 @@ static int tc956xmac_ptp_clk_config(struct stmmac_priv *priv, void __user *data)
 
 /*!
  * \brief API to configure ptp offloading feature
- * \param[in] tc956xmac priv structure
+ * \param[in] stmmac priv structure
  * \param[in] An IOCTL specefic structure, that can contain a data pointer
  * \return 0 (success) or Error value (fail)
  */
-static int tc956xmac_config_ptpoffload(struct stmmac_priv *priv, void __user *data)
+static int stmmac_config_ptpoffload(struct stmmac_priv *priv, void __user *data)
 {
 	u32 pto_cntrl;
 	u32 varMAC_TCR;
@@ -11811,11 +11811,11 @@ static int tc956xmac_config_ptpoffload(struct stmmac_priv *priv, void __user *da
 
 /*!
  * \brief API to configure to enable auxiliary timestamp feature
- * \param[in] tc956xmac priv structure
+ * \param[in] stmmac priv structure
  * \param[in] An IOCTL specific structure, that can contain a data pointer
  * \return 0 (success) or Error value (fail)
  */
-static int tc956xmac_aux_timestamp_enable(struct stmmac_priv *priv, void __user *data)
+static int stmmac_aux_timestamp_enable(struct stmmac_priv *priv, void __user *data)
 {
 	struct stm_ioctl_aux_snapshot ioctl_data;
 	u32 aux_cntrl_en, val, msi_out_val;
@@ -11869,11 +11869,11 @@ static int tc956xmac_aux_timestamp_enable(struct stmmac_priv *priv, void __user 
 
 /*!
  * \brief API to configure to enable/disable onestep timestamp feature
- * \param[in] tc956xmac priv structure
+ * \param[in] stmmac priv structure
  * \param[in] An IOCTL specefic structure, that can contain a data pointer
  * \return 0 (success) or Error value (fail)
  */
-static int tc956xmac_config_onestep_timestamp(struct stmmac_priv *priv, void __user *data)
+static int stmmac_config_onestep_timestamp(struct stmmac_priv *priv, void __user *data)
 {
 	struct stm_config_ost ioctl_data;
 
@@ -11891,9 +11891,9 @@ static int tc956xmac_config_onestep_timestamp(struct stmmac_priv *priv, void __u
 
 }
 
-static int tc956xmac_sa_vlan_ins_config(struct stmmac_priv *priv, void __user *data)
+static int stmmac_sa_vlan_ins_config(struct stmmac_priv *priv, void __user *data)
 {
-	struct tc956xmac_ioctl_sa_ins_cfg ioctl_data;
+	struct stmmac_ioctl_sa_ins_cfg ioctl_data;
 	u32 reg_data;
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 	unsigned long flags;
@@ -11916,7 +11916,7 @@ static int tc956xmac_sa_vlan_ins_config(struct stmmac_priv *priv, void __user *d
 			spin_lock_irqsave(&priv->spn_lock.mac_filter, flags);
 #endif
 
-			tc956xmac_set_umac_addr(priv, priv->hw, priv->ins_mac_addr, 0, PF_DRIVER);
+			stmmac_set_umac_addr(priv, priv->hw, priv->ins_mac_addr, 0, PF_DRIVER);
 
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 			spin_unlock_irqrestore(&priv->spn_lock.mac_filter, flags);
@@ -11941,7 +11941,7 @@ static int tc956xmac_sa_vlan_ins_config(struct stmmac_priv *priv, void __user *d
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 			spin_lock_irqsave(&priv->spn_lock.mac_filter, flags);
 #endif
-			tc956xmac_set_umac_addr(priv, priv->hw, priv->ins_mac_addr, 1, PF_DRIVER);
+			stmmac_set_umac_addr(priv, priv->hw, priv->ins_mac_addr, 1, PF_DRIVER);
 
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 			spin_unlock_irqrestore(&priv->spn_lock.mac_filter, flags);
@@ -11967,10 +11967,10 @@ static int tc956xmac_sa_vlan_ins_config(struct stmmac_priv *priv, void __user *d
 }
 
 #endif /* TC956X_SRIOV_VF */
-static int tc956xmac_get_tx_qcnt(struct stmmac_priv *priv, void __user *data)
+static int stmmac_get_tx_qcnt(struct stmmac_priv *priv, void __user *data)
 {
 	u32 tx_qcnt = 0;
-	struct tc956xmac_ioctl_tx_qcnt ioctl_data;
+	struct stmmac_ioctl_tx_qcnt ioctl_data;
 
 	DBGPR_FUNC(priv->device, "-->%s\n", __func__);
 
@@ -11986,10 +11986,10 @@ static int tc956xmac_get_tx_qcnt(struct stmmac_priv *priv, void __user *data)
 	return 0;
 }
 
-static int tc956xmac_get_rx_qcnt(struct stmmac_priv *priv, void __user *data)
+static int stmmac_get_rx_qcnt(struct stmmac_priv *priv, void __user *data)
 {
 	u32 rx_qcnt = 0;
-	struct tc956xmac_ioctl_rx_qcnt ioctl_data;
+	struct stmmac_ioctl_rx_qcnt ioctl_data;
 
 	DBGPR_FUNC(priv->device, "-->%s\n", __func__);
 
@@ -12011,9 +12011,9 @@ static int tc956xmac_get_rx_qcnt(struct stmmac_priv *priv, void __user *data)
  * \return -EFAULT in case of error, otherwise 0
  * \description register can be read for pcie conf between 0 to 0xFFF.
  */
-static int tc956xmac_pcie_config_reg_rd(struct stmmac_priv *priv, void __user *data)
+static int stmmac_pcie_config_reg_rd(struct stmmac_priv *priv, void __user *data)
 {
-	struct tc956xmac_ioctl_pcie_reg_rd_wr ioctl_data;
+	struct stmmac_ioctl_pcie_reg_rd_wr ioctl_data;
 	u32 val;
 
 	DBGPR_FUNC(priv->device, "-->%s\n", __func__);
@@ -12037,9 +12037,9 @@ static int tc956xmac_pcie_config_reg_rd(struct stmmac_priv *priv, void __user *d
  * \return -EFAULT in case of error, otherwise 0
  * \description register can be written for pcie conf between 0 to 0xFFF.
  */
-static int tc956xmac_pcie_config_reg_wr(struct stmmac_priv *priv, void __user *data)
+static int stmmac_pcie_config_reg_wr(struct stmmac_priv *priv, void __user *data)
 {
-	struct tc956xmac_ioctl_pcie_reg_rd_wr ioctl_data;
+	struct stmmac_ioctl_pcie_reg_rd_wr ioctl_data;
 	u32 val;
 
 	DBGPR_FUNC(priv->device, "-->%s\n", __func__);
@@ -12066,9 +12066,9 @@ static int tc956xmac_pcie_config_reg_wr(struct stmmac_priv *priv, void __user *d
  * \description enable/disable stripping.
  * Enable this function only if NETIF_F_HW_VLAN_CTAG_RX is user-configureable.
  */
-static int tc956xmac_vlan_strip_config(struct stmmac_priv *priv, void __user *data)
+static int stmmac_vlan_strip_config(struct stmmac_priv *priv, void __user *data)
 {
-	struct tc956xmac_ioctl_vlan_strip_cfg ioctl_data;
+	struct stmmac_ioctl_vlan_strip_cfg ioctl_data;
 	u32 reg_data;
 	struct net_device *dev = priv->dev;
 
@@ -12100,7 +12100,7 @@ static int tc956xmac_vlan_strip_config(struct stmmac_priv *priv, void __user *da
 
 #ifdef TC956X
 #ifdef TC956X_UNSUPPORTED_UNTESTED_FEATURE
-static int tc956xmac_mode1_usp_lane_change_4_to_1(struct stmmac_priv *priv, void __iomem *ioaddr)
+static int stmmac_mode1_usp_lane_change_4_to_1(struct stmmac_priv *priv, void __iomem *ioaddr)
 {
 	u32 reg_data;
 
@@ -12183,7 +12183,7 @@ static int tc956xmac_mode1_usp_lane_change_4_to_1(struct stmmac_priv *priv, void
 }
 
 
-static int tc956xmac_mode1_usp_lane_change_4_to_2(struct stmmac_priv *priv, void __iomem *ioaddr)
+static int stmmac_mode1_usp_lane_change_4_to_2(struct stmmac_priv *priv, void __iomem *ioaddr)
 {
 	u32 reg_data;
 
@@ -12231,7 +12231,7 @@ static int tc956xmac_mode1_usp_lane_change_4_to_2(struct stmmac_priv *priv, void
 	return 0;
 }
 
-static int tc956xmac_mode1_usp_lane_change_1_2_to_4(struct stmmac_priv *priv, void __iomem *ioaddr)
+static int stmmac_mode1_usp_lane_change_1_2_to_4(struct stmmac_priv *priv, void __iomem *ioaddr)
 {
 	u32 reg_data;
 
@@ -12367,7 +12367,7 @@ static int tc956xmac_mode1_usp_lane_change_1_2_to_4(struct stmmac_priv *priv, vo
 }
 #endif /* TC956X_UNSUPPORTED_UNTESTED_FEATURE */
 
-static int tc956xmac_mode2_usp_lane_change_2_to_1(struct stmmac_priv *priv, void __iomem *ioaddr)
+static int stmmac_mode2_usp_lane_change_2_to_1(struct stmmac_priv *priv, void __iomem *ioaddr)
 {
 	u32 reg_data;
 
@@ -12415,7 +12415,7 @@ static int tc956xmac_mode2_usp_lane_change_2_to_1(struct stmmac_priv *priv, void
 	return 0;
 }
 
-static int tc956xmac_mode2_usp_lane_change_1_to_2(struct stmmac_priv *priv, void __iomem *ioaddr)
+static int stmmac_mode2_usp_lane_change_1_to_2(struct stmmac_priv *priv, void __iomem *ioaddr)
 {
 	u32 reg_data;
 
@@ -12497,7 +12497,7 @@ static int tc956xmac_mode2_usp_lane_change_1_to_2(struct stmmac_priv *priv, void
 }
 
 #ifdef TC956X_UNSUPPORTED_UNTESTED_FEATURE
-static int tc956xmac_mode2_dsp1_lane_change_2_to_1(struct stmmac_priv *priv, void __iomem *ioaddr)
+static int stmmac_mode2_dsp1_lane_change_2_to_1(struct stmmac_priv *priv, void __iomem *ioaddr)
 {
 	u32 reg_data;
 
@@ -12544,7 +12544,7 @@ static int tc956xmac_mode2_dsp1_lane_change_2_to_1(struct stmmac_priv *priv, voi
 	return 0;
 }
 
-static int tc956xmac_mode2_dsp1_lane_change_1_to_2(struct stmmac_priv *priv, void __iomem *ioaddr)
+static int stmmac_mode2_dsp1_lane_change_1_to_2(struct stmmac_priv *priv, void __iomem *ioaddr)
 {
 	u32 reg_data;
 
@@ -12627,7 +12627,7 @@ static int tc956xmac_mode2_dsp1_lane_change_1_to_2(struct stmmac_priv *priv, voi
 }
 #endif /* TC956X_UNSUPPORTED_UNTESTED_FEATURE */
 
-static int tc956xmac_pcie_lane_change(struct stmmac_priv *priv, void __user *data)
+static int stmmac_pcie_lane_change(struct stmmac_priv *priv, void __user *data)
 {
 	struct stm_ioctl_pcie_lane_change ioctl_data;
 	u32 reg_data;
@@ -12677,11 +12677,11 @@ static int tc956xmac_pcie_lane_change(struct stmmac_priv *priv, void __user *dat
 #ifdef TC956X_UNSUPPORTED_UNTESTED_FEATURE
 		/* All lane width change from x4 to x1, x4 to x2, x1/x2 to x4 are allowed */
 		if (usp_curr_lane_width == LANE_4 && ioctl_data.target_lane_width == LANE_1)
-			return tc956xmac_mode1_usp_lane_change_4_to_1(priv, ioaddr);
+			return stmmac_mode1_usp_lane_change_4_to_1(priv, ioaddr);
 		else if (usp_curr_lane_width == LANE_4 && ioctl_data.target_lane_width == LANE_2)
-			return tc956xmac_mode1_usp_lane_change_4_to_2(priv, ioaddr);
+			return stmmac_mode1_usp_lane_change_4_to_2(priv, ioaddr);
 		else if (ioctl_data.target_lane_width == LANE_4) /* x1/x2 to x4*/
-			return tc956xmac_mode1_usp_lane_change_1_2_to_4(priv, ioaddr);
+			return stmmac_mode1_usp_lane_change_1_2_to_4(priv, ioaddr);
 		else
 			return -EINVAL;
 #endif /* TC956X_UNSUPPORTED_UNTESTED_FEATURE */
@@ -12703,9 +12703,9 @@ static int tc956xmac_pcie_lane_change(struct stmmac_priv *priv, void __user *dat
 			}
 
 			if (usp_curr_lane_width == LANE_2 && ioctl_data.target_lane_width == LANE_1)
-				return tc956xmac_mode2_usp_lane_change_2_to_1(priv, ioaddr);
+				return stmmac_mode2_usp_lane_change_2_to_1(priv, ioaddr);
 			else if (usp_curr_lane_width == LANE_1 && ioctl_data.target_lane_width == LANE_2)
-				return tc956xmac_mode2_usp_lane_change_1_to_2(priv, ioaddr);
+				return stmmac_mode2_usp_lane_change_1_to_2(priv, ioaddr);
 			else
 				return -EINVAL;
 		}
@@ -12715,9 +12715,9 @@ static int tc956xmac_pcie_lane_change(struct stmmac_priv *priv, void __user *dat
 				return 0;
 #ifdef TC956X_UNSUPPORTED_UNTESTED_FEATURE
 			if (dsp1_curr_lane_width == LANE_2 && ioctl_data.target_lane_width == LANE_1)
-				return tc956xmac_mode2_dsp1_lane_change_2_to_1(priv, ioaddr);
+				return stmmac_mode2_dsp1_lane_change_2_to_1(priv, ioaddr);
 			else if (dsp1_curr_lane_width == LANE_1 && ioctl_data.target_lane_width == LANE_2)
-				return tc956xmac_mode2_dsp1_lane_change_1_to_2(priv, ioaddr);
+				return stmmac_mode2_dsp1_lane_change_1_to_2(priv, ioaddr);
 			else
 				return -EINVAL;
 #endif /* TC956X_UNSUPPORTED_UNTESTED_FEATURE */
@@ -12734,7 +12734,7 @@ static int tc956xmac_pcie_lane_change(struct stmmac_priv *priv, void __user *dat
 }
 
 
-static int tc956xmac_pcie_set_tx_margin(struct stmmac_priv *priv, void __user *data)
+static int stmmac_pcie_set_tx_margin(struct stmmac_priv *priv, void __user *data)
 {
 	struct stm_ioctl_pcie_set_tx_margin ioctl_data;
 	u32 reg_data;
@@ -12850,7 +12850,7 @@ static int tc956xmac_pcie_set_tx_margin(struct stmmac_priv *priv, void __user *d
 
 
 
-static int tc956xmac_set_gen3_deemphasis(struct stmmac_priv *priv, void __iomem *ioaddr,
+static int stmmac_set_gen3_deemphasis(struct stmmac_priv *priv, void __iomem *ioaddr,
 						__u8 txpreset, __u8 enable)
 {
 	DBGPR_FUNC(priv->device, "-->%s\n", __func__);
@@ -12881,7 +12881,7 @@ static int tc956xmac_set_gen3_deemphasis(struct stmmac_priv *priv, void __iomem 
 	return 0;
 }
 
-static int tc956xmac_dfe_read_and_write_ctle_optimised(struct stmmac_priv *priv, void __iomem *ioaddr)
+static int stmmac_dfe_read_and_write_ctle_optimised(struct stmmac_priv *priv, void __iomem *ioaddr)
 {
 	u32 reg_data;
 	u8 eqc_force, eq_res, vga_ctrl;
@@ -12907,7 +12907,7 @@ static int tc956xmac_dfe_read_and_write_ctle_optimised(struct stmmac_priv *priv,
 	return 0;
 }
 
-static int tc956xmac_dfe_disable_settings(struct stmmac_priv *priv, void __iomem *ioaddr, u32 phy_core)
+static int stmmac_dfe_disable_settings(struct stmmac_priv *priv, void __iomem *ioaddr, u32 phy_core)
 {
 
 	DBGPR_FUNC(priv->device, "-->%s\n", __func__);
@@ -12933,7 +12933,7 @@ static int tc956xmac_dfe_disable_settings(struct stmmac_priv *priv, void __iomem
 	return 0;
 }
 
-static int tc956xmac_dfe_enable_settings(struct stmmac_priv *priv, void __iomem *ioaddr, u32 phy_core)
+static int stmmac_dfe_enable_settings(struct stmmac_priv *priv, void __iomem *ioaddr, u32 phy_core)
 {
 
 	DBGPR_FUNC(priv->device, "-->%s\n", __func__);
@@ -12956,7 +12956,7 @@ static int tc956xmac_dfe_enable_settings(struct stmmac_priv *priv, void __iomem 
 	return 0;
 }
 
-static int tc956xmac_dfe_pll_reset_settings(struct stmmac_priv *priv, void __iomem *ioaddr, u8 dfe_enable_flag)
+static int stmmac_dfe_pll_reset_settings(struct stmmac_priv *priv, void __iomem *ioaddr, u8 dfe_enable_flag)
 {
 	DBGPR_FUNC(priv->device, "-->%s\n", __func__);
 
@@ -12982,7 +12982,7 @@ static int tc956xmac_dfe_pll_reset_settings(struct stmmac_priv *priv, void __iom
 	return 0;
 }
 
-static int tc956xmac_pcie_set_tx_deemphasis(struct stmmac_priv *priv, void __user *data)
+static int stmmac_pcie_set_tx_deemphasis(struct stmmac_priv *priv, void __user *data)
 {
 	struct stm_ioctl_pcie_set_tx_deemphasis ioctl_data;
 	u32 reg_data;
@@ -13027,7 +13027,7 @@ static int tc956xmac_pcie_set_tx_deemphasis(struct stmmac_priv *priv, void __use
 			reg_data |= (LANE_0_ENABLE | LANE_1_ENABLE);
 			writel(reg_data, ioaddr + TC956X_PHY_CORE0_GL_LANE_ACCESS);
 
-			tc956xmac_set_gen3_deemphasis(priv, ioaddr, ioctl_data.txpreset, ioctl_data.enable);
+			stmmac_set_gen3_deemphasis(priv, ioaddr, ioctl_data.txpreset, ioctl_data.enable);
 
 
 		break;
@@ -13037,7 +13037,7 @@ static int tc956xmac_pcie_set_tx_deemphasis(struct stmmac_priv *priv, void __use
 			reg_data |= PHY_CORE_2_ENABLE;
 			writel(reg_data, ioaddr + TC956X_GLUE_PHY_REG_ACCESS_CTRL);
 
-			tc956xmac_set_gen3_deemphasis(priv, ioaddr, ioctl_data.txpreset, ioctl_data.enable);
+			stmmac_set_gen3_deemphasis(priv, ioaddr, ioctl_data.txpreset, ioctl_data.enable);
 
 
 		break;
@@ -13047,7 +13047,7 @@ static int tc956xmac_pcie_set_tx_deemphasis(struct stmmac_priv *priv, void __use
 			reg_data |= PHY_CORE_3_ENABLE;
 			writel(reg_data, ioaddr + TC956X_GLUE_PHY_REG_ACCESS_CTRL);
 
-			tc956xmac_set_gen3_deemphasis(priv, ioaddr, ioctl_data.txpreset, ioctl_data.enable);
+			stmmac_set_gen3_deemphasis(priv, ioaddr, ioctl_data.txpreset, ioctl_data.enable);
 
 		break;
 		default:
@@ -13072,7 +13072,7 @@ static int tc956xmac_pcie_set_tx_deemphasis(struct stmmac_priv *priv, void __use
 			reg_data |= (LANE_0_ENABLE | LANE_1_ENABLE);
 			writel(reg_data, ioaddr + TC956X_PHY_CORE0_GL_LANE_ACCESS);
 
-			tc956xmac_set_gen3_deemphasis(priv, ioaddr, ioctl_data.txpreset, ioctl_data.enable);
+			stmmac_set_gen3_deemphasis(priv, ioaddr, ioctl_data.txpreset, ioctl_data.enable);
 
 		break;
 		case DOWNSTREAM_PORT1:
@@ -13089,7 +13089,7 @@ static int tc956xmac_pcie_set_tx_deemphasis(struct stmmac_priv *priv, void __use
 			reg_data |= (LANE_0_ENABLE | LANE_1_ENABLE);
 			writel(reg_data, ioaddr + TC956X_PHY_CORE0_GL_LANE_ACCESS);
 
-			tc956xmac_set_gen3_deemphasis(priv, ioaddr, ioctl_data.txpreset, ioctl_data.enable);
+			stmmac_set_gen3_deemphasis(priv, ioaddr, ioctl_data.txpreset, ioctl_data.enable);
 
 		break;
 		case DOWNSTREAM_PORT2:
@@ -13098,7 +13098,7 @@ static int tc956xmac_pcie_set_tx_deemphasis(struct stmmac_priv *priv, void __use
 			reg_data |= PHY_CORE_3_ENABLE;
 			writel(reg_data, ioaddr + TC956X_GLUE_PHY_REG_ACCESS_CTRL);
 
-			tc956xmac_set_gen3_deemphasis(priv, ioaddr, ioctl_data.txpreset, ioctl_data.enable);
+			stmmac_set_gen3_deemphasis(priv, ioaddr, ioctl_data.txpreset, ioctl_data.enable);
 
 		break;
 		default:
@@ -13113,7 +13113,7 @@ static int tc956xmac_pcie_set_tx_deemphasis(struct stmmac_priv *priv, void __use
 	return 0;
 }
 
-static int tc956xmac_pcie_set_dfe(struct stmmac_priv *priv, void __user *data)
+static int stmmac_pcie_set_dfe(struct stmmac_priv *priv, void __user *data)
 {
 	struct stm_ioctl_pcie_set_dfe ioctl_data;
 	u32 reg_data;
@@ -13165,7 +13165,7 @@ static int tc956xmac_pcie_set_dfe(struct stmmac_priv *priv, void __user *data)
 				reg_data |= LANE_0_ENABLE;
 				writel(reg_data, ioaddr + TC956X_PHY_CORE0_GL_LANE_ACCESS);
 
-				tc956xmac_dfe_read_and_write_ctle_optimised(priv, ioaddr);
+				stmmac_dfe_read_and_write_ctle_optimised(priv, ioaddr);
 
 
 				/*Phy core 0, Lane 1 CTLE copy settings*/
@@ -13179,7 +13179,7 @@ static int tc956xmac_pcie_set_dfe(struct stmmac_priv *priv, void __user *data)
 				reg_data |= LANE_1_ENABLE;
 				writel(reg_data, ioaddr + TC956X_PHY_CORE0_GL_LANE_ACCESS);
 
-				tc956xmac_dfe_read_and_write_ctle_optimised(priv, ioaddr);
+				stmmac_dfe_read_and_write_ctle_optimised(priv, ioaddr);
 
 
 				/*Phy core 1, Lane 0 CTLE copysettings*/
@@ -13193,7 +13193,7 @@ static int tc956xmac_pcie_set_dfe(struct stmmac_priv *priv, void __user *data)
 				reg_data |= LANE_0_ENABLE;
 				writel(reg_data, ioaddr + TC956X_PHY_CORE0_GL_LANE_ACCESS);
 
-				tc956xmac_dfe_read_and_write_ctle_optimised(priv, ioaddr);
+				stmmac_dfe_read_and_write_ctle_optimised(priv, ioaddr);
 
 
 				/*Phy core 1, Lane 1 CTLE copy settings*/
@@ -13207,7 +13207,7 @@ static int tc956xmac_pcie_set_dfe(struct stmmac_priv *priv, void __user *data)
 				reg_data |= LANE_1_ENABLE;
 				writel(reg_data, ioaddr + TC956X_PHY_CORE0_GL_LANE_ACCESS);
 
-				tc956xmac_dfe_read_and_write_ctle_optimised(priv, ioaddr);
+				stmmac_dfe_read_and_write_ctle_optimised(priv, ioaddr);
 
 				/*Disable DFE settings for Phy core0 and Lane 0/1*/
 				reg_data = readl(ioaddr + TC956X_GLUE_PHY_REG_ACCESS_CTRL);
@@ -13220,7 +13220,7 @@ static int tc956xmac_pcie_set_dfe(struct stmmac_priv *priv, void __user *data)
 				reg_data |= (LANE_0_ENABLE | LANE_1_ENABLE);
 				writel(reg_data, ioaddr + TC956X_PHY_CORE0_GL_LANE_ACCESS);
 
-				tc956xmac_dfe_disable_settings(priv, ioaddr, PHY_CORE_0_ENABLE);
+				stmmac_dfe_disable_settings(priv, ioaddr, PHY_CORE_0_ENABLE);
 
 				/*Disable DFE settings for Phy core1 and Lane 0/1*/
 				reg_data = readl(ioaddr + TC956X_GLUE_PHY_REG_ACCESS_CTRL);
@@ -13233,7 +13233,7 @@ static int tc956xmac_pcie_set_dfe(struct stmmac_priv *priv, void __user *data)
 				reg_data |= (LANE_0_ENABLE | LANE_1_ENABLE);
 				writel(reg_data, ioaddr + TC956X_PHY_CORE0_GL_LANE_ACCESS);
 
-				tc956xmac_dfe_disable_settings(priv, ioaddr, PHY_CORE_1_ENABLE);
+				stmmac_dfe_disable_settings(priv, ioaddr, PHY_CORE_1_ENABLE);
 
 				/*PLL reset settings for phy core 0/1*/
 				reg_data = readl(ioaddr + TC956X_GLUE_PHY_REG_ACCESS_CTRL);
@@ -13241,7 +13241,7 @@ static int tc956xmac_pcie_set_dfe(struct stmmac_priv *priv, void __user *data)
 				reg_data |= (PHY_CORE_0_ENABLE | PHY_CORE_1_ENABLE);
 				writel(reg_data, ioaddr + TC956X_GLUE_PHY_REG_ACCESS_CTRL);
 
-				tc956xmac_dfe_pll_reset_settings(priv, ioaddr, ioctl_data.enable);
+				stmmac_dfe_pll_reset_settings(priv, ioaddr, ioctl_data.enable);
 			} else { /*DFE Enable settings*/
 
 				/*Phy core 0/1, Lane 0/1 CTLE initial value register settings*/
@@ -13264,7 +13264,7 @@ static int tc956xmac_pcie_set_dfe(struct stmmac_priv *priv, void __user *data)
 				reg_data |= PHY_CORE_0_ENABLE;
 				writel(reg_data, ioaddr + TC956X_GLUE_PHY_REG_ACCESS_CTRL);
 
-				tc956xmac_dfe_enable_settings(priv, ioaddr, PHY_CORE_0_ENABLE);
+				stmmac_dfe_enable_settings(priv, ioaddr, PHY_CORE_0_ENABLE);
 
 
 				/*Enable DFE settings for Phy core1 */
@@ -13273,7 +13273,7 @@ static int tc956xmac_pcie_set_dfe(struct stmmac_priv *priv, void __user *data)
 				reg_data |= PHY_CORE_1_ENABLE;
 				writel(reg_data, ioaddr + TC956X_GLUE_PHY_REG_ACCESS_CTRL);
 
-				tc956xmac_dfe_enable_settings(priv, ioaddr, PHY_CORE_1_ENABLE);
+				stmmac_dfe_enable_settings(priv, ioaddr, PHY_CORE_1_ENABLE);
 
 
 				/*PLL reset settings for Phy core0/1*/
@@ -13282,7 +13282,7 @@ static int tc956xmac_pcie_set_dfe(struct stmmac_priv *priv, void __user *data)
 				reg_data |= (PHY_CORE_0_ENABLE | PHY_CORE_1_ENABLE);
 				writel(reg_data, ioaddr + TC956X_GLUE_PHY_REG_ACCESS_CTRL);
 
-				tc956xmac_dfe_pll_reset_settings(priv, ioaddr, ioctl_data.enable);
+				stmmac_dfe_pll_reset_settings(priv, ioaddr, ioctl_data.enable);
 
 			}
 
@@ -13302,21 +13302,21 @@ static int tc956xmac_pcie_set_dfe(struct stmmac_priv *priv, void __user *data)
 
 
 			if (ioctl_data.enable == 0) { /*DFE Disable settings*/
-				tc956xmac_dfe_read_and_write_ctle_optimised(priv, ioaddr);
+				stmmac_dfe_read_and_write_ctle_optimised(priv, ioaddr);
 
 				/*Disable DFE settings for Phy core2*/
-				tc956xmac_dfe_disable_settings(priv, ioaddr, PHY_CORE_2_ENABLE);
+				stmmac_dfe_disable_settings(priv, ioaddr, PHY_CORE_2_ENABLE);
 
 				/*PLL reset settings for Phy core2*/
-				tc956xmac_dfe_pll_reset_settings(priv, ioaddr, ioctl_data.enable);
+				stmmac_dfe_pll_reset_settings(priv, ioaddr, ioctl_data.enable);
 			} else { /*DFE Enable settings*/
 				writel(0x000008A5, ioaddr + TC956X_PHY_COREX_PMACNT_LN_PM_EMCNT_INIT_CFG0_R2);
 
 				/*Enable DFE settings for Phy core2*/
-				tc956xmac_dfe_enable_settings(priv, ioaddr, PHY_CORE_2_ENABLE);
+				stmmac_dfe_enable_settings(priv, ioaddr, PHY_CORE_2_ENABLE);
 
 				/*PLL reset settings for Phy core2*/
-				tc956xmac_dfe_pll_reset_settings(priv, ioaddr, ioctl_data.enable);
+				stmmac_dfe_pll_reset_settings(priv, ioaddr, ioctl_data.enable);
 			}
 		break;
 		case DOWNSTREAM_PORT2:
@@ -13334,21 +13334,21 @@ static int tc956xmac_pcie_set_dfe(struct stmmac_priv *priv, void __user *data)
 
 
 			if (ioctl_data.enable == 0) { /*DFE Disable settings*/
-				tc956xmac_dfe_read_and_write_ctle_optimised(priv, ioaddr);
+				stmmac_dfe_read_and_write_ctle_optimised(priv, ioaddr);
 
 				/*Disable DFE settings for Phy core3*/
-				tc956xmac_dfe_disable_settings(priv, ioaddr, PHY_CORE_3_ENABLE);
+				stmmac_dfe_disable_settings(priv, ioaddr, PHY_CORE_3_ENABLE);
 
 				/*PLL reset settings for Phy core3*/
-				tc956xmac_dfe_pll_reset_settings(priv, ioaddr, ioctl_data.enable);
+				stmmac_dfe_pll_reset_settings(priv, ioaddr, ioctl_data.enable);
 			} else {  /*DFE Enable settings*/
 				writel(0x000008A5, ioaddr + TC956X_PHY_COREX_PMACNT_LN_PM_EMCNT_INIT_CFG0_R2);
 
 				/*Enable DFE settings for Phy core2*/
-				tc956xmac_dfe_enable_settings(priv, ioaddr, PHY_CORE_3_ENABLE);
+				stmmac_dfe_enable_settings(priv, ioaddr, PHY_CORE_3_ENABLE);
 
 				/*PLL reset settings for Phy core2*/
-				tc956xmac_dfe_pll_reset_settings(priv, ioaddr, ioctl_data.enable);
+				stmmac_dfe_pll_reset_settings(priv, ioaddr, ioctl_data.enable);
 			}
 
 		break;
@@ -13380,7 +13380,7 @@ static int tc956xmac_pcie_set_dfe(struct stmmac_priv *priv, void __user *data)
 				reg_data |= LANE_0_ENABLE;
 				writel(reg_data, ioaddr + TC956X_PHY_CORE0_GL_LANE_ACCESS);
 
-				tc956xmac_dfe_read_and_write_ctle_optimised(priv, ioaddr);
+				stmmac_dfe_read_and_write_ctle_optimised(priv, ioaddr);
 
 
 				/*Phy core 0, Lane 1 CTLE copy settings*/
@@ -13394,7 +13394,7 @@ static int tc956xmac_pcie_set_dfe(struct stmmac_priv *priv, void __user *data)
 				reg_data |= LANE_1_ENABLE;
 				writel(reg_data, ioaddr + TC956X_PHY_CORE0_GL_LANE_ACCESS);
 
-				tc956xmac_dfe_read_and_write_ctle_optimised(priv, ioaddr);
+				stmmac_dfe_read_and_write_ctle_optimised(priv, ioaddr);
 
 
 				/*Disable DFE settings for Phy core0 and Lane 0/1*/
@@ -13408,10 +13408,10 @@ static int tc956xmac_pcie_set_dfe(struct stmmac_priv *priv, void __user *data)
 				reg_data |= (LANE_0_ENABLE | LANE_1_ENABLE);
 				writel(reg_data, ioaddr + TC956X_PHY_CORE0_GL_LANE_ACCESS);
 
-				tc956xmac_dfe_disable_settings(priv, ioaddr, PHY_CORE_0_ENABLE);
+				stmmac_dfe_disable_settings(priv, ioaddr, PHY_CORE_0_ENABLE);
 
 				/*PLL reset settings*/
-				tc956xmac_dfe_pll_reset_settings(priv, ioaddr, ioctl_data.enable);
+				stmmac_dfe_pll_reset_settings(priv, ioaddr, ioctl_data.enable);
 			} else { /*Enable settings*/
 
 				/*Phy core 0, Lane 0/1 CTLE initial value register settings*/
@@ -13427,10 +13427,10 @@ static int tc956xmac_pcie_set_dfe(struct stmmac_priv *priv, void __user *data)
 
 				writel(0x000008A5, ioaddr + TC956X_PHY_COREX_PMACNT_LN_PM_EMCNT_INIT_CFG0_R2);
 
-				tc956xmac_dfe_enable_settings(priv, ioaddr, PHY_CORE_0_ENABLE);
+				stmmac_dfe_enable_settings(priv, ioaddr, PHY_CORE_0_ENABLE);
 
 				/*PLL reset settings*/
-				tc956xmac_dfe_pll_reset_settings(priv, ioaddr, ioctl_data.enable);
+				stmmac_dfe_pll_reset_settings(priv, ioaddr, ioctl_data.enable);
 
 			}
 		break;
@@ -13454,7 +13454,7 @@ static int tc956xmac_pcie_set_dfe(struct stmmac_priv *priv, void __user *data)
 				reg_data |= LANE_0_ENABLE;
 				writel(reg_data, ioaddr + TC956X_PHY_CORE0_GL_LANE_ACCESS);
 
-				tc956xmac_dfe_read_and_write_ctle_optimised(priv, ioaddr);
+				stmmac_dfe_read_and_write_ctle_optimised(priv, ioaddr);
 
 
 				/*Phy core 1, Lane 1 CTLE copy settings*/
@@ -13468,7 +13468,7 @@ static int tc956xmac_pcie_set_dfe(struct stmmac_priv *priv, void __user *data)
 				reg_data |= LANE_1_ENABLE;
 				writel(reg_data, ioaddr + TC956X_PHY_CORE0_GL_LANE_ACCESS);
 
-				tc956xmac_dfe_read_and_write_ctle_optimised(priv, ioaddr);
+				stmmac_dfe_read_and_write_ctle_optimised(priv, ioaddr);
 
 
 				/*Disable DFE settings for Phy core1*/
@@ -13482,10 +13482,10 @@ static int tc956xmac_pcie_set_dfe(struct stmmac_priv *priv, void __user *data)
 				reg_data |= (LANE_0_ENABLE | LANE_1_ENABLE);
 				writel(reg_data, ioaddr + TC956X_PHY_CORE0_GL_LANE_ACCESS);
 
-				tc956xmac_dfe_disable_settings(priv, ioaddr, PHY_CORE_1_ENABLE);
+				stmmac_dfe_disable_settings(priv, ioaddr, PHY_CORE_1_ENABLE);
 
 				/*PLL reset settings for Phy core1*/
-				tc956xmac_dfe_pll_reset_settings(priv, ioaddr, ioctl_data.enable);
+				stmmac_dfe_pll_reset_settings(priv, ioaddr, ioctl_data.enable);
 			} else { /*DFE Enable settings*/
 				/*Phy core 1, Lane 0 CTLE copy settings*/
 				reg_data = readl(ioaddr + TC956X_GLUE_PHY_REG_ACCESS_CTRL);
@@ -13500,10 +13500,10 @@ static int tc956xmac_pcie_set_dfe(struct stmmac_priv *priv, void __user *data)
 
 				writel(0x000008A5, ioaddr + TC956X_PHY_COREX_PMACNT_LN_PM_EMCNT_INIT_CFG0_R2);
 
-				tc956xmac_dfe_enable_settings(priv, ioaddr, PHY_CORE_1_ENABLE);
+				stmmac_dfe_enable_settings(priv, ioaddr, PHY_CORE_1_ENABLE);
 
 				/*PLL reset settings*/
-				tc956xmac_dfe_pll_reset_settings(priv, ioaddr, ioctl_data.enable);
+				stmmac_dfe_pll_reset_settings(priv, ioaddr, ioctl_data.enable);
 
 			}
 		break;
@@ -13522,21 +13522,21 @@ static int tc956xmac_pcie_set_dfe(struct stmmac_priv *priv, void __user *data)
 
 			if (ioctl_data.enable == 0) {//Disable setting
 
-				tc956xmac_dfe_read_and_write_ctle_optimised(priv, ioaddr);
+				stmmac_dfe_read_and_write_ctle_optimised(priv, ioaddr);
 
 
 				/*Disable DFE settings for Phy core3*/
-				tc956xmac_dfe_disable_settings(priv, ioaddr, PHY_CORE_3_ENABLE);
+				stmmac_dfe_disable_settings(priv, ioaddr, PHY_CORE_3_ENABLE);
 
 				/*PLL reset settings for Phy core3*/
-				tc956xmac_dfe_pll_reset_settings(priv, ioaddr, ioctl_data.enable);
+				stmmac_dfe_pll_reset_settings(priv, ioaddr, ioctl_data.enable);
 			} else { /*DFE Enable settings*/
 				writel(0x000008A5, ioaddr + TC956X_PHY_COREX_PMACNT_LN_PM_EMCNT_INIT_CFG0_R2);
 
-				tc956xmac_dfe_enable_settings(priv, ioaddr, PHY_CORE_3_ENABLE);
+				stmmac_dfe_enable_settings(priv, ioaddr, PHY_CORE_3_ENABLE);
 
 				/*PLL reset settings*/
-				tc956xmac_dfe_pll_reset_settings(priv, ioaddr, ioctl_data.enable);
+				stmmac_dfe_pll_reset_settings(priv, ioaddr, ioctl_data.enable);
 
 			}
 		break;
@@ -13553,7 +13553,7 @@ static int tc956xmac_pcie_set_dfe(struct stmmac_priv *priv, void __user *data)
 	return 0;
 }
 
-static int tc956xmac_pcie_set_ctle_fixed(struct stmmac_priv *priv, void __user *data)
+static int stmmac_pcie_set_ctle_fixed(struct stmmac_priv *priv, void __user *data)
 {
 	struct stm_ioctl_pcie_set_ctle_fixed_mode ioctl_data;
 	u32 reg_data;
@@ -13643,7 +13643,7 @@ static int tc956xmac_pcie_set_ctle_fixed(struct stmmac_priv *priv, void __user *
 			reg_data |= (LANE_0_ENABLE | LANE_1_ENABLE);
 			writel(reg_data, ioaddr + TC956X_PHY_CORE0_GL_LANE_ACCESS);
 
-			tc956xmac_dfe_disable_settings(priv, ioaddr, PHY_CORE_0_ENABLE);
+			stmmac_dfe_disable_settings(priv, ioaddr, PHY_CORE_0_ENABLE);
 
 			/*Disable DFE settings for Phy core1 and Lane 0/1*/
 			reg_data = readl(ioaddr + TC956X_GLUE_PHY_REG_ACCESS_CTRL);
@@ -13656,7 +13656,7 @@ static int tc956xmac_pcie_set_ctle_fixed(struct stmmac_priv *priv, void __user *
 			reg_data |= (LANE_0_ENABLE | LANE_1_ENABLE);
 			writel(reg_data, ioaddr + TC956X_PHY_CORE0_GL_LANE_ACCESS);
 
-			tc956xmac_dfe_disable_settings(priv, ioaddr, PHY_CORE_1_ENABLE);
+			stmmac_dfe_disable_settings(priv, ioaddr, PHY_CORE_1_ENABLE);
 
 			/*PLL reset settings for phy core 0/1*/
 			reg_data = readl(ioaddr + TC956X_GLUE_PHY_REG_ACCESS_CTRL);
@@ -13664,7 +13664,7 @@ static int tc956xmac_pcie_set_ctle_fixed(struct stmmac_priv *priv, void __user *
 			reg_data |= (PHY_CORE_0_ENABLE | PHY_CORE_1_ENABLE);
 			writel(reg_data, ioaddr + TC956X_GLUE_PHY_REG_ACCESS_CTRL);
 
-			tc956xmac_dfe_pll_reset_settings(priv, ioaddr, 0);
+			stmmac_dfe_pll_reset_settings(priv, ioaddr, 0);
 
 		break;
 		case DOWNSTREAM_PORT1:
@@ -13690,10 +13690,10 @@ static int tc956xmac_pcie_set_ctle_fixed(struct stmmac_priv *priv, void __user *
 			writel(reg_data, ioaddr + TC956X_PHY_COREX_PMACNT_LN_PM_EMCNT_INIT_CFG0_R2);
 
 			/*Disable DFE settings for Phy core2*/
-			tc956xmac_dfe_disable_settings(priv, ioaddr, PHY_CORE_2_ENABLE);
+			stmmac_dfe_disable_settings(priv, ioaddr, PHY_CORE_2_ENABLE);
 
 			/*PLL reset settings for Phy core2*/
-			tc956xmac_dfe_pll_reset_settings(priv, ioaddr, 0);
+			stmmac_dfe_pll_reset_settings(priv, ioaddr, 0);
 		break;
 		case DOWNSTREAM_PORT2:
 			/*Device should be in Gen3 when we execute this command*/
@@ -13717,10 +13717,10 @@ static int tc956xmac_pcie_set_ctle_fixed(struct stmmac_priv *priv, void __user *
 			writel(reg_data, ioaddr + TC956X_PHY_COREX_PMACNT_LN_PM_EMCNT_INIT_CFG0_R2);
 
 			/*Disable DFE settings for Phy core3*/
-			tc956xmac_dfe_disable_settings(priv, ioaddr, PHY_CORE_3_ENABLE);
+			stmmac_dfe_disable_settings(priv, ioaddr, PHY_CORE_3_ENABLE);
 
 			/*PLL reset settings for Phy core3*/
-			tc956xmac_dfe_pll_reset_settings(priv, ioaddr, 0);
+			stmmac_dfe_pll_reset_settings(priv, ioaddr, 0);
 
 		break;
 		default:
@@ -13770,10 +13770,10 @@ static int tc956xmac_pcie_set_ctle_fixed(struct stmmac_priv *priv, void __user *
 			reg_data |= (LANE_0_ENABLE | LANE_1_ENABLE);
 			writel(reg_data, ioaddr + TC956X_PHY_CORE0_GL_LANE_ACCESS);
 
-			tc956xmac_dfe_disable_settings(priv, ioaddr, PHY_CORE_0_ENABLE);
+			stmmac_dfe_disable_settings(priv, ioaddr, PHY_CORE_0_ENABLE);
 
 			/*PLL reset settings done with disable flag*/
-			tc956xmac_dfe_pll_reset_settings(priv, ioaddr, 0);
+			stmmac_dfe_pll_reset_settings(priv, ioaddr, 0);
 
 		break;
 		case DOWNSTREAM_PORT1:
@@ -13814,10 +13814,10 @@ static int tc956xmac_pcie_set_ctle_fixed(struct stmmac_priv *priv, void __user *
 			reg_data |= (LANE_0_ENABLE | LANE_1_ENABLE);
 			writel(reg_data, ioaddr + TC956X_PHY_CORE0_GL_LANE_ACCESS);
 
-			tc956xmac_dfe_disable_settings(priv, ioaddr, PHY_CORE_1_ENABLE);
+			stmmac_dfe_disable_settings(priv, ioaddr, PHY_CORE_1_ENABLE);
 
 			/*PLL reset settings for Phy core1*/
-			tc956xmac_dfe_pll_reset_settings(priv, ioaddr, 0);
+			stmmac_dfe_pll_reset_settings(priv, ioaddr, 0);
 		break;
 		case DOWNSTREAM_PORT2:
 			/*Device should be in Gen3 when we execute this command*/
@@ -13841,10 +13841,10 @@ static int tc956xmac_pcie_set_ctle_fixed(struct stmmac_priv *priv, void __user *
 			writel(reg_data, ioaddr + TC956X_PHY_COREX_PMACNT_LN_PM_EMCNT_INIT_CFG0_R2);
 
 			/*Disable DFE settings for Phy core3*/
-			tc956xmac_dfe_disable_settings(priv, ioaddr, PHY_CORE_3_ENABLE);
+			stmmac_dfe_disable_settings(priv, ioaddr, PHY_CORE_3_ENABLE);
 
 			/*PLL reset settings for Phy core3*/
-			tc956xmac_dfe_pll_reset_settings(priv, ioaddr, 0);
+			stmmac_dfe_pll_reset_settings(priv, ioaddr, 0);
 		break;
 		default:
 			return -EINVAL;
@@ -13859,7 +13859,7 @@ static int tc956xmac_pcie_set_ctle_fixed(struct stmmac_priv *priv, void __user *
 	return 0;
 }
 
-static int tc956xmac_pcie_speed_change(struct stmmac_priv *priv, void __user *data)
+static int stmmac_pcie_speed_change(struct stmmac_priv *priv, void __user *data)
 {
 	struct pci_dev *pdev = to_pci_dev(priv->device);
 	struct stm_ioctl_pcie_set_speed ioctl_data;
@@ -13875,10 +13875,10 @@ static int tc956xmac_pcie_speed_change(struct stmmac_priv *priv, void __user *da
 #endif /*#define TC956X*/
 #endif /*#ifdef TC956X_SRIOV_VF*/
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0)
-static int tc956xmac_siocdevprivate(struct net_device *dev, struct ifreq *rq,
+static int stmmac_siocdevprivate(struct net_device *dev, struct ifreq *rq,
 			       void __user *data, int cmd)
 #else
-static int tc956xmac_extension_ioctl(struct stmmac_priv *priv,
+static int stmmac_extension_ioctl(struct stmmac_priv *priv,
 				     void __user *data)
 #endif
 {
@@ -13900,12 +13900,12 @@ static int tc956xmac_extension_ioctl(struct stmmac_priv *priv,
 #ifdef TC956X_SRIOV_PF
 	{
 		int ret;
-		struct tc956xmac_ioctl_cbs_cfg cbs;
+		struct stmmac_ioctl_cbs_cfg cbs;
 
 		if (copy_from_user(&cbs, data, sizeof(cbs)))
 			return -EFAULT;
 
-		ret = tc956xmac_ioctl_get_cbs(priv, &cbs);
+		ret = stmmac_ioctl_get_cbs(priv, &cbs);
 
 		if (ret == 0) {
 			if (copy_to_user(data, &cbs, sizeof(cbs)))
@@ -13915,32 +13915,32 @@ static int tc956xmac_extension_ioctl(struct stmmac_priv *priv,
 		return ret;
 	}
 #elif (defined TC956X_SRIOV_VF)
-		return tc956xmac_get_cbs(priv, data);
+		return stmmac_get_cbs(priv, data);
 #endif
 	case TC956XMAC_SET_CBS:
 #ifdef TC956X_SRIOV_PF
 	{
-		struct tc956xmac_ioctl_cbs_cfg cbs;
+		struct stmmac_ioctl_cbs_cfg cbs;
 
 		if (copy_from_user(&cbs, data, sizeof(cbs)))
 			return -EFAULT;
 
-		return tc956xmac_ioctl_set_cbs(priv, &cbs);
+		return stmmac_ioctl_set_cbs(priv, &cbs);
 	}
 #elif (defined TC956X_SRIOV_VF)
-		return tc956xmac_set_cbs(priv, data);
+		return stmmac_set_cbs(priv, data);
 #endif
 	case TC956XMAC_GET_EST:
 #ifdef TC956X_SRIOV_PF
 	{
 		int ret;
-		struct tc956xmac_ioctl_est_cfg *est;
+		struct stmmac_ioctl_est_cfg *est;
 
 		est = kzalloc(sizeof(*est), GFP_KERNEL);
 		if (!est)
 			return -ENOMEM;
 
-		ret = tc956xmac_ioctl_get_est(priv, est);
+		ret = stmmac_ioctl_get_est(priv, est);
 		if (ret == 0) {
 			if (copy_to_user(data, est, sizeof(*est))) {
 				kfree(est);
@@ -13951,12 +13951,12 @@ static int tc956xmac_extension_ioctl(struct stmmac_priv *priv,
 		return ret;
 	}
 #elif (defined TC956X_SRIOV_VF)
-	return tc956xmac_get_est(priv, data);
+	return stmmac_get_est(priv, data);
 #endif
 	case TC956XMAC_SET_EST:
 #ifdef TC956X_SRIOV_PF
 	{
-		struct tc956xmac_ioctl_est_cfg *est;
+		struct stmmac_ioctl_est_cfg *est;
 
 		est = kzalloc(sizeof(*est), GFP_KERNEL);
 		if (!est)
@@ -13966,10 +13966,10 @@ static int tc956xmac_extension_ioctl(struct stmmac_priv *priv,
 			kfree(est);
 			return -EFAULT;
 		}
-		return tc956xmac_ioctl_set_est(priv, est);
+		return stmmac_ioctl_set_est(priv, est);
 	}
 #elif (defined TC956X_SRIOV_VF)
-	return tc956xmac_set_est(priv, data);
+	return stmmac_set_est(priv, data);
 #endif
 	case TC956XMAC_GET_FPE: /*Function to Get FPE related configurations*/
 		reg = readl(priv->ioaddr + NCID_OFFSET);
@@ -13980,13 +13980,13 @@ static int tc956xmac_extension_ioctl(struct stmmac_priv *priv,
 #ifdef TC956X_SRIOV_PF
 	{
 		int ret;
-		struct tc956xmac_ioctl_fpe_cfg *fpe;
+		struct stmmac_ioctl_fpe_cfg *fpe;
 
 		fpe = kzalloc(sizeof(*fpe), GFP_KERNEL);
 		if (!fpe)
 			return -ENOMEM;
 
-		ret = tc956xmac_ioctl_get_fpe(priv, fpe);
+		ret = stmmac_ioctl_get_fpe(priv, fpe);
 		if (ret == 0) {
 			if (copy_to_user(data, fpe, sizeof(*fpe))) {
 				kfree(fpe);
@@ -13997,7 +13997,7 @@ static int tc956xmac_extension_ioctl(struct stmmac_priv *priv,
 		return ret;
 	}
 #elif (defined TC956X_SRIOV_VF)
-	return tc956xmac_get_fpe(priv, data);
+	return stmmac_get_fpe(priv, data);
 #endif
 	case TC956XMAC_SET_FPE: /*Function to Set FPE related configurations*/
 		reg = readl(priv->ioaddr + NCID_OFFSET);
@@ -14007,7 +14007,7 @@ static int tc956xmac_extension_ioctl(struct stmmac_priv *priv,
 		}
 #ifdef TC956X_SRIOV_PF
 	{
-		struct tc956xmac_ioctl_fpe_cfg *fpe;
+		struct stmmac_ioctl_fpe_cfg *fpe;
 
 		fpe = kzalloc(sizeof(*fpe), GFP_KERNEL);
 		if (!fpe)
@@ -14017,29 +14017,29 @@ static int tc956xmac_extension_ioctl(struct stmmac_priv *priv,
 			kfree(fpe);
 			return -EFAULT;
 		}
-		return tc956xmac_ioctl_set_fpe(priv, fpe);
+		return stmmac_ioctl_set_fpe(priv, fpe);
 	}
 #elif (defined TC956X_SRIOV_VF)
-		return tc956xmac_set_fpe(priv, data);
+		return stmmac_set_fpe(priv, data);
 #endif
 
 #ifdef TC956X_SRIOV_PF
 	case TC956X_GET_FW_STATUS:
 		return stm_xgmac_get_fw_status(priv, data);
 	case TC956XMAC_VLAN_FILTERING:
-		return tc956xmac_config_vlan_filter(priv, data);
+		return stmmac_config_vlan_filter(priv, data);
 #endif
 	case TC956XMAC_GET_RXP:
 #ifdef TC956X_SRIOV_PF
 	{
 		int ret;
-		struct tc956xmac_ioctl_rxp_cfg *rxp;
+		struct stmmac_ioctl_rxp_cfg *rxp;
 
 		rxp = kzalloc(sizeof(*rxp), GFP_KERNEL);
 		if (!rxp)
 			return -ENOMEM;
 
-		ret = tc956xmac_ioctl_get_rxp(priv, rxp);
+		ret = stmmac_ioctl_get_rxp(priv, rxp);
 		if (ret == 0) {
 			if (copy_to_user(data, rxp, sizeof(*rxp))) {
 				kfree(rxp);
@@ -14050,12 +14050,12 @@ static int tc956xmac_extension_ioctl(struct stmmac_priv *priv,
 		return ret;
 	}
 #elif (defined TC956X_SRIOV_VF)
-		return tc956xmac_get_rxp(priv, data);
+		return stmmac_get_rxp(priv, data);
 #endif
 	case TC956XMAC_SET_RXP:
 #ifdef TC956X_SRIOV_PF
 	{
-		struct tc956xmac_ioctl_rxp_cfg *rxp;
+		struct stmmac_ioctl_rxp_cfg *rxp;
 
 		rxp = kzalloc(sizeof(*rxp), GFP_KERNEL);
 		if (!rxp)
@@ -14065,64 +14065,64 @@ static int tc956xmac_extension_ioctl(struct stmmac_priv *priv,
 			kfree(rxp);
 			return -EFAULT;
 		}
-		return tc956xmac_ioctl_set_rxp(priv, rxp);
+		return stmmac_ioctl_set_rxp(priv, rxp);
 	}
 #elif (defined TC956X_SRIOV_VF)
-		return tc956xmac_set_rxp(priv, data);
+		return stmmac_set_rxp(priv, data);
 #endif
 	case TC956XMAC_GET_SPEED:
 #ifdef TC956X_SRIOV_PF
-		return tc956xmac_ioctl_get_connected_speed(priv, data);
+		return stmmac_ioctl_get_connected_speed(priv, data);
 #elif defined TC956X_SRIOV_VF
-		return tc956xmac_get_speed(priv, data);
+		return stmmac_get_speed(priv, data);
 #endif
 	case TC956XMAC_GET_TX_FREE_DESC:
-		return tc956xmac_ioctl_get_tx_free_desc(priv, data);
+		return stmmac_ioctl_get_tx_free_desc(priv, data);
 #ifdef TC956X_IOCTL_REG_RD_WR_ENABLE
 	case TC956XMAC_REG_RD:
-		return tc956xmac_reg_rd(priv, data);
+		return stmmac_reg_rd(priv, data);
 	case TC956XMAC_REG_WR:
 #ifdef TC956X_SRIOV_PF
-		return tc956xmac_reg_wr(priv, data);
+		return stmmac_reg_wr(priv, data);
 #elif defined TC956X_SRIOV_VF
-		return tc956xmac_reg_wr(priv, data);
+		return stmmac_reg_wr(priv, data);
 #endif
 #endif /* TC956X_IOCTL_REG_RD_WR_ENABLE */
 #ifndef TC956X_SRIOV_VF
 	case TC956XMAC_SET_MAC_LOOPBACK:
-		return tc956xmac_ioctl_set_mac_loopback(priv, data);
+		return stmmac_ioctl_set_mac_loopback(priv, data);
 	case TC956XMAC_SET_PHY_LOOPBACK:
-		return tc956xmac_ioctl_set_phy_loopback(priv, data);
+		return stmmac_ioctl_set_phy_loopback(priv, data);
 	case TC956XMAC_L2_DA_FILTERING_CMD:
-		return tc956xmac_config_l2_da_filter(priv, data);
+		return stmmac_config_l2_da_filter(priv, data);
 	case TC956XMAC_SET_PPS_OUT:
-		return tc956xmac_set_ppsout(priv, data);
+		return stmmac_set_ppsout(priv, data);
 	case TC956XMAC_PTPCLK_CONFIG:
-		return tc956xmac_ptp_clk_config(priv, data);
+		return stmmac_ptp_clk_config(priv, data);
 	case TC956XMAC_SA0_VLAN_INS_REP_REG:
-		return tc956xmac_sa_vlan_ins_config(priv, data);
+		return stmmac_sa_vlan_ins_config(priv, data);
 	case TC956XMAC_SA1_VLAN_INS_REP_REG:
-		return tc956xmac_sa_vlan_ins_config(priv, data);
+		return stmmac_sa_vlan_ins_config(priv, data);
 #endif /* TC956X_SRIOV_VF */
 	case TC956XMAC_GET_TX_QCNT:
-		return tc956xmac_get_tx_qcnt(priv, data);
+		return stmmac_get_tx_qcnt(priv, data);
 	case TC956XMAC_GET_RX_QCNT:
-		return tc956xmac_get_rx_qcnt(priv, data);
+		return stmmac_get_rx_qcnt(priv, data);
 	case TC956XMAC_PCIE_CONFIG_REG_RD:
-		return tc956xmac_pcie_config_reg_rd(priv, data);
+		return stmmac_pcie_config_reg_rd(priv, data);
 	case TC956XMAC_PCIE_CONFIG_REG_WR:
-		return tc956xmac_pcie_config_reg_wr(priv, data);
+		return stmmac_pcie_config_reg_wr(priv, data);
 #ifdef TC956X_SRIOV_PF
 	case TC956XMAC_PTPOFFLOADING:
-		return tc956xmac_config_ptpoffload(priv, data);
+		return stmmac_config_ptpoffload(priv, data);
 #endif /* TC956X_SRIOV_PF */
 	case TC956XMAC_ENABLE_AUX_TIMESTAMP:
 #ifdef TC956X_SRIOV_PF
-		return tc956xmac_aux_timestamp_enable(priv, data);
+		return stmmac_aux_timestamp_enable(priv, data);
 #endif
 #ifdef TC956X_SRIOV_PF
 	case TC956XMAC_ENABLE_ONESTEP_TIMESTAMP:
-		return tc956xmac_config_onestep_timestamp(priv, data);
+		return stmmac_config_onestep_timestamp(priv, data);
 #endif /* TC956X_SRIOV_PF */
 
 #ifndef TC956X_SRIOV_VF
@@ -14135,20 +14135,20 @@ static int tc956xmac_extension_ioctl(struct stmmac_priv *priv,
 		return stm_pcie_ioctl_state_log_enable(priv, data);
 #endif /* #ifdef TC956X_PCIE_LOGSTAT */
 	case TC956XMAC_VLAN_STRIP_CONFIG:
-		return tc956xmac_vlan_strip_config(priv, data);
+		return stmmac_vlan_strip_config(priv, data);
 #ifdef TC956X
 	case TC956XMAC_PCIE_LANE_CHANGE:
-		return tc956xmac_pcie_lane_change(priv, data);
+		return stmmac_pcie_lane_change(priv, data);
 	case TC956XMAC_PCIE_SET_TX_MARGIN:
-		return tc956xmac_pcie_set_tx_margin(priv, data);
+		return stmmac_pcie_set_tx_margin(priv, data);
 	case TC956XMAC_PCIE_SET_TX_DEEMPHASIS:
-		return tc956xmac_pcie_set_tx_deemphasis(priv, data);
+		return stmmac_pcie_set_tx_deemphasis(priv, data);
 	case TC956XMAC_PCIE_SET_DFE:
-		return tc956xmac_pcie_set_dfe(priv, data);
+		return stmmac_pcie_set_dfe(priv, data);
 	case TC956XMAC_PCIE_SET_CTLE:
-		return tc956xmac_pcie_set_ctle_fixed(priv, data);
+		return stmmac_pcie_set_ctle_fixed(priv, data);
 	case TC956XMAC_PCIE_SPEED_CHANGE:
-		return tc956xmac_pcie_speed_change(priv, data);
+		return stmmac_pcie_speed_change(priv, data);
 #endif /* TC956X */
 #endif
 
@@ -14161,7 +14161,7 @@ static int tc956xmac_extension_ioctl(struct stmmac_priv *priv,
 
 #ifndef TC956X_SRIOV_VF
 
-static int tc956xmac_phy_fw_flash_mdio_ioctl(struct net_device *ndev,
+static int stmmac_phy_fw_flash_mdio_ioctl(struct net_device *ndev,
 					     struct ifreq *ifr, int cmd)
 {
 	struct mii_ioctl_data *mii = if_mii(ifr);
@@ -14214,7 +14214,7 @@ static int tc956xmac_phy_fw_flash_mdio_ioctl(struct net_device *ndev,
 #endif
 
 /**
- *  tc956xmac_ioctl - Entry point for the Ioctl
+ *  stmmac_ioctl - Entry point for the Ioctl
  *  @dev: Device pointer.
  *  @rq: An IOCTL specefic structure, that can contain a pointer to
  *  a proprietary structure used to pass information to the driver.
@@ -14222,7 +14222,7 @@ static int tc956xmac_phy_fw_flash_mdio_ioctl(struct net_device *ndev,
  *  Description:
  *  Currently it supports the phy_mii_ioctl(...) and HW time stamping.
  */
-static int tc956xmac_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
+static int stmmac_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 {
 
 	struct stmmac_priv *priv = netdev_priv(dev);
@@ -14238,7 +14238,7 @@ static int tc956xmac_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 	if (priv->dma_cap.sma_mdio == 1) {
 		if (!netif_running(dev))
 #ifndef TC956X_SRIOV_VF
-			return tc956xmac_phy_fw_flash_mdio_ioctl(dev, rq, cmd);
+			return stmmac_phy_fw_flash_mdio_ioctl(dev, rq, cmd);
 #else
 			return -EINVAL;
 #endif
@@ -14257,7 +14257,7 @@ static int tc956xmac_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 		mbx[1] = 1; //size
 		mbx[2] = OPCODE_MBX_VF_GET_MII_PHY;//cmd for SIOCGMIIPHY
 
-		ret = tc956xmac_mbx_write(priv, mbx, msg_dst, &priv->fn_id_info);
+		ret = stmmac_mbx_write(priv, mbx, msg_dst, &priv->fn_id_info);
 
 		/* Validation of successfull message posting can be done
 		 * by reading the mbx buffer for ACK opcode (0xFE)
@@ -14300,7 +14300,7 @@ static int tc956xmac_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 
 		memset(&mbx[9], 0, sizeof(rq->ifr_ifrn.ifrn_name));
 		memcpy(&mbx[9], &rq->ifr_ifrn.ifrn_name, sizeof(rq->ifr_ifrn.ifrn_name));
-		ret = tc956xmac_mbx_write(priv, mbx, msg_dst, &priv->fn_id_info);
+		ret = stmmac_mbx_write(priv, mbx, msg_dst, &priv->fn_id_info);
 
 		/* Validation of successfull message posting can be done
 		 * by reading the mbx buffer for ACK opcode (0xFF)
@@ -14313,7 +14313,7 @@ static int tc956xmac_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 				mbx[1] = 1; //size
 				mbx[2] = OPCODE_MBX_VF_GET_MII_REG_2;
 
-				ret = tc956xmac_mbx_write(priv, mbx, msg_dst, &priv->fn_id_info);
+				ret = stmmac_mbx_write(priv, mbx, msg_dst, &priv->fn_id_info);
 				if (ret > 0) {
 					KPRINT_DEBUG2("mailbox write with ACK or NACK %d %x %x", ret, mbx[4], mbx[5]);
 
@@ -14335,18 +14335,18 @@ static int tc956xmac_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 #endif
 #ifndef TC956X_SRIOV_VF
 	case SIOCSHWTSTAMP:
-		ret = tc956xmac_hwtstamp_set(dev, rq);
+		ret = stmmac_hwtstamp_set(dev, rq);
 		break;
 #endif
 	case SIOCGHWTSTAMP:
 #ifndef TC956X_SRIOV_VF
-		ret = tc956xmac_hwtstamp_get(dev, rq);
+		ret = stmmac_hwtstamp_get(dev, rq);
 #else
 		mbx[0] = OPCODE_MBX_VF_IOCTL; //opcode for ioctl
 		mbx[1] = 1; //size
 		mbx[2] = OPCODE_MBX_VF_GET_HW_STMP;//cmd for SIOCGHWTSTAMP
 
-		ret = tc956xmac_mbx_write(priv, mbx, msg_dst, &priv->fn_id_info);
+		ret = stmmac_mbx_write(priv, mbx, msg_dst, &priv->fn_id_info);
 
 		/* Validation of successfull message posting can be done
 		 * by reading the mbx buffer for ACK opcode (0xFF)
@@ -14371,7 +14371,7 @@ static int tc956xmac_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 	case SIOCSTIOCTL:
 		if (!priv || !rq)
 			return -EINVAL;
-		ret = tc956xmac_extension_ioctl(priv, rq->ifr_data);
+		ret = stmmac_extension_ioctl(priv, rq->ifr_data);
 		break;
 #endif
 	default:
@@ -14381,7 +14381,7 @@ static int tc956xmac_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 	return ret;
 }
 
-static int tc956xmac_setup_tc_block_cb(enum tc_setup_type type, void *type_data,
+static int stmmac_setup_tc_block_cb(enum tc_setup_type type, void *type_data,
 				    void *cb_priv)
 {
 	struct stmmac_priv *priv = cb_priv;
@@ -14390,26 +14390,26 @@ static int tc956xmac_setup_tc_block_cb(enum tc_setup_type type, void *type_data,
 	if (!tc_cls_can_offload_and_chain0(priv->dev, type_data))
 		return ret;
 
-	tc956xmac_disable_all_queues(priv);
+	stmmac_disable_all_queues(priv);
 
 	switch (type) {
 	case TC_SETUP_CLSU32:
-		ret = tc956xmac_tc_setup_cls_u32(priv, type_data);
+		ret = stmmac_tc_setup_cls_u32(priv, type_data);
 		break;
 	case TC_SETUP_CLSFLOWER:
-		ret = tc956xmac_tc_setup_cls(priv, type_data);
+		ret = stmmac_tc_setup_cls(priv, type_data);
 		break;
 	default:
 		break;
 	}
 
-	tc956xmac_enable_all_queues(priv);
+	stmmac_enable_all_queues(priv);
 	return ret;
 }
 
-static LIST_HEAD(tc956xmac_block_cb_list);
+static LIST_HEAD(stmmac_block_cb_list);
 
-static int tc956xmac_setup_tc(struct net_device *ndev, enum tc_setup_type type,
+static int stmmac_setup_tc(struct net_device *ndev, enum tc_setup_type type,
 			   void *type_data)
 {
 	struct stmmac_priv *priv = netdev_priv(ndev);
@@ -14417,25 +14417,25 @@ static int tc956xmac_setup_tc(struct net_device *ndev, enum tc_setup_type type,
 	switch (type) {
 	case TC_SETUP_BLOCK:
 		return flow_block_cb_setup_simple(type_data,
-						  &tc956xmac_block_cb_list,
-						  tc956xmac_setup_tc_block_cb,
+						  &stmmac_block_cb_list,
+						  stmmac_setup_tc_block_cb,
 						  priv, priv, true);
 	case TC_SETUP_QDISC_CBS:
-		return tc956xmac_tc_setup_cbs(priv, type_data);
+		return stmmac_tc_setup_cbs(priv, type_data);
 	case TC_SETUP_QDISC_TAPRIO:
-		return tc956xmac_tc_setup_taprio(priv, type_data);
+		return stmmac_tc_setup_taprio(priv, type_data);
 	case TC_SETUP_QDISC_ETF:
-		return tc956xmac_tc_setup_etf(priv, type_data);
+		return stmmac_tc_setup_etf(priv, type_data);
 #if LINUX_VERSION_CODE > KERNEL_VERSION(6, 2, 16)
 	case TC_QUERY_CAPS:
-		return tc956xmac_tc_setup_query_cap(priv, type_data);
+		return stmmac_tc_setup_query_cap(priv, type_data);
 #endif
 	default:
 		return -EOPNOTSUPP;
 	}
 }
 
-static u16 tc956xmac_select_queue(struct net_device *dev, struct sk_buff *skb,
+static u16 stmmac_select_queue(struct net_device *dev, struct sk_buff *skb,
 			       struct net_device *sb_dev)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
@@ -14520,7 +14520,7 @@ static u16 tc956xmac_select_queue(struct net_device *dev, struct sk_buff *skb,
 #endif
 }
 
-static int tc956xmac_set_mac_address(struct net_device *ndev, void *addr)
+static int stmmac_set_mac_address(struct net_device *ndev, void *addr)
 {
 	struct stmmac_priv *priv = netdev_priv(ndev);
 	int ret = 0;
@@ -14533,13 +14533,13 @@ static int tc956xmac_set_mac_address(struct net_device *ndev, void *addr)
 		return ret;
 
 #ifdef TC956X_SRIOV_VF
-	tc956xmac_set_umac_addr(priv, ndev->dev_addr, HOST_MAC_ADDR_OFFSET + priv->fn_id_info.vf_no);
+	stmmac_set_umac_addr(priv, ndev->dev_addr, HOST_MAC_ADDR_OFFSET + priv->fn_id_info.vf_no);
 #else
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 	spin_lock_irqsave(&priv->spn_lock.mac_filter, flags);
 #endif
 
-	tc956xmac_set_umac_addr(priv, priv->hw, (unsigned char *)ndev->dev_addr, HOST_MAC_ADDR_OFFSET, PF_DRIVER);
+	stmmac_set_umac_addr(priv, priv->hw, (unsigned char *)ndev->dev_addr, HOST_MAC_ADDR_OFFSET, PF_DRIVER);
 
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 	spin_unlock_irqrestore(&priv->spn_lock.mac_filter, flags);
@@ -14552,7 +14552,7 @@ static int tc956xmac_set_mac_address(struct net_device *ndev, void *addr)
 
 #ifdef TC956X_SRIOV_PF
 #ifdef CONFIG_DEBUG_FS
-static struct dentry *tc956xmac_fs_dir;
+static struct dentry *stmmac_fs_dir;
 
 #ifdef TC956X_UNSUPPORTED_UNTESETD_FEATURE
 static void sysfs_display_ring(void *head, int size, int extend_desc,
@@ -14582,7 +14582,7 @@ static void sysfs_display_ring(void *head, int size, int extend_desc,
 	}
 }
 
-static int tc956xmac_rings_status_show(struct seq_file *seq, void *v)
+static int stmmac_rings_status_show(struct seq_file *seq, void *v)
 {
 	struct net_device *dev = seq->private;
 	struct stmmac_priv *priv = netdev_priv(dev);
@@ -14594,7 +14594,7 @@ static int tc956xmac_rings_status_show(struct seq_file *seq, void *v)
 		return 0;
 
 	for (queue = 0; queue < rx_count; queue++) {
-		struct tc956xmac_rx_queue *rx_q = &priv->rx_queue[queue];
+		struct stmmac_rx_queue *rx_q = &priv->rx_queue[queue];
 
 		if (priv->plat->rx_dma_ch_owner[queue] != USE_IN_TC956X_SW)
 			continue;
@@ -14613,7 +14613,7 @@ static int tc956xmac_rings_status_show(struct seq_file *seq, void *v)
 	}
 
 	for (queue = 0; queue < tx_count; queue++) {
-		struct tc956xmac_tx_queue *tx_q = &priv->tx_queue[queue];
+		struct stmmac_tx_queue *tx_q = &priv->tx_queue[queue];
 
 		if (priv->plat->tx_dma_ch_owner[queue] != USE_IN_TC956X_SW)
 			continue;
@@ -14633,9 +14633,9 @@ static int tc956xmac_rings_status_show(struct seq_file *seq, void *v)
 
 	return 0;
 }
-DEFINE_SHOW_ATTRIBUTE(tc956xmac_rings_status);
+DEFINE_SHOW_ATTRIBUTE(stmmac_rings_status);
 
-static int tc956xmac_dma_cap_show(struct seq_file *seq, void *v)
+static int stmmac_dma_cap_show(struct seq_file *seq, void *v)
 {
 	struct net_device *dev = seq->private;
 	struct stmmac_priv *priv = netdev_priv(dev);
@@ -14737,29 +14737,29 @@ static int tc956xmac_dma_cap_show(struct seq_file *seq, void *v)
 		   priv->dma_cap.tbssel ? "Y" : "N");
 	return 0;
 }
-DEFINE_SHOW_ATTRIBUTE(tc956xmac_dma_cap);
+DEFINE_SHOW_ATTRIBUTE(stmmac_dma_cap);
 
 /* Use network device events to rename debugfs file entries.
  */
-static int tc956xmac_device_event(struct notifier_block *unused,
+static int stmmac_device_event(struct notifier_block *unused,
 			       unsigned long event, void *ptr)
 {
 	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
 	struct stmmac_priv *priv = netdev_priv(dev);
 
 #ifndef TC956X_SRIOV_VF
-	if (dev->netdev_ops != &tc956xmac_netdev_ops)
+	if (dev->netdev_ops != &stmmac_netdev_ops)
 #else
-	if (dev->netdev_ops != &tc956xmac_vf_netdev_ops)
+	if (dev->netdev_ops != &stmmac_vf_netdev_ops)
 #endif
 		goto done;
 
 	switch (event) {
 	case NETDEV_CHANGENAME:
 		if (priv->dbgfs_dir)
-			priv->dbgfs_dir = debugfs_rename(tc956xmac_fs_dir,
+			priv->dbgfs_dir = debugfs_rename(stmmac_fs_dir,
 							 priv->dbgfs_dir,
-							 tc956xmac_fs_dir,
+							 stmmac_fs_dir,
 							 dev->name);
 		break;
 	}
@@ -14767,35 +14767,35 @@ done:
 	return NOTIFY_DONE;
 }
 
-static struct notifier_block tc956xmac_notifier = {
-	.notifier_call = tc956xmac_device_event,
+static struct notifier_block stmmac_notifier = {
+	.notifier_call = stmmac_device_event,
 };
 #endif
-static void tc956xmac_init_fs(struct net_device *dev)
+static void stmmac_init_fs(struct net_device *dev)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 
 	/* Create per netdev entries */
-	priv->dbgfs_dir = debugfs_create_dir(dev->name, tc956xmac_fs_dir);
+	priv->dbgfs_dir = debugfs_create_dir(dev->name, stmmac_fs_dir);
 
 #ifndef TC956X
 	/* Entry to report DMA RX/TX rings */
 	debugfs_create_file("descriptors_status", 0444, priv->dbgfs_dir, dev,
-			    &tc956xmac_rings_status_fops);
+			    &stmmac_rings_status_fops);
 
 	/* Entry to report the DMA HW features */
 	debugfs_create_file("dma_cap", 0444, priv->dbgfs_dir, dev,
-			    &tc956xmac_dma_cap_fops);
+			    &stmmac_dma_cap_fops);
 
-	register_netdevice_notifier(&tc956xmac_notifier);
+	register_netdevice_notifier(&stmmac_notifier);
 #endif
 }
 
-static void tc956xmac_exit_fs(struct net_device *dev)
+static void stmmac_exit_fs(struct net_device *dev)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 #ifndef TC956X
-	unregister_netdevice_notifier(&tc956xmac_notifier);
+	unregister_netdevice_notifier(&stmmac_notifier);
 #endif
 	debugfs_remove_recursive(priv->dbgfs_dir);
 }
@@ -14803,7 +14803,7 @@ static void tc956xmac_exit_fs(struct net_device *dev)
 #endif /* TC956X_SRIOV_PF */
 
 #ifndef TC956X
-static u32 tc956xmac_vid_crc32_le(__le16 vid_le)
+static u32 stmmac_vid_crc32_le(__le16 vid_le)
 {
 	unsigned char *data = (unsigned char *)&vid_le;
 	unsigned char data_byte = 0;
@@ -14828,7 +14828,7 @@ static u32 tc956xmac_vid_crc32_le(__le16 vid_le)
 }
 #endif
 
-static int tc956xmac_vlan_rx_add_vid(struct net_device *ndev, __be16 proto,
+static int stmmac_vlan_rx_add_vid(struct net_device *ndev, __be16 proto,
 				  u16 vid)
 {
 	struct stmmac_priv *priv = netdev_priv(ndev);
@@ -14845,19 +14845,19 @@ static int tc956xmac_vlan_rx_add_vid(struct net_device *ndev, __be16 proto,
 	spin_lock_irqsave(&priv->spn_lock.vlan_filter, flags);
 #endif
 
-	tc956xmac_update_vlan_hash(priv, ndev, is_double, vid, PF_DRIVER);
+	stmmac_update_vlan_hash(priv, ndev, is_double, vid, PF_DRIVER);
 
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 	spin_unlock_irqrestore(&priv->spn_lock.vlan_filter, flags);
 #endif
 	return ret;
 #elif (defined TC956X_SRIOV_VF)
-	tc956xmac_add_vlan(priv, vid);
+	stmmac_add_vlan(priv, vid);
 	return 0;
 #endif
 }
 
-static int tc956xmac_vlan_rx_kill_vid(struct net_device *ndev, __be16 proto,
+static int stmmac_vlan_rx_kill_vid(struct net_device *ndev, __be16 proto,
 				   u16 vid)
 {
 	struct stmmac_priv *priv = netdev_priv(ndev);
@@ -14868,50 +14868,50 @@ static int tc956xmac_vlan_rx_kill_vid(struct net_device *ndev, __be16 proto,
 
 	spin_lock_irqsave(&priv->spn_lock.vlan_filter, flags);
 #endif
-	tc956xmac_delete_vlan(priv, ndev, vid, PF_DRIVER);
+	stmmac_delete_vlan(priv, ndev, vid, PF_DRIVER);
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 	spin_unlock_irqrestore(&priv->spn_lock.vlan_filter, flags);
 #endif
 	return ret;
 #elif (defined TC956X_SRIOV_VF)
-	tc956xmac_delete_vlan(priv, vid);
+	stmmac_delete_vlan(priv, vid);
 	return 0;
 #endif
 }
 
 #ifndef TC956X_SRIOV_VF
-static const struct net_device_ops tc956xmac_netdev_ops = {
+static const struct net_device_ops stmmac_netdev_ops = {
 #elif defined TC956X_SRIOV_VF
-static const struct net_device_ops tc956xmac_vf_netdev_ops = {
+static const struct net_device_ops stmmac_vf_netdev_ops = {
 #endif
-	.ndo_open = tc956xmac_open,
-	.ndo_start_xmit = tc956xmac_xmit,
-	.ndo_stop = tc956xmac_release,
-	.ndo_change_mtu = tc956xmac_change_mtu,
-	.ndo_fix_features = tc956xmac_fix_features,
-	.ndo_set_features = tc956xmac_set_features,
-	.ndo_set_rx_mode = tc956xmac_set_rx_mode,
-	.ndo_tx_timeout = tc956xmac_tx_timeout,
+	.ndo_open = stmmac_open,
+	.ndo_start_xmit = stmmac_xmit,
+	.ndo_stop = stmmac_release,
+	.ndo_change_mtu = stmmac_change_mtu,
+	.ndo_fix_features = stmmac_fix_features,
+	.ndo_set_features = stmmac_set_features,
+	.ndo_set_rx_mode = stmmac_set_rx_mode,
+	.ndo_tx_timeout = stmmac_tx_timeout,
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0)
-	.ndo_eth_ioctl = tc956xmac_ioctl,
-	.ndo_siocdevprivate = tc956xmac_siocdevprivate,
+	.ndo_eth_ioctl = stmmac_ioctl,
+	.ndo_siocdevprivate = stmmac_siocdevprivate,
 #else
-	.ndo_do_ioctl = tc956xmac_ioctl,
+	.ndo_do_ioctl = stmmac_ioctl,
 #endif
-	.ndo_setup_tc = tc956xmac_setup_tc,
-	.ndo_select_queue = tc956xmac_select_queue,
+	.ndo_setup_tc = stmmac_setup_tc,
+	.ndo_select_queue = stmmac_select_queue,
 #ifdef TC956X_UNSUPPORTED_UNTESTED_FEATURE
 #ifdef CONFIG_NET_POLL_CONTROLLER
-	.ndo_poll_controller = tc956xmac_poll_controller,
+	.ndo_poll_controller = stmmac_poll_controller,
 #endif
 #endif /* TC956X_UNSUPPORTED_UNTESTED_FEATURE */
-	.ndo_set_mac_address = tc956xmac_set_mac_address,
-	.ndo_vlan_rx_add_vid = tc956xmac_vlan_rx_add_vid,
-	.ndo_vlan_rx_kill_vid = tc956xmac_vlan_rx_kill_vid,
+	.ndo_set_mac_address = stmmac_set_mac_address,
+	.ndo_vlan_rx_add_vid = stmmac_vlan_rx_add_vid,
+	.ndo_vlan_rx_kill_vid = stmmac_vlan_rx_kill_vid,
 };
 
 #ifdef TC956X_UNSUPPORTED_UNTESTED
-static void tc956xmac_reset_subtask(struct stmmac_priv *priv)
+static void stmmac_reset_subtask(struct stmmac_priv *priv)
 {
 	if (!test_and_clear_bit(TC956XMAC_RESET_REQUESTED, &priv->state))
 		return;
@@ -14933,21 +14933,21 @@ static void tc956xmac_reset_subtask(struct stmmac_priv *priv)
 	rtnl_unlock();
 }
 
-static void tc956xmac_service_task(struct work_struct *work)
+static void stmmac_service_task(struct work_struct *work)
 {
 	struct stmmac_priv *priv = container_of(work, struct stmmac_priv,
 			service_task);
 
-	tc956xmac_reset_subtask(priv);
+	stmmac_reset_subtask(priv);
 	clear_bit(TC956XMAC_SERVICE_SCHED, &priv->state);
 }
 #endif
 #if defined(TC956X_SRIOV_PF) && !defined(TC956X_AUTOMOTIVE_CONFIG) && !defined(TC956X_ENABLE_MAC2MAC_BRIDGE) && !defined(TC956X_CPE_CONFIG)
 /**
- * tc956xmac_service_mbx_task - Service mailbox task
+ * stmmac_service_mbx_task - Service mailbox task
  * @work: work structure
  */
-static void tc956xmac_service_mbx_task(struct work_struct *work)
+static void stmmac_service_mbx_task(struct work_struct *work)
 {
 	struct stmmac_priv *priv = container_of(work, struct stmmac_priv,
 			service_mbx_task);
@@ -14972,7 +14972,7 @@ static void tc956xmac_service_mbx_task(struct work_struct *work)
 				priv->clear_to_send[vf] = VF_DOWN;
 				for (dma_ch = 0; dma_ch < TC956XMAC_CH_MAX; dma_ch++) {
 					if (priv->dma_vf_map[dma_ch] == vf)
-						tc956xmac_stop_rx_dma(priv, dma_ch);
+						stmmac_stop_rx_dma(priv, dma_ch);
 				}
 			}
 			ret = -EBUSY;  //to continue with next vf
@@ -14992,7 +14992,7 @@ static void tc956xmac_service_mbx_task(struct work_struct *work)
 		priv->mbx_wq_param.fn_id = 0;
 	} else if (priv->mbx_wq_param.fn_id == SCH_WQ_GET_PAUSE_PARAM) {
 		rtnl_lock();
-		tc956xmac_get_pauseparam(priv->dev, &priv->mbx_wq_param.pause);
+		stmmac_get_pauseparam(priv->dev, &priv->mbx_wq_param.pause);
 		rtnl_unlock();
 		priv->mbx_wq_param.fn_id = 0;
 	} else {
@@ -15015,7 +15015,7 @@ static void tc956xmac_service_mbx_task(struct work_struct *work)
 #endif
 
 #ifdef TC956X_SRIOV_VF
-static void tc956xmac_mailbox_service_task(struct work_struct *work)
+static void stmmac_mailbox_service_task(struct work_struct *work)
 {
 	struct stmmac_priv *priv = container_of(work, struct stmmac_priv, mbx_service_task);
 	struct pci_dev *pdev = to_pci_dev(priv->device);
@@ -15024,7 +15024,7 @@ static void tc956xmac_mailbox_service_task(struct work_struct *work)
 		pci_reset_function(pdev);
 		priv->flag = 0;
 	} else if (priv->flag == SCH_WQ_RX_DMA_ERR) {
-		tc956xmac_stop_all_dma(priv);
+		stmmac_stop_all_dma(priv);
 		priv->flag = 0;
 	} else if (priv->flag == SCH_WQ_LINK_STATE_UP) {
 		int ret = 0;
@@ -15035,7 +15035,7 @@ static void tc956xmac_mailbox_service_task(struct work_struct *work)
 				__func__);
 		}
 
-		ret = tc956xmac_hw_setup(priv->dev, true);
+		ret = stmmac_hw_setup(priv->dev, true);
 		if (ret < 0)
 			netdev_err(priv->dev, "%s: Hw setup failed\n", __func__);
 		priv->flag = 0;
@@ -15053,14 +15053,14 @@ static void tc956xmac_mailbox_service_task(struct work_struct *work)
 #endif
 
 /**
- *  tc956xmac_hw_init - Init the MAC device
+ *  stmmac_hw_init - Init the MAC device
  *  @priv: driver private structure
  *  Description: this function is to configure the MAC device according to
  *  some platform parameters or the HW capability register. It prepares the
  *  driver to use either ring or chain modes and to setup either enhanced or
  *  normal descriptors.
  */
-static int tc956xmac_hw_init(struct stmmac_priv *priv)
+static int stmmac_hw_init(struct stmmac_priv *priv)
 {
 	int ret;
 
@@ -15072,12 +15072,12 @@ static int tc956xmac_hw_init(struct stmmac_priv *priv)
 #endif
 
 	/* Initialize HW Interface */
-	ret = tc956xmac_hwif_init(priv);
+	ret = stmmac_hwif_init(priv);
 	if (ret)
 		return ret;
 
 	/* Get the HW capability (new GMAC newer than 3.50a) */
-	priv->hw_cap_support = tc956xmac_get_hw_features(priv);
+	priv->hw_cap_support = stmmac_get_hw_features(priv);
 	if (priv->hw_cap_support) {
 		dev_info(priv->device, "DMA HW capability register supported\n");
 
@@ -15165,7 +15165,7 @@ static int tc956xmac_hw_init(struct stmmac_priv *priv)
  * retval -1 Failure
  */
 
-static unsigned char stm_get_tx_channel_count(struct tc956xmac_resources *res)
+static unsigned char stm_get_tx_channel_count(struct stmmac_resources *res)
 {
 	unsigned char count;
 	unsigned long varMAC_HFR2;
@@ -15187,7 +15187,7 @@ static unsigned char stm_get_tx_channel_count(struct tc956xmac_resources *res)
  * retval -1 Failure
  */
 
-static unsigned char stm_get_rx_channel_count(struct tc956xmac_resources *res)
+static unsigned char stm_get_rx_channel_count(struct stmmac_resources *res)
 {
 	unsigned char count;
 	unsigned long varMAC_HFR2;
@@ -15439,7 +15439,7 @@ static int validate_rsc_mgr_alloc(struct stmmac_priv *priv, struct net_device *n
 
 	/* Validate Resource allocation for VF */
 
-	tc956xmac_rsc_mng_get_rscs(priv, ndev, &rsc);
+	stmmac_rsc_mng_get_rscs(priv, ndev, &rsc);
 
 	dev_info(priv->device, "VF %d Resource allocation %x\n", priv->plat->vf_id+1, rsc);
 
@@ -15455,11 +15455,11 @@ static int validate_rsc_mgr_alloc(struct stmmac_priv *priv, struct net_device *n
 /**
  * stm_platform_probe
  * @priv: driver private structure
- * @res: tc956xmac resource pointer
+ * @res: stmmac resource pointer
  * Description: this is the platform specific function
  * returns 0 on success
  */
-int stm_platform_probe(struct stmmac_priv *priv, struct tc956xmac_resources *res)
+int stm_platform_probe(struct stmmac_priv *priv, struct stmmac_resources *res)
 {
 #ifdef RBTC9563_3MA
 #ifdef RBTC9563_3DB
@@ -15475,7 +15475,7 @@ int stm_platform_probe(struct stmmac_priv *priv, struct tc956xmac_resources *res
  * stm_platform_resume()
  *
  * @priv: driver private structure
- * @res: tc956xmac resource pointer
+ * @res: stmmac resource pointer
  * Description: this is the platform specific function
  * returns 0 on success
  */
@@ -15496,7 +15496,7 @@ int stm_platform_resume(struct stmmac_priv *priv)
  * tc956xmac_dvr_probe
  * @device: device pointer
  * @plat_dat: platform data pointer
- * @res: tc956xmac resource pointer
+ * @res: stmmac resource pointer
  * Description: this is the main probe function used to
  * call the alloc_etherdev, allocate the priv structure.
  * Return:
@@ -15505,10 +15505,10 @@ int stm_platform_resume(struct stmmac_priv *priv)
 #ifdef TC956X_SRIOV_PF
 int tc956xmac_dvr_probe(struct device *device,
 #elif defined TC956X_SRIOV_VF
-int tc956xmac_vf_dvr_probe(struct device *device,
+int stmmac_vf_dvr_probe(struct device *device,
 #endif
-		     struct plat_tc956xmacenet_data *plat_dat,
-		     struct tc956xmac_resources *res)
+		     struct plat_stmmacenet_data *plat_dat,
+		     struct stmmac_resources *res)
 {
 	struct net_device *ndev = NULL;
 	struct stmmac_priv *priv;
@@ -15571,7 +15571,7 @@ int tc956xmac_vf_dvr_probe(struct device *device,
 	priv->link_down_rst = false; /* Disable MAC reset during link down by default */
 #endif
 
-	tc956xmac_set_ethtool_ops(ndev);
+	stmmac_set_ethtool_ops(ndev);
 	priv->pause = pause;
 	priv->plat = plat_dat;
 #ifdef TC956X_SRIOV_PF
@@ -15778,7 +15778,7 @@ int tc956xmac_vf_dvr_probe(struct device *device,
 #ifndef TC956X_SRIOV_PF
 #ifdef CONFIG_TC956X_DMA_OFFLOAD_ENABLE
 	priv->client_priv = NULL;
-	memset(priv->cm3_tamap, 0, sizeof(struct tc956xmac_cm3_tamap) * MAX_CM3_TAMAP_ENTRIES);
+	memset(priv->cm3_tamap, 0, sizeof(struct stmmac_cm3_tamap) * MAX_CM3_TAMAP_ENTRIES);
 #endif
 #endif
 #ifdef TC956X
@@ -15868,38 +15868,38 @@ int tc956xmac_vf_dvr_probe(struct device *device,
 	dev_set_drvdata(device, priv->dev);
 
 	/* Verify driver arguments */
-	tc956xmac_verify_args();
+	stmmac_verify_args();
 
 #ifdef TC956X_UNSUPPORTED_UNTESTED
 	/* Allocate workqueue */
-	priv->wq = create_singlethread_workqueue("tc956xmac_wq");
+	priv->wq = create_singlethread_workqueue("stmmac_wq");
 	if (!priv->wq) {
 		dev_err(priv->device, "failed to create workqueue\n");
 		return -ENOMEM;
 	}
 
-	INIT_WORK(&priv->service_task, tc956xmac_service_task);
+	INIT_WORK(&priv->service_task, stmmac_service_task);
 #endif
 
 #if defined(TC956X_SRIOV_PF) && !defined(TC956X_AUTOMOTIVE_CONFIG) && !defined(TC956X_ENABLE_MAC2MAC_BRIDGE) && !defined(TC956X_CPE_CONFIG)
 	/* Allocate workqueue */
-	priv->mbx_wq = create_singlethread_workqueue("tc956xmac_mbx_wq");
+	priv->mbx_wq = create_singlethread_workqueue("stmmac_mbx_wq");
 	if (!priv->mbx_wq) {
 		dev_err(priv->device, "failed to create workqueue\n");
 		return -ENOMEM;
 	}
 
-	INIT_WORK(&priv->service_mbx_task, tc956xmac_service_mbx_task);
+	INIT_WORK(&priv->service_mbx_task, stmmac_service_mbx_task);
 #endif
 #ifdef TC956X_SRIOV_VF
 	/* Allocate workqueue */
-	priv->mbx_wq = create_singlethread_workqueue("tc956xmac_mailbox_wq");
+	priv->mbx_wq = create_singlethread_workqueue("stmmac_mailbox_wq");
 	if (!priv->mbx_wq) {
 		dev_err(priv->device, "failed to create workqueue\n");
 		return -ENOMEM;
 	}
 
-	INIT_WORK(&priv->mbx_service_task, tc956xmac_mailbox_service_task);
+	INIT_WORK(&priv->mbx_service_task, stmmac_mailbox_service_task);
 #endif
 	/* Override with kernel parameters if supplied XXX CRS XXX
 	 * this needs to have multiple instances
@@ -15907,18 +15907,18 @@ int tc956xmac_vf_dvr_probe(struct device *device,
 	if ((phyaddr >= 0) && (phyaddr <= 31))
 		priv->plat->phy_addr = phyaddr;
 
-	if (priv->plat->tc956xmac_rst) {
-		ret = reset_control_assert(priv->plat->tc956xmac_rst);
-		reset_control_deassert(priv->plat->tc956xmac_rst);
+	if (priv->plat->stmmac_rst) {
+		ret = reset_control_assert(priv->plat->stmmac_rst);
+		reset_control_deassert(priv->plat->stmmac_rst);
 		/* Some reset controllers have only reset callback instead of
 		 * assert + deassert callbacks pair.
 		 */
 		if (ret == -ENOTSUPP)
-			reset_control_reset(priv->plat->tc956xmac_rst);
+			reset_control_reset(priv->plat->stmmac_rst);
 	}
 
 	/* Init MAC and get the capabilities */
-	ret = tc956xmac_hw_init(priv);
+	ret = stmmac_hw_init(priv);
 	if (ret)
 		goto error_hw_init;
 #ifdef TC956X_SRIOV_VF
@@ -15929,17 +15929,17 @@ int tc956xmac_vf_dvr_probe(struct device *device,
 		goto error_hw_init;
 	}
 
-	tc956xmac_check_ether_addr(priv);
+	stmmac_check_ether_addr(priv);
 #endif
 	/* Configure real RX and TX queues */
 #ifndef TC956X_SRIOV_VF
 	netif_set_real_num_rx_queues(ndev, priv->plat->rx_queues_to_use);
 	netif_set_real_num_tx_queues(ndev, priv->plat->tx_queues_to_use);
-	ndev->netdev_ops = &tc956xmac_netdev_ops;
+	ndev->netdev_ops = &stmmac_netdev_ops;
 #elif (defined TC956X_SRIOV_VF)
 	netif_set_real_num_rx_queues(ndev, priv->plat->rx_queues_to_use_actual);
 	netif_set_real_num_tx_queues(ndev, priv->plat->tx_queues_to_use_actual);
-	ndev->netdev_ops = &tc956xmac_vf_netdev_ops;
+	ndev->netdev_ops = &stmmac_vf_netdev_ops;
 #endif
 
 #ifdef TC956X_SRIOV_VF
@@ -15949,7 +15949,7 @@ int tc956xmac_vf_dvr_probe(struct device *device,
 				NETIF_F_RXCSUM;
 #endif
 
-	ret = tc956xmac_tc_init(priv, NULL);
+	ret = stmmac_tc_init(priv, NULL);
 	if (!ret)
 		ndev->hw_features |= NETIF_F_HW_TC;
 
@@ -16017,7 +16017,7 @@ int tc956xmac_vf_dvr_probe(struct device *device,
 #ifdef TC956X_SRIOV_VF
 	/* Get the VF function id information */
 
-	if (tc956xmac_rsc_mng_get_fn_id(priv, priv->stm_BRIDGE_CFG_pci_base_addr,
+	if (stmmac_rsc_mng_get_fn_id(priv, priv->stm_BRIDGE_CFG_pci_base_addr,
 					&priv->fn_id_info)) {
 		netdev_err(priv->dev,
 				"%s: Wrong function id for the driver (error: %d)\n",
@@ -16025,7 +16025,7 @@ int tc956xmac_vf_dvr_probe(struct device *device,
 		return -ENODEV;
 	}
 
-	tc956xmac_mbx_init(priv, NULL);
+	stmmac_mbx_init(priv, NULL);
 
 	/* Get PF driver capabilities */
 	stm_get_drv_cap(priv, priv);
@@ -16153,7 +16153,7 @@ int tc956xmac_vf_dvr_probe(struct device *device,
 	maxq = max(priv->plat->rx_queues_to_use, priv->plat->tx_queues_to_use);
 
 	for (queue = 0; queue < maxq; queue++) {
-		struct tc956xmac_channel *ch = &priv->channel[queue];
+		struct stmmac_channel *ch = &priv->channel[queue];
 
 		spin_lock_init(&ch->lock);
 		ch->priv_data = priv;
@@ -16169,9 +16169,9 @@ int tc956xmac_vf_dvr_probe(struct device *device,
 
 			/* Add napi only for applicable channels */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0)
-			netif_napi_add(ndev, &ch->rx_napi, tc956xmac_napi_poll_rx);
+			netif_napi_add(ndev, &ch->rx_napi, stmmac_napi_poll_rx);
 #else
-			netif_napi_add(ndev, &ch->rx_napi, tc956xmac_napi_poll_rx,
+			netif_napi_add(ndev, &ch->rx_napi, stmmac_napi_poll_rx,
 				       NAPI_POLL_WEIGHT);
 #endif
 		}
@@ -16185,10 +16185,10 @@ int tc956xmac_vf_dvr_probe(struct device *device,
 			/* Add napi only for applicable channels */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 19, 0)
 			netif_napi_add_tx(ndev, &ch->tx_napi,
-					  tc956xmac_napi_poll_tx);
+					  stmmac_napi_poll_tx);
 #else
 			netif_tx_napi_add(ndev, &ch->tx_napi,
-					  tc956xmac_napi_poll_tx,
+					  stmmac_napi_poll_tx,
 					  NAPI_POLL_WEIGHT);
 #endif
 		}
@@ -16199,26 +16199,26 @@ int tc956xmac_vf_dvr_probe(struct device *device,
 
 		if ((queue < priv->plat->rx_queues_to_use) &&
 				(priv->plat->ch_in_use[queue] == 1)) {
-			netif_napi_add(ndev, &ch->rx_napi, tc956xmac_napi_poll_rx,
+			netif_napi_add(ndev, &ch->rx_napi, stmmac_napi_poll_rx,
 				       NAPI_POLL_WEIGHT);
 		}
 		if ((queue < priv->plat->tx_queues_to_use) &&
 				(priv->plat->ch_in_use[queue] == 1)) {
 			netif_tx_napi_add(ndev, &ch->tx_napi,
-					  tc956xmac_napi_poll_tx,
+					  stmmac_napi_poll_tx,
 					  NAPI_POLL_WEIGHT);
 		}
 #else /* TC956X_SRIOV_PF */
 		if ((queue < priv->plat->rx_queues_to_use) &&
 			(priv->plat->rx_dma_ch_owner[queue] == USE_IN_TC956X_SW)) {
 
-			netif_napi_add(ndev, &ch->rx_napi, tc956xmac_napi_poll_rx,
+			netif_napi_add(ndev, &ch->rx_napi, stmmac_napi_poll_rx,
 				       NAPI_POLL_WEIGHT);
 		}
 		if ((queue < priv->plat->tx_queues_to_use) &&
 			(priv->plat->tx_dma_ch_owner[queue] == USE_IN_TC956X_SW)) {
 			netif_tx_napi_add(ndev, &ch->tx_napi,
-					  tc956xmac_napi_poll_tx,
+					  stmmac_napi_poll_tx,
 					  NAPI_POLL_WEIGHT);
 		}
 #endif /* TC956X_SRIOV_PF */
@@ -16239,10 +16239,10 @@ int tc956xmac_vf_dvr_probe(struct device *device,
 		priv->clk_csr = priv->plat->clk_csr;
 #ifdef TC956X_UNSUPPORTED_UNTESTED_FEATURE
 	else
-		tc956xmac_clk_csr_set(priv);
+		stmmac_clk_csr_set(priv);
 #endif /* TC956X_UNSUPPORTED_UNTESTED_FEATURE */
 
-	tc956xmac_check_pcs_mode(priv);
+	stmmac_check_pcs_mode(priv);
 
 #ifdef TC956X
 	/*PMA module init*/
@@ -16304,9 +16304,9 @@ int tc956xmac_vf_dvr_probe(struct device *device,
 
 		/* MDIO bus Registration */
 		if (priv->dma_cap.sma_mdio == 1) {
-			ret = tc956xmac_mdio_register(ndev);
+			ret = stmmac_mdio_register(ndev);
 			if (ret < 0) {
-				/* tc956xmac_mdio_register() will return -ENODEV when No PHY is found */
+				/* stmmac_mdio_register() will return -ENODEV when No PHY is found */
 				if (ret == -ENODEV) {
 					dev_info(priv->device, "Port%d Bus id %x will not be registered as ethernet controller", priv->port_num, priv->plat->bus_id);
 					goto error_mdio_register;
@@ -16323,7 +16323,7 @@ int tc956xmac_vf_dvr_probe(struct device *device,
 	}
 
 	if (priv->dma_cap.sma_mdio == 1) {
-		ret = tc956xmac_phy_setup(priv);
+		ret = stmmac_phy_setup(priv);
 		if (ret) {
 			netdev_err(ndev, "failed to setup phy (%d)\n", ret);
 			goto error_phy_setup;
@@ -16339,7 +16339,7 @@ int tc956xmac_vf_dvr_probe(struct device *device,
 
 #ifdef TC956X_SRIOV_PF
 #ifdef CONFIG_DEBUG_FS
-	tc956xmac_init_fs(ndev);
+	stmmac_init_fs(ndev);
 #endif
 #endif /* TC956X_SRIOV_PF */
 
@@ -16363,11 +16363,11 @@ error_phy_setup:
 		if (priv->hw->pcs != TC956XMAC_PCS_RGMII &&
 			priv->hw->pcs != TC956XMAC_PCS_TBI &&
 			priv->hw->pcs != TC956XMAC_PCS_RTBI)
-			tc956xmac_mdio_unregister(ndev);
+			stmmac_mdio_unregister(ndev);
 	}
 error_mdio_register:
 	for (queue = 0; queue < maxq; queue++) {
-		struct tc956xmac_channel *ch = &priv->channel[queue];
+		struct stmmac_channel *ch = &priv->channel[queue];
 #ifdef TC956X_SRIOV_PF
 		if (queue < priv->plat->rx_queues_to_use) {
 			if (priv->plat->rx_ch_in_use[queue] ==
@@ -16424,7 +16424,7 @@ error_hw_init:
 #ifdef TC956X_SRIOV_PF
 EXPORT_SYMBOL_GPL(tc956xmac_dvr_probe);
 #elif defined TC956X_SRIOV_VF
-EXPORT_SYMBOL_GPL(tc956xmac_vf_dvr_probe);
+EXPORT_SYMBOL_GPL(stmmac_vf_dvr_probe);
 #endif
 /**
  * tc956xmac_dvr_remove
@@ -16435,7 +16435,7 @@ EXPORT_SYMBOL_GPL(tc956xmac_vf_dvr_probe);
 #ifdef TC956X_SRIOV_PF
 int tc956xmac_dvr_remove(struct device *dev)
 #elif defined TC956X_SRIOV_VF
-int tc956xmac_vf_dvr_remove(struct device *dev)
+int stmmac_vf_dvr_remove(struct device *dev)
 #endif
 {
 	struct net_device *ndev = dev_get_drvdata(dev);
@@ -16452,7 +16452,7 @@ int tc956xmac_vf_dvr_remove(struct device *dev)
 	netdev_info(priv->dev, "%s: removing driver", __func__);
 
 #ifdef TC956X_SRIOV_VF
-	tc956xmac_vf_reset(priv, VF_DOWN);
+	stmmac_vf_reset(priv, VF_DOWN);
 #else
 	if (phydev) {
 		if (phydev->drv != NULL) {
@@ -16464,14 +16464,14 @@ int tc956xmac_vf_dvr_remove(struct device *dev)
 
 #ifdef TC956X_SRIOV_PF
 #ifdef CONFIG_DEBUG_FS
-	tc956xmac_exit_fs(ndev);
+	stmmac_exit_fs(ndev);
 #endif
 #endif /* TC956X_SRIOV_PF */
 
-	tc956xmac_stop_all_dma(priv);
+	stmmac_stop_all_dma(priv);
 
 #ifndef TC956X_SRIOV_VF
-	tc956xmac_mac_set(priv, priv->ioaddr, false);
+	stmmac_mac_set(priv, priv->ioaddr, false);
 #endif
 
 	netif_carrier_off(ndev);
@@ -16483,17 +16483,17 @@ int tc956xmac_vf_dvr_remove(struct device *dev)
 	kfree(priv->mac_table);
 	kfree(priv->vlan_table);
 
-	if (priv->plat->tc956xmac_rst)
-		reset_control_assert(priv->plat->tc956xmac_rst);
+	if (priv->plat->stmmac_rst)
+		reset_control_assert(priv->plat->stmmac_rst);
 #ifndef TC956X_SRIOV_VF
 	clk_disable_unprepare(priv->plat->pclk);
-	clk_disable_unprepare(priv->plat->tc956xmac_clk);
+	clk_disable_unprepare(priv->plat->stmmac_clk);
 
 	if (priv->dma_cap.sma_mdio == 1) {
 		if (priv->hw->pcs != TC956XMAC_PCS_RGMII &&
 			priv->hw->pcs != TC956XMAC_PCS_TBI &&
 			priv->hw->pcs != TC956XMAC_PCS_RTBI)
-			tc956xmac_mdio_unregister(ndev);
+			stmmac_mdio_unregister(ndev);
 	}
 
 	if (stm_platform_remove(priv))
@@ -16531,7 +16531,7 @@ int tc956xmac_vf_dvr_remove(struct device *dev)
 #ifdef TC956X_SRIOV_PF
 EXPORT_SYMBOL_GPL(tc956xmac_dvr_remove);
 #elif defined TC956X_SRIOV_VF
-EXPORT_SYMBOL_GPL(tc956xmac_vf_dvr_remove);
+EXPORT_SYMBOL_GPL(stmmac_vf_dvr_remove);
 #endif
 
 /**
@@ -16544,7 +16544,7 @@ EXPORT_SYMBOL_GPL(tc956xmac_vf_dvr_remove);
 #ifdef TC956X_SRIOV_PF
 int tc956xmac_suspend(struct device *dev)
 #elif defined TC956X_SRIOV_VF
-int tc956xmac_vf_suspend(struct device *dev)
+int stmmac_vf_suspend(struct device *dev)
 #endif
 {
 	struct net_device *ndev = dev_get_drvdata(dev);
@@ -16572,13 +16572,13 @@ int tc956xmac_vf_suspend(struct device *dev)
 #endif
 
 #ifdef TC956X_SRIOV_VF
-	tc956xmac_vf_reset(priv, VF_SUSPEND);
+	stmmac_vf_reset(priv, VF_SUSPEND);
 #endif
 
 #ifndef TC956X_SRIOV_VF
 	/* Disabling EEE for issue in TC9560/62, to be tested for TC956X */
 	if (priv->eee_enabled)
-		tc956xmac_disable_eee_mode(priv);
+		stmmac_disable_eee_mode(priv);
 
 	//if (priv->wolopts) {
 	//	KPRINT_INFO("%s : Port %d - Phy Speed Down", __func__, priv->port_num);
@@ -16603,7 +16603,7 @@ int tc956xmac_vf_suspend(struct device *dev)
 #endif
 	/* Invoke device driver close only when net inteface is up and running. */
 	rtnl_lock();
-	tc956xmac_release(ndev);
+	stmmac_release(ndev);
 	rtnl_unlock();
 
 clean_exit:
@@ -16620,21 +16620,21 @@ clean_exit:
 #ifdef TC956X_SRIOV_PF
 EXPORT_SYMBOL_GPL(tc956xmac_suspend);
 #elif defined TC956X_SRIOV_VF
-EXPORT_SYMBOL_GPL(tc956xmac_vf_suspend);
+EXPORT_SYMBOL_GPL(stmmac_vf_suspend);
 #endif
 #ifndef TC956X
 /**
- * tc956xmac_reset_queues_param - reset queue parameters
+ * stmmac_reset_queues_param - reset queue parameters
  * @priv: driver private structure
  */
-static void tc956xmac_reset_queues_param(struct stmmac_priv *priv)
+static void stmmac_reset_queues_param(struct stmmac_priv *priv)
 {
 	u32 rx_cnt = priv->plat->rx_queues_to_use;
 	u32 tx_cnt = priv->plat->tx_queues_to_use;
 	u32 queue;
 
 	for (queue = 0; queue < rx_cnt; queue++) {
-		struct tc956xmac_rx_queue *rx_q = &priv->rx_queue[queue];
+		struct stmmac_rx_queue *rx_q = &priv->rx_queue[queue];
 #ifdef TC956X_SRIOV_PF
 		if (priv->plat->rx_ch_in_use[queue] ==
 						TC956X_DISABLE_CHNL)
@@ -16652,7 +16652,7 @@ static void tc956xmac_reset_queues_param(struct stmmac_priv *priv)
 	}
 
 	for (queue = 0; queue < tx_cnt; queue++) {
-		struct tc956xmac_tx_queue *tx_q = &priv->tx_queue[queue];
+		struct stmmac_tx_queue *tx_q = &priv->tx_queue[queue];
 #ifdef TC956X_SRIOV_PF
 		if (priv->plat->tx_ch_in_use[queue] ==
 						TC956X_DISABLE_CHNL)
@@ -16680,12 +16680,12 @@ static void tc956xmac_reset_queues_param(struct stmmac_priv *priv)
 #ifdef TC956X_SRIOV_PF
 int tc956xmac_resume(struct device *dev)
 #elif defined TC956X_SRIOV_VF
-int tc956xmac_vf_resume(struct device *dev)
+int stmmac_vf_resume(struct device *dev)
 #endif
 {
 	struct net_device *ndev = dev_get_drvdata(dev);
 	struct stmmac_priv *priv = netdev_priv(ndev);
-	struct tc956xmac_resources res;
+	struct stmmac_resources res;
 #ifndef TC956X_SRIOV_VF
 	u32 cm3_reset_status = 0;
 	s32 fw_load_status = 0;
@@ -16725,14 +16725,14 @@ int tc956xmac_vf_resume(struct device *dev)
 
 #ifndef TC956X
 	/* Reset Parameters. */
-	tc956xmac_reset_queues_param(priv);
+	stmmac_reset_queues_param(priv);
 #endif
 	if (!netif_running(ndev))
 		goto clean_exit;
 
 	/* Invoke device driver open */
 	rtnl_lock();
-	tc956xmac_open(ndev);
+	stmmac_open(ndev);
 	rtnl_unlock();
 
 clean_exit:
@@ -16742,7 +16742,7 @@ clean_exit:
 
 
 #ifdef TC956X_SRIOV_VF
-	tc956xmac_vf_reset(priv, VF_UP);
+	stmmac_vf_reset(priv, VF_UP);
 #endif  /* TC956X_SRIOV_VF */
 
 #ifndef TC956X_SRIOV_VF
@@ -16777,7 +16777,7 @@ clean_exit:
 #ifdef TC956X_SRIOV_PF
 EXPORT_SYMBOL_GPL(tc956xmac_resume);
 #elif defined TC956X_SRIOV_VF
-EXPORT_SYMBOL_GPL(tc956xmac_vf_resume);
+EXPORT_SYMBOL_GPL(stmmac_vf_resume);
 #endif
 
 #ifndef TC956X_SRIOV_VF
@@ -16792,7 +16792,7 @@ EXPORT_SYMBOL_GPL(tc956xmac_vf_resume);
  *
  * \return None
  */
-void tc956xmac_link_change_set_power(struct stmmac_priv *priv, enum TC956X_PORT_LINK_CHANGE_STATE state)
+void stmmac_link_change_set_power(struct stmmac_priv *priv, enum TC956X_PORT_LINK_CHANGE_STATE state)
 {
 	void *nrst_reg = NULL, *nclk_reg = NULL, *commonrst_reg = NULL, *commonclk_reg = NULL;
 	u32 nrst_val = 0, nclk_val = 0, commonrst_val = 0, commonclk_val = 0;
@@ -16921,7 +16921,7 @@ void tc956xmac_link_change_set_power(struct stmmac_priv *priv, enum TC956X_PORT_
 #endif
 
 #ifndef MODULE
-static int __init tc956xmac_cmdline_opt(char *str)
+static int __init stmmac_cmdline_opt(char *str)
 {
 	char *opt;
 
@@ -16964,28 +16964,28 @@ err:
 	return -EINVAL;
 }
 
-__setup("tc956xmaceth=", tc956xmac_cmdline_opt);
+__setup("stmmaceth=", stmmac_cmdline_opt);
 #endif /* MODULE */
 
 #ifdef TC956X
-int tc956xmac_init(void)
+int stmmac_init(void)
 {
 #ifdef TC956X_SRIOV_PF
 #ifdef CONFIG_DEBUG_FS
 	/* Create debugfs main directory if it doesn't exist yet */
-	if (!tc956xmac_fs_dir)
-		tc956xmac_fs_dir = debugfs_create_dir(TC956X_RESOURCE_NAME, NULL);
+	if (!stmmac_fs_dir)
+		stmmac_fs_dir = debugfs_create_dir(TC956X_RESOURCE_NAME, NULL);
 #endif
 #endif /* TC956X_SRIOV_PF */
 
 	return 0;
 }
 
-void tc956xmac_exit(void)
+void stmmac_exit(void)
 {
 #ifdef TC956X_SRIOV_PF
 #ifdef CONFIG_DEBUG_FS
-	debugfs_remove_recursive(tc956xmac_fs_dir);
+	debugfs_remove_recursive(stmmac_fs_dir);
 #endif
 #endif /* TC956X_SRIOV_PF */
 }

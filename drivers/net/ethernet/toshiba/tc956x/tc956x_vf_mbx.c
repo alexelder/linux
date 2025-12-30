@@ -212,10 +212,10 @@ void stm_vf_parse_mbx(struct stmmac_priv *priv,
 	/* Get the function id information and read the mailbox.
 	 * Function id can be get earlier too
 	 */
-	if (!tc956xmac_rsc_mng_get_fn_id(priv,
+	if (!stmmac_rsc_mng_get_fn_id(priv,
 		priv->stm_BRIDGE_CFG_pci_base_addr, &priv->fn_id_info)) {
 		/* Read and acknowledge the mailbox */
-		tc956xmac_mbx_read(priv, msg_buff, msg_src,
+		stmmac_mbx_read(priv, msg_buff, msg_src,
 				   &priv->fn_id_info);
 	}
 }
@@ -426,14 +426,14 @@ static int stm_vf_mbx_write(struct stmmac_priv *priv, u8 *msg_buff,
 	stm_vf_trigger_interrupt(priv, msg_dst);
 
 	/*poll for ack/nack from the VF/MCU/Other PF*/
-	ret = tc956xmac_mbx_poll_for_ack(priv, msg_dst);
+	ret = stmmac_mbx_poll_for_ack(priv, msg_dst);
 
 	/* Read for ACK message */
 	if (ret > 0) {
 		/* msg_buff to be overwritten here with ACK notification data
 		 * and ACK message data
 		 */
-		tc956xmac_mbx_read(priv, msg_buff, msg_dst,
+		stmmac_mbx_read(priv, msg_buff, msg_dst,
 				   &priv->fn_id_info);
 	}
 
@@ -533,13 +533,13 @@ static int stm_vf_mbx_read(struct stmmac_priv *priv, u8 *msg_buff,
 		/* After successful parsing, ACK/NACK the functions which
 		 * originated the message
 		 */
-		tc956xmac_mbx_send_ack(priv, msg_buff, msg_dst,
+		stmmac_mbx_send_ack(priv, msg_buff, msg_dst,
 				       fn_id_info);
 	}
 	return 0;
 }
 
-const struct mac_mbx_ops tc956xmac_mbx_ops = {
+const struct mac_mbx_ops stmmac_mbx_ops = {
 	.init = stm_vf_mbx_init,
 	.read = stm_vf_mbx_read,
 	.write = stm_vf_mbx_write,

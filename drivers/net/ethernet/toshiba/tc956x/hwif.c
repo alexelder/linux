@@ -44,7 +44,7 @@
 #endif
 #endif
 
-static u32 tc956xmac_get_id(struct stmmac_priv *priv, u32 id_reg)
+static u32 stmmac_get_id(struct stmmac_priv *priv, u32 id_reg)
 {
 	u32 reg = readl(priv->ioaddr + id_reg);
 
@@ -60,7 +60,7 @@ static u32 tc956xmac_get_id(struct stmmac_priv *priv, u32 id_reg)
 }
 
 #ifndef TC956X
-static void tc956xmac_dwmac_mode_quirk(struct stmmac_priv *priv)
+static void stmmac_dwmac_mode_quirk(struct stmmac_priv *priv)
 {
 	struct mac_device_info *mac = priv->hw;
 
@@ -75,7 +75,7 @@ static void tc956xmac_dwmac_mode_quirk(struct stmmac_priv *priv)
 	}
 }
 
-static int tc956xmac_dwmac1_quirks(struct stmmac_priv *priv)
+static int stmmac_dwmac1_quirks(struct stmmac_priv *priv)
 {
 	struct mac_device_info *mac = priv->hw;
 
@@ -96,13 +96,13 @@ static int tc956xmac_dwmac1_quirks(struct stmmac_priv *priv)
 		mac->desc = &ndesc_ops;
 	}
 
-	tc956xmac_dwmac_mode_quirk(priv);
+	stmmac_dwmac_mode_quirk(priv);
 	return 0;
 }
 
-static int tc956xmac_dwmac4_quirks(struct stmmac_priv *priv)
+static int stmmac_dwmac4_quirks(struct stmmac_priv *priv)
 {
-	tc956xmac_dwmac_mode_quirk(priv);
+	stmmac_dwmac_mode_quirk(priv);
 	return 0;
 }
 #endif
@@ -129,7 +129,7 @@ static const struct stmmac_hwif_entry {
 #endif
 	int (*setup)(struct stmmac_priv *priv);
 	int (*quirks)(struct stmmac_priv *priv);
-} tc956xmac_hw[] = {
+} stmmac_hw[] = {
 	/* NOTE: New HW versions shall go to the end of this table */
 #ifndef TC956X
 	{
@@ -144,12 +144,12 @@ static const struct stmmac_hwif_entry {
 		.desc = NULL,
 		.dma = &dwmac100_dma_ops,
 		.mac = &dwmac100_ops,
-		.hwtimestamp = &tc956xmac_ptp,
+		.hwtimestamp = &stmmac_ptp,
 		.mode = NULL,
 		.tc = NULL,
 		.mmc = &dwmac_mmc_ops,
 		.setup = dwmac100_setup,
-		.quirks = tc956xmac_dwmac1_quirks,
+		.quirks = stmmac_dwmac1_quirks,
 	}, {
 		.gmac = true,
 		.gmac4 = false,
@@ -162,12 +162,12 @@ static const struct stmmac_hwif_entry {
 		.desc = NULL,
 		.dma = &dwmac1000_dma_ops,
 		.mac = &dwmac1000_ops,
-		.hwtimestamp = &tc956xmac_ptp,
+		.hwtimestamp = &stmmac_ptp,
 		.mode = NULL,
 		.tc = NULL,
 		.mmc = &dwmac_mmc_ops,
 		.setup = dwmac1000_setup,
-		.quirks = tc956xmac_dwmac1_quirks,
+		.quirks = stmmac_dwmac1_quirks,
 	}, {
 		.gmac = false,
 		.gmac4 = true,
@@ -180,12 +180,12 @@ static const struct stmmac_hwif_entry {
 		.desc = &dwmac4_desc_ops,
 		.dma = &dwmac4_dma_ops,
 		.mac = &dwmac4_ops,
-		.hwtimestamp = &tc956xmac_ptp,
+		.hwtimestamp = &stmmac_ptp,
 		.mode = NULL,
 		.tc = &dwmac510_tc_ops,
 		.mmc = &dwmac_mmc_ops,
 		.setup = dwmac4_setup,
-		.quirks = tc956xmac_dwmac4_quirks,
+		.quirks = stmmac_dwmac4_quirks,
 	}, {
 		.gmac = false,
 		.gmac4 = true,
@@ -198,7 +198,7 @@ static const struct stmmac_hwif_entry {
 		.desc = &dwmac4_desc_ops,
 		.dma = &dwmac4_dma_ops,
 		.mac = &dwmac410_ops,
-		.hwtimestamp = &tc956xmac_ptp,
+		.hwtimestamp = &stmmac_ptp,
 		.mode = &dwmac4_ring_mode_ops,
 		.tc = &dwmac510_tc_ops,
 		.mmc = &dwmac_mmc_ops,
@@ -216,7 +216,7 @@ static const struct stmmac_hwif_entry {
 		.desc = &dwmac4_desc_ops,
 		.dma = &dwmac410_dma_ops,
 		.mac = &dwmac410_ops,
-		.hwtimestamp = &tc956xmac_ptp,
+		.hwtimestamp = &stmmac_ptp,
 		.mode = &dwmac4_ring_mode_ops,
 		.tc = &dwmac510_tc_ops,
 		.mmc = &dwmac_mmc_ops,
@@ -234,7 +234,7 @@ static const struct stmmac_hwif_entry {
 		.desc = &dwmac4_desc_ops,
 		.dma = &dwmac410_dma_ops,
 		.mac = &dwmac510_ops,
-		.hwtimestamp = &tc956xmac_ptp,
+		.hwtimestamp = &stmmac_ptp,
 		.mode = &dwmac4_ring_mode_ops,
 		.tc = &dwmac510_tc_ops,
 		.mmc = &dwmac_mmc_ops,
@@ -260,7 +260,7 @@ static const struct stmmac_hwif_entry {
 		.desc = &dwxgmac210_desc_ops,
 		.dma = &dwxgmac210_dma_ops,
 		.mac = &dwxgmac210_ops,
-		.hwtimestamp = &tc956xmac_ptp,
+		.hwtimestamp = &stmmac_ptp,
 		.mode = NULL,
 		.tc = &dwmac510_tc_ops,
 		.mmc = &dwxgmac_mmc_ops,
@@ -271,19 +271,19 @@ static const struct stmmac_hwif_entry {
 #endif
 #if defined(TC956X_SRIOV_PF) | defined(TC956X_SRIOV_VF)
 		.msi = &stm_msigen_ops,
-		.rsc = &tc956xmac_rsc_mng_ops,
+		.rsc = &stmmac_rsc_mng_ops,
 #endif
 
 #if (defined(TC956X_SRIOV_PF) && !defined(TC956X_AUTOMOTIVE_CONFIG) && !defined(TC956X_ENABLE_MAC2MAC_BRIDGE) && !defined(TC956X_CPE_CONFIG)) | defined(TC956X_SRIOV_VF)
-		.mbx = &tc956xmac_mbx_ops,
-		.mbx_wrapper = &tc956xmac_mbx_wrapper_ops,
+		.mbx = &stmmac_mbx_ops,
+		.mbx_wrapper = &stmmac_mbx_wrapper_ops,
 #endif
 		.setup = dwxgmac2_setup,
 		.quirks = NULL,
 	},
 };
 
-int tc956xmac_hwif_init(struct stmmac_priv *priv)
+int stmmac_hwif_init(struct stmmac_priv *priv)
 {
 	bool needs_xgmac = priv->plat->has_xgmac;
 	bool needs_gmac4 = priv->plat->has_gmac4;
@@ -297,9 +297,9 @@ int tc956xmac_hwif_init(struct stmmac_priv *priv)
 					MAC0_BASE_OFFSET : MAC1_BASE_OFFSET;
 
 	if (needs_gmac)
-		id = tc956xmac_get_id(priv, GMAC_VERSION);
+		id = stmmac_get_id(priv, GMAC_VERSION);
 	else if (needs_gmac4 || needs_xgmac)
-		id = tc956xmac_get_id(priv, GMAC4_VERSION);
+		id = stmmac_get_id(priv, GMAC4_VERSION);
 	else
 		id = 0;
 
@@ -330,8 +330,8 @@ int tc956xmac_hwif_init(struct stmmac_priv *priv)
 		return -ENOMEM;
 
 	/* Fallback to generic HW */
-	for (i = ARRAY_SIZE(tc956xmac_hw) - 1; i >= 0; i--) {
-		entry = &tc956xmac_hw[i];
+	for (i = ARRAY_SIZE(stmmac_hw) - 1; i >= 0; i--) {
+		entry = &stmmac_hw[i];
 
 		if (needs_gmac ^ entry->gmac)
 			continue;

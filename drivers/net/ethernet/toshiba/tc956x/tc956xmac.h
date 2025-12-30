@@ -237,7 +237,7 @@
 //#define CONFIG_TC956X_LOAD_FW_HEADER
 #endif
 
-struct tc956xmac_cm3_tamap;
+struct stmmac_cm3_tamap;
 
 #define PF_DRIVER 4
 
@@ -471,7 +471,7 @@ struct tc956xmac_cm3_tamap;
 #define TC956X_MAX_RX_BUF_SIZE(num)	(((num) * PAGE_SIZE) - XDP_PACKET_HEADROOM)
 
 #ifdef CONFIG_TC956X_DMA_OFFLOAD_ENABLE
-struct tc956xmac_cm3_tamap {
+struct stmmac_cm3_tamap {
 	u32 trsl_addr_hi;
 	u32 trsl_addr_low;
 	u32 src_addr_hi;
@@ -481,7 +481,7 @@ struct tc956xmac_cm3_tamap {
 };
 #endif
 
-struct tc956xmac_resources {
+struct stmmac_resources {
 
 	void __iomem *addr;
 #ifdef TC956X_SRIOV_PF
@@ -512,7 +512,7 @@ struct tc956xmac_resources {
 	uint16_t probe_seq_no;
 };
 
-struct tc956xmac_tx_info {
+struct stmmac_tx_info {
 	dma_addr_t buf;
 	bool map_as_page;
 	unsigned int len;
@@ -525,7 +525,7 @@ struct tc956xmac_tx_info {
 
 
 /* Frequently used values are kept adjacent for cache effect */
-struct tc956xmac_tx_queue {
+struct stmmac_tx_queue {
 	u32 tx_count_frames;
 	int tbs;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5,11,0)
@@ -539,7 +539,7 @@ struct tc956xmac_tx_queue {
 	struct dma_edesc *dma_entx;
 	struct dma_desc *dma_tx;
 	struct sk_buff **tx_skbuff;
-	struct tc956xmac_tx_info *tx_skbuff_dma;
+	struct stmmac_tx_info *tx_skbuff_dma;
 	unsigned int cur_tx;
 	unsigned int dirty_tx;
 	dma_addr_t dma_tx_phy;
@@ -553,18 +553,18 @@ struct tc956xmac_tx_queue {
 #endif
 };
 
-struct tc956xmac_rx_buffer {
+struct stmmac_rx_buffer {
 	struct page *page;
 	struct page *sec_page;
 	dma_addr_t addr;
 	dma_addr_t sec_addr;
 };
 
-struct tc956xmac_rx_queue {
+struct stmmac_rx_queue {
 	u32 rx_count_frames;
 	u32 queue_index;
 	struct page_pool *page_pool;
-	struct tc956xmac_rx_buffer *buf_pool;
+	struct stmmac_rx_buffer *buf_pool;
 	struct stmmac_priv *priv_data;
 	struct dma_extended_desc *dma_erx;
 	struct dma_desc *dma_rx ____cacheline_aligned_in_smp;
@@ -587,7 +587,7 @@ struct tc956xmac_rx_queue {
 #endif
 };
 
-struct tc956xmac_channel {
+struct stmmac_channel {
 	struct napi_struct rx_napi ____cacheline_aligned_in_smp;
 	struct napi_struct tx_napi ____cacheline_aligned_in_smp;
 	struct stmmac_priv *priv_data;
@@ -595,7 +595,7 @@ struct tc956xmac_channel {
 	u32 index;
 };
 
-struct tc956xmac_tc_entry {
+struct stmmac_tc_entry {
 	bool in_use;
 	bool in_hw;
 	bool is_last;
@@ -626,20 +626,20 @@ struct tc956xmac_tc_entry {
 #else
 #define TC956XMAC_PPS_MAX		4
 #endif
-struct tc956xmac_pps_cfg {
+struct stmmac_pps_cfg {
 	bool available;
 	struct timespec64 start;
 	struct timespec64 period;
 };
 
-struct tc956xmac_rss {
+struct stmmac_rss {
 	int enable;
 	u8 key[TC956XMAC_RSS_HASH_KEY_SIZE];
 	u32 table[TC956XMAC_RSS_MAX_TABLE_SIZE];
 };
 
 #define TC956XMAC_FLOW_ACTION_DROP		BIT(0)
-struct tc956xmac_flow_entry {
+struct stmmac_flow_entry {
 	unsigned long cookie;
 	unsigned long action;
 	u8 ip_proto;
@@ -648,7 +648,7 @@ struct tc956xmac_flow_entry {
 	int is_l4;
 };
 
-struct tc956xmac_rfs_entry {
+struct stmmac_rfs_entry {
 	unsigned long cookie;
 	u16 etype;
 	int in_use;
@@ -755,13 +755,13 @@ struct stmmac_priv {
 	struct mutex lock;
 
 	/* RX Queue */
-	struct tc956xmac_rx_queue rx_queue[MTL_MAX_RX_QUEUES];
+	struct stmmac_rx_queue rx_queue[MTL_MAX_RX_QUEUES];
 
 	/* TX Queue */
-	struct tc956xmac_tx_queue tx_queue[MTL_MAX_TX_QUEUES];
+	struct stmmac_tx_queue tx_queue[MTL_MAX_TX_QUEUES];
 
 	/* Generic channel for NAPI */
-	struct tc956xmac_channel channel[TC956XMAC_CH_MAX];
+	struct stmmac_channel channel[TC956XMAC_CH_MAX];
 
 	unsigned int l2_filtering_mode; /* 0 - if perfect and 1 - if hash filtering */
 	unsigned int vlan_hash_filtering;
@@ -790,7 +790,7 @@ struct stmmac_priv {
 #endif
 	struct stmmac_extra_stats xstats ____cacheline_aligned_in_smp;
 	struct stmmac_safety_stats sstats;
-	struct plat_tc956xmacenet_data *plat;
+	struct plat_stmmacenet_data *plat;
 	struct dma_features dma_cap;
 	struct stmmac_counters mmc;
 #ifdef TC956X_SRIOV_VF
@@ -857,20 +857,20 @@ struct stmmac_priv {
 	/* TC Handling */
 	unsigned int tc_entries_max;
 	unsigned int tc_off_max;
-	struct tc956xmac_tc_entry *tc_entries;
+	struct stmmac_tc_entry *tc_entries;
 	unsigned int flow_entries_max;
-	struct tc956xmac_flow_entry *flow_entries;
+	struct stmmac_flow_entry *flow_entries;
 
 	unsigned int rfs_entries_max[TC956X_RFS_T_MAX];
 	unsigned int rfs_entries_cnt[TC956X_RFS_T_MAX];
 	unsigned int rfs_entries_total;
-	struct tc956xmac_rfs_entry *rfs_entries;
+	struct stmmac_rfs_entry *rfs_entries;
 
 	/* Pulse Per Second output */
-	struct tc956xmac_pps_cfg pps[TC956XMAC_PPS_MAX];
+	struct stmmac_pps_cfg pps[TC956XMAC_PPS_MAX];
 
 	/* Receive Side Scaling */
-	struct tc956xmac_rss rss;
+	struct stmmac_rss rss;
 #ifdef TC956X_SRIOV_PF
 	u8 dma_vf_map[TC956XMAC_CH_MAX];
 	u8 pf_queue_dma_map[MTL_MAX_TX_QUEUES];
@@ -903,7 +903,7 @@ struct stmmac_priv {
 	bool is_sgmii_2p5g; /* For 2.5G SGMI, XPCS doesn't support AN. This flag is to identify 2.5G Speed for SGMII interface. */
 	u32 port_interface; /* Kernel module parameter variable for interface */
 	bool stm_port_pm_suspend; /* Port Suspend Status; True : port suspended, False : port resume */
-	bool tc956xmac_pm_wol_interrupt; /* Port-wise flag for clearing interrupt after resume. */
+	bool stmmac_pm_wol_interrupt; /* Port-wise flag for clearing interrupt after resume. */
 #endif
 
 	/* set to 1 when ptp offload is enabled, else 0. */
@@ -921,7 +921,7 @@ struct stmmac_priv {
 	void *plat_priv;
 #ifdef CONFIG_TC956X_DMA_OFFLOAD_ENABLE
 	void *client_priv;
-	struct tc956xmac_cm3_tamap cm3_tamap[MAX_CM3_TAMAP_ENTRIES];
+	struct stmmac_cm3_tamap cm3_tamap[MAX_CM3_TAMAP_ENTRIES];
 #endif
 	/* Work struct for handling phy interrupt */
 	struct work_struct emac_phy_work;
@@ -971,7 +971,7 @@ struct stm_version {
 	unsigned char patch_rel_minor;
 };
 
-enum tc956xmac_state {
+enum stmmac_state {
 	TC956XMAC_DOWN,
 	TC956XMAC_RESET_REQUESTED,
 	TC956XMAC_RESETING,
@@ -1041,7 +1041,7 @@ struct tx956x_tx_desc_buf_addrs {
 	void *buff_va_addr;
 #endif
 	struct sk_buff **tx_skbuff;
-	struct tc956xmac_tx_info *tx_skbuff_dma;
+	struct stmmac_tx_info *tx_skbuff_dma;
 };
 
 struct tx956x_rx_desc_buf_addrs {
@@ -1051,7 +1051,7 @@ struct tx956x_rx_desc_buf_addrs {
 	dma_addr_t buff_phy_addr;
 	void *buff_va_addr;
 #endif
-	struct tc956xmac_rx_buffer *buf_pool;
+	struct stmmac_rx_buffer *buf_pool;
 };
 
 struct stm_regs_dma {
@@ -1214,7 +1214,7 @@ struct stm_regs {
 	struct stm_regs_m3 m3_reg;
 
 	/*FRP Table*/
-	struct tc956xmac_rx_parser_cfg *rxp_cfg;
+	struct stmmac_rx_parser_cfg *rxp_cfg;
 
 	/* TAMAP */
 	struct stm_tamap tamap[MAX_CM3_TAMAP_ENTRIES + 1]; /*0th for PCIe-eMAC 1,2,3 for IPA*/
@@ -1229,48 +1229,48 @@ struct stm_regs {
 
 int stm_dump_regs(struct net_device *net_device, struct stm_regs *regs);
 int tc956x_print_debug_regs(struct net_device *net_device, struct stm_regs *regs);
-int tc956xmac_mdio_unregister(struct net_device *ndev);
-int tc956xmac_mdio_register(struct net_device *ndev);
-int tc956xmac_mdio_reset(struct mii_bus *mii);
-void tc956xmac_set_ethtool_ops(struct net_device *netdev);
+int stmmac_mdio_unregister(struct net_device *ndev);
+int stmmac_mdio_register(struct net_device *ndev);
+int stmmac_mdio_reset(struct mii_bus *mii);
+void stmmac_set_ethtool_ops(struct net_device *netdev);
 
-void tc956xmac_ptp_register(struct stmmac_priv *priv);
-void tc956xmac_ptp_unregister(struct stmmac_priv *priv);
+void stmmac_ptp_register(struct stmmac_priv *priv);
+void stmmac_ptp_unregister(struct stmmac_priv *priv);
 #ifdef TC956X_SRIOV_PF
 int tc956xmac_resume(struct device *dev);
 int tc956xmac_suspend(struct device *dev);
 int tc956xmac_dvr_remove(struct device *dev);
 int tc956xmac_dvr_probe(struct device *device,
-		     struct plat_tc956xmacenet_data *plat_dat,
-		     struct tc956xmac_resources *res);
+		     struct plat_stmmacenet_data *plat_dat,
+		     struct stmmac_resources *res);
 #elif defined TC956X_SRIOV_VF
-int tc956xmac_vf_resume(struct device *dev);
-int tc956xmac_vf_suspend(struct device *dev);
-int tc956xmac_vf_dvr_remove(struct device *dev);
-int tc956xmac_vf_dvr_probe(struct device *device,
-		     struct plat_tc956xmacenet_data *plat_dat,
-		     struct tc956xmac_resources *res);
+int stmmac_vf_resume(struct device *dev);
+int stmmac_vf_suspend(struct device *dev);
+int stmmac_vf_dvr_remove(struct device *dev);
+int stmmac_vf_dvr_probe(struct device *device,
+		     struct plat_stmmacenet_data *plat_dat,
+		     struct stmmac_resources *res);
 #endif
-void tc956xmac_disable_eee_mode(struct stmmac_priv *priv);
-bool tc956xmac_eee_init(struct stmmac_priv *priv);
+void stmmac_disable_eee_mode(struct stmmac_priv *priv);
+bool stmmac_eee_init(struct stmmac_priv *priv);
 
 #ifdef CONFIG_TC956X_MAC_SELFTESTS
-void tc956xmac_selftest_run(struct net_device *dev,
+void stmmac_selftest_run(struct net_device *dev,
 			 struct ethtool_test *etest, u64 *buf);
-void tc956xmac_selftest_get_strings(struct stmmac_priv *priv, u8 *data);
-int tc956xmac_selftest_get_count(struct stmmac_priv *priv);
+void stmmac_selftest_get_strings(struct stmmac_priv *priv, u8 *data);
+int stmmac_selftest_get_count(struct stmmac_priv *priv);
 #else
-static inline void tc956xmac_selftest_run(struct net_device *dev,
+static inline void stmmac_selftest_run(struct net_device *dev,
 				       struct ethtool_test *etest, u64 *buf)
 {
 	/* Not enabled */
 }
-static inline void tc956xmac_selftest_get_strings(struct stmmac_priv *priv,
+static inline void stmmac_selftest_get_strings(struct stmmac_priv *priv,
 					       u8 *data)
 {
 	/* Not enabled */
 }
-static inline int tc956xmac_selftest_get_count(struct stmmac_priv *priv)
+static inline int stmmac_selftest_get_count(struct stmmac_priv *priv)
 {
 	return -EOPNOTSUPP;
 }
@@ -1279,9 +1279,9 @@ static inline int tc956xmac_selftest_get_count(struct stmmac_priv *priv)
 /* Function Prototypes */
 
 #ifndef TC956X_SRIOV_VF
-s32 stm_load_firmware(struct device *dev, struct tc956xmac_resources *res);
+s32 stm_load_firmware(struct device *dev, struct stmmac_resources *res);
 #endif
-extern int tc956xmac_pm_usage_counter;
+extern int stmmac_pm_usage_counter;
 extern int stm_dsp_count;
 #if defined(TC956X_SRIOV_PF) && !defined(TC956X_AUTOMOTIVE_CONFIG) && !defined(TC956X_ENABLE_MAC2MAC_BRIDGE) && !defined(TC956X_CPE_CONFIG)
 int stm_pf_get_fn_idx_from_int_sts(struct stmmac_priv *priv,
@@ -1291,17 +1291,17 @@ void stm_pf_parse_mbx(struct stmmac_priv *priv,
 #endif
 
 #ifdef CONFIG_TC956X_PLATFORM_SUPPORT
-int stm_platform_probe(struct stmmac_priv *priv, struct tc956xmac_resources *res);
+int stm_platform_probe(struct stmmac_priv *priv, struct stmmac_resources *res);
 int stm_platform_remove(struct stmmac_priv *priv);
 int stm_platform_suspend(struct stmmac_priv *priv);
 int stm_platform_resume(struct stmmac_priv *priv);
-int stm_platform_port_interface_overlay(struct device *dev, struct tc956xmac_resources *res);
+int stm_platform_port_interface_overlay(struct device *dev, struct stmmac_resources *res);
 #else
-int stm_platform_probe(struct stmmac_priv *priv, struct tc956xmac_resources *res);
+int stm_platform_probe(struct stmmac_priv *priv, struct stmmac_resources *res);
 static inline int stm_platform_remove(struct stmmac_priv *priv) { return 0; }
 static inline int stm_platform_suspend(struct stmmac_priv *priv) { return 0; }
 int stm_platform_resume(struct stmmac_priv *priv);
-static inline int stm_platform_port_interface_overlay(struct device *dev, struct tc956xmac_resources *res) { return 0; }
+static inline int stm_platform_port_interface_overlay(struct device *dev, struct stmmac_resources *res) { return 0; }
 #endif
 
 int stm_GPIO_OutputConfigPin(struct stmmac_priv *priv, u32 gpio_pin, u8 out_value);
@@ -1318,17 +1318,17 @@ int stm_vf_rsc_mng_get_fn_id(struct stmmac_priv *priv, void __iomem *reg_pci_bri
 #endif
 void stm_config_CM3_tamap(struct device *dev,
 				void __iomem *reg_pci_base_addr,
-				struct tc956xmac_cm3_tamap *tamap,
+				struct stmmac_cm3_tamap *tamap,
 				u8 table_entry);
 int stm_set_pci_speed(struct pci_dev *pdev, u32 speed);
 uint8_t get_stm_index(struct pci_dev *pdev);
-void tc956xmac_link_change_set_power(struct stmmac_priv *priv, enum TC956X_PORT_LINK_CHANGE_STATE state);
+void stmmac_link_change_set_power(struct stmmac_priv *priv, enum TC956X_PORT_LINK_CHANGE_STATE state);
 uint16_t stm_get_shared_mem_offset(struct pci_dev *pdev, uint16_t pci_bd);
 
 #ifdef TC956X_SRIOV_PF
 #ifdef CONFIG_DEBUG_FS
-int tc956xmac_create_debugfs(struct net_device *net_device);
-int tc956xmac_cleanup_debugfs(struct net_device *net_device);
+int stmmac_create_debugfs(struct net_device *net_device);
+int stmmac_cleanup_debugfs(struct net_device *net_device);
 #endif
 #endif
 

@@ -70,7 +70,7 @@ static int stm_pma_init(struct stmmac_priv *priv, void __iomem *pmaaddr)
 
 }
 
-const struct tc956xmac_pma_ops stm_pma_ops = {
+const struct stmmac_pma_ops stm_pma_ops = {
 	.init = stm_pma_init,
 };
 #endif

@@ -191,7 +191,7 @@
 
 /* Platfrom data for platform device structure's platform_data field */
 
-struct tc956xmac_mdio_bus_data {
+struct stmmac_mdio_bus_data {
 	unsigned int phy_mask;
 	int *irqs;
 	int probed_phy_irq;
@@ -223,7 +223,7 @@ struct stmmac_axi {
 };
 
 #define EST_GCL		128
-struct tc956xmac_est {
+struct stmmac_est {
 	int enable;
 	u32 btr_offset[2];
 	u32 btr[2];
@@ -236,7 +236,7 @@ struct tc956xmac_est {
 #endif
 };
 
-struct tc956xmac_rxq_cfg {
+struct stmmac_rxq_cfg {
 	u8 mode_to_use;
 	u32 chan;
 	u8 pkt_route;
@@ -247,7 +247,7 @@ struct tc956xmac_rxq_cfg {
 	u32 rfa;
 };
 
-struct tc956xmac_txq_cfg {
+struct stmmac_txq_cfg {
 	u32 weight;
 	u8 mode_to_use;
 	/* Credit Base Shaper parameters */
@@ -263,7 +263,7 @@ struct tc956xmac_txq_cfg {
 	u32 size;
 };
 
-struct tc956xmac_fpe_cfg {
+struct stmmac_fpe_cfg {
 	bool enable;
 	u32 pec_cfg;
 	u32 afsz_cfg;
@@ -277,21 +277,21 @@ enum ch_owner {
 	USE_IN_OFFLOADER = 2,
 };
 
-struct plat_tc956xmacenet_data {
+struct plat_stmmacenet_data {
 	int bus_id;
 	int phy_addr;
 	int interface;
-	struct tc956xmac_rx_parser_cfg rxp_cfg;
+	struct stmmac_rx_parser_cfg rxp_cfg;
 	struct pci_dev *pdev;
 	phy_interface_t phy_interface;
-	struct tc956xmac_mdio_bus_data *mdio_bus_data;
+	struct stmmac_mdio_bus_data *mdio_bus_data;
 	struct device_node *phy_node;
 #ifndef TC956X_SRIOV_VF
 	struct device_node *phylink_node;
 #endif
 	struct device_node *mdio_node;
 	struct stmmac_dma_cfg *dma_cfg;
-	struct tc956xmac_est *est;
+	struct stmmac_est *est;
 	int clk_csr;
 	int clk_crs;
 	u8 mdc_clk;
@@ -337,20 +337,20 @@ struct plat_tc956xmacenet_data {
 #endif
 	u8 rx_sched_algorithm;
 	u8 tx_sched_algorithm;
-	struct tc956xmac_rxq_cfg rx_queues_cfg[MTL_MAX_RX_QUEUES];
-	struct tc956xmac_txq_cfg tx_queues_cfg[MTL_MAX_TX_QUEUES];
+	struct stmmac_rxq_cfg rx_queues_cfg[MTL_MAX_RX_QUEUES];
+	struct stmmac_txq_cfg tx_queues_cfg[MTL_MAX_TX_QUEUES];
 	void (*fix_mac_speed)(void *priv, unsigned int speed);
 	int (*init)(struct platform_device *pdev, void *priv);
 	void (*exit)(struct platform_device *pdev, void *priv);
 	struct mac_device_info *(*setup)(void *priv);
 	void *bsp_priv;
-	struct clk *tc956xmac_clk;
+	struct clk *stmmac_clk;
 	struct clk *pclk;
 	struct clk *clk_ptp_ref;
 	unsigned int clk_ptp_rate;
 	unsigned int clk_ref_rate;
 	s32 ptp_max_adj;
-	struct reset_control *tc956xmac_rst;
+	struct reset_control *stmmac_rst;
 	struct stmmac_axi *axi;
 	int has_gmac4;
 	bool has_sun8i;
@@ -359,7 +359,7 @@ struct plat_tc956xmacenet_data {
 	int sph_en;
 	int mac_port_sel_speed;
 	bool en_tx_lpi_clockgating;
-	struct tc956xmac_fpe_cfg fpe_cfg;
+	struct stmmac_fpe_cfg fpe_cfg;
 	int has_xgmac;
 	int (*cphy_read)(void *priv, int phyaddr, int phyreg);
 	int (*cphy_write)(void *priv, int phyaddr, int phyreg, u16 phydata);
@@ -399,7 +399,7 @@ struct tx956x_shrd_mem {
 };
 
 #ifdef TC956X_SRIOV_VF
-static const struct tc956xmac_vf_entry {
+static const struct stmmac_vf_entry {
 	u32 rx_queues_to_use_actual;
 	u32 tx_queues_to_use_actual;
 	/* No of and name of Rx and Tx channel will be always same */
@@ -414,8 +414,8 @@ static const struct tc956xmac_vf_entry {
 	u32 tsn_ch_no;
 	u32 tsn_application; /* Set if VF supports TSN application */
 	u32 avb_application; /* Set if VF supports AVB app */
-	struct tc956xmac_txq_cfg tx_queues_cfg[MTL_MAX_TX_QUEUES];
-} tc956xmac_vf[] = {
+	struct stmmac_txq_cfg tx_queues_cfg[MTL_MAX_TX_QUEUES];
+} stmmac_vf[] = {
 	/* VF[0] configurations */
 	{
 		.rx_queues_to_use_actual = 8,

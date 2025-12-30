@@ -36,15 +36,15 @@
 #include "tc956xmac.h"
 #include "common.h"
 
-extern int tc956xmac_ioctl_get_cbs(struct stmmac_priv *priv, void *data);
-extern int tc956xmac_ioctl_set_cbs(struct stmmac_priv *priv, void *data);
-extern int tc956xmac_ioctl_set_rxp(struct stmmac_priv *priv, void *data);
-extern int tc956xmac_ioctl_get_rxp(struct stmmac_priv *priv, void *data);
-extern int tc956xmac_ioctl_set_est(struct stmmac_priv *priv, void *data);
-extern int tc956xmac_ioctl_get_est(struct stmmac_priv *priv, void *data);
-extern int tc956xmac_ioctl_set_fpe(struct stmmac_priv *priv, void *data);
-extern int tc956xmac_ioctl_get_fpe(struct stmmac_priv *priv, void *data);
-extern int tc956xmac_ethtool_op_get_eee(struct net_device *dev,
+extern int stmmac_ioctl_get_cbs(struct stmmac_priv *priv, void *data);
+extern int stmmac_ioctl_set_cbs(struct stmmac_priv *priv, void *data);
+extern int stmmac_ioctl_set_rxp(struct stmmac_priv *priv, void *data);
+extern int stmmac_ioctl_get_rxp(struct stmmac_priv *priv, void *data);
+extern int stmmac_ioctl_set_est(struct stmmac_priv *priv, void *data);
+extern int stmmac_ioctl_get_est(struct stmmac_priv *priv, void *data);
+extern int stmmac_ioctl_set_fpe(struct stmmac_priv *priv, void *data);
+extern int stmmac_ioctl_get_fpe(struct stmmac_priv *priv, void *data);
+extern int stmmac_ethtool_op_get_eee(struct net_device *dev,
 										struct ethtool_eee *edata);
 
 
@@ -59,7 +59,7 @@ extern void stm_pf_del_vlan_filter(struct net_device *dev, u16 vf, u16 vid);
 
 extern void stm_pf_del_umac_addr(struct stmmac_priv *priv, int index, int vf);
 
-extern void tc956xmac_service_mbx_event_schedule(struct stmmac_priv *priv);
+extern void stmmac_service_mbx_event_schedule(struct stmmac_priv *priv);
 
 #ifdef TC956X_SRIOV_PF
 /**
@@ -103,7 +103,7 @@ static void stm_mbx_phy_link(struct stmmac_priv *priv)
 		if (priv->clear_to_send[i-vf0] == VF_UP) {
 			msg_dst = (enum mbx_msg_fns) i;
 
-			ret = tc956xmac_mbx_write(priv, &mbx[i-vf0][0], msg_dst,
+			ret = stmmac_mbx_write(priv, &mbx[i-vf0][0], msg_dst,
 							&priv->fn_id_info);
 
 			/* Validation of successfull message posting can be done
@@ -158,7 +158,7 @@ static int stm_mbx_rx_dma_ch_tlptr(struct stmmac_priv *priv, u32 ch, u8 vf)
 	if (priv->clear_to_send[vf] == VF_UP) {
 		msg_dst = (enum mbx_msg_fns)(vf + 3);
 
-		ret = tc956xmac_mbx_write(priv, &mbx[0], msg_dst,
+		ret = stmmac_mbx_write(priv, &mbx[0], msg_dst,
 							&priv->fn_id_info);
 
 		/* Validation of successfull message posting can be done
@@ -214,7 +214,7 @@ static int stm_mbx_set_dma_tx_mode(struct stmmac_priv *priv, u8 *mbx_buff, u8 *a
 	qmode = mbx_buff[14];
 
 	/* Call core API to set the register */
-	tc956xmac_dma_tx_mode(priv, priv->ioaddr, txmode, chan,
+	stmmac_dma_tx_mode(priv, priv->ioaddr, txmode, chan,
 				txfifosz, qmode);
 
 	/* Clear the ACK buffer as there is no ACK message */
@@ -259,7 +259,7 @@ static int stm_mbx_set_mtl_tx_queue_weight(struct stmmac_priv *priv, u8 *mbx_buf
 	memcpy(&traffic_class, &mbx_buff[6], sizeof(traffic_class));
 
 	/* Call core API to set the register */
-	tc956xmac_set_mtl_tx_queue_weight(priv, priv->hw, weight, traffic_class);
+	stmmac_set_mtl_tx_queue_weight(priv, priv->hw, weight, traffic_class);
 
 	/* Clear the ACK buffer as there is no ACK message */
 	ack_buff[0] = OPCODE_MBX_ACK_MSG; /* set ACK opcode */
@@ -311,7 +311,7 @@ static int stm_mbx_config_cbs(struct stmmac_priv *priv,
 	memcpy(&queue, &mbx_buff[18], sizeof(queue));
 
 	/* Call core API to set the register */
-	tc956xmac_config_cbs(priv, priv->hw, send_slope,
+	stmmac_config_cbs(priv, priv->hw, send_slope,
 		idle_slope, high_credit, low_credit, queue);
 
 	if (priv->speed == SPEED_100) {
@@ -389,7 +389,7 @@ static int stm_mbx_setup_cbs(struct stmmac_priv *priv,
 	memcpy(&qopt.locredit, &mbx_buff[15], sizeof(qopt.locredit));
 	memcpy(&qopt.queue, &mbx_buff[19], sizeof(qopt.queue));
 
-	tc956xmac_tc_setup_cbs(priv, &qopt);
+	stmmac_tc_setup_cbs(priv, &qopt);
 	/* Clear the ACK buffer as there is no ACK message */
 	ack_buff[0] = OPCODE_MBX_ACK_MSG;
 	memset(&ack_buff[1], 0, MBX_MSG_SIZE-1);
@@ -433,7 +433,7 @@ static int stm_mbx_tx_queue_prio(struct stmmac_priv *priv,
 	memcpy(&queue, &mbx_buff[6], sizeof(queue));
 
 	/* Call core API to set the register */
-	tc956xmac_tx_queue_prio(priv, priv->hw, prio, queue);
+	stmmac_tx_queue_prio(priv, priv->hw, prio, queue);
 
 
 	/* Clear the ACK buffer as there is no ACK message */
@@ -484,7 +484,7 @@ static int stm_mbx_vf_get_link_status(struct stmmac_priv *priv,
 }
 
 /**
- * tc956xmac_pf_ioctl_interface
+ * stmmac_pf_ioctl_interface
  *
  * \brief API to process ioctl requests
  *
@@ -497,7 +497,7 @@ static int stm_mbx_vf_get_link_status(struct stmmac_priv *priv,
  *
  * \return ACK/NACK
  */
-static int tc956xmac_pf_ioctl_interface(struct stmmac_priv *priv,
+static int stmmac_pf_ioctl_interface(struct stmmac_priv *priv,
 							u8 *mbx, u8 *ack_buff, u8 vf_no)
 {
 	u32 val;
@@ -518,7 +518,7 @@ static int tc956xmac_pf_ioctl_interface(struct stmmac_priv *priv,
 	case TC956XMAC_SET_CBS_2:
 		{
 			static u8 msg_seq[TC956X_TOTAL_VFS], mbx_loc[TC956X_TOTAL_VFS][MBX_TOT_SIZE * TC956X_TWO];
-			static struct tc956xmac_ioctl_cbs_cfg cbs;
+			static struct stmmac_ioctl_cbs_cfg cbs;
 
 			vf_no -= TC956X_ONE;
 			if (mbx[2] == TC956XMAC_SET_CBS_1) {
@@ -570,7 +570,7 @@ static int tc956xmac_pf_ioctl_interface(struct stmmac_priv *priv,
 					memcpy(&cbs.speed2500cfg.low_credit, &mbx_loc[vf_no][92], sizeof(cbs.speed2500cfg.low_credit));
 					memcpy(&cbs.speed2500cfg.percentage, &mbx_loc[vf_no][96], sizeof(cbs.speed2500cfg.percentage));
 
-					tc956xmac_ioctl_set_cbs(priv, &cbs);
+					stmmac_ioctl_set_cbs(priv, &cbs);
 				}
 			}
 
@@ -583,14 +583,14 @@ static int tc956xmac_pf_ioctl_interface(struct stmmac_priv *priv,
 	case TC956XMAC_GET_CBS_2:
 	{
 		static u8 mbx_loc[TC956X_TOTAL_VFS][MBX_TOT_SIZE * TC956X_TWO];
-		struct tc956xmac_ioctl_cbs_cfg cbs;
+		struct stmmac_ioctl_cbs_cfg cbs;
 		int ret = 0;
 
 		vf_no -= TC956X_ONE;
 		if (mbx[2] == TC956XMAC_GET_CBS_1) {
-			memset(&mbx_loc[vf_no][0], 0, sizeof(struct tc956xmac_ioctl_cbs_cfg));
+			memset(&mbx_loc[vf_no][0], 0, sizeof(struct stmmac_ioctl_cbs_cfg));
 			cbs.queue_idx = mbx[3];
-			ret = tc956xmac_ioctl_get_cbs(priv, &cbs);
+			ret = stmmac_ioctl_get_cbs(priv, &cbs);
 			memcpy(&mbx_loc[vf_no][0], (u8 *)&cbs.speed100cfg, sizeof(cbs) - TC956X_EIGHT);
 
 			ack_buff[0] = OPCODE_MBX_ACK_MSG; /* set ACK opcode */
@@ -621,7 +621,7 @@ static int tc956xmac_pf_ioctl_interface(struct stmmac_priv *priv,
 	{
 		static u16 total_size, msg_size, offset = 1;
 		static u8 mbx_loc[MBX_TOT_SIZE * TC956X_TEN];
-		static struct tc956xmac_ioctl_est_cfg *est;
+		static struct stmmac_ioctl_est_cfg *est;
 
 		if (vf_no != TC956XMAC_VF_ADAS)
 			return NACK;
@@ -636,7 +636,7 @@ static int tc956xmac_pf_ioctl_interface(struct stmmac_priv *priv,
 			memset(&mbx_loc[0], 0, MBX_TOT_SIZE * TC956X_TEN);
 			memcpy(&mbx_loc[0], &mbx[3], SIZE_MBX_SET_GET_EST_1);
 
-			memset(est, 0, sizeof(struct tc956xmac_est));
+			memset(est, 0, sizeof(struct stmmac_est));
 			memcpy(&est->enabled, &mbx_loc[0], sizeof(est->enabled));
 			memcpy(&est->btr_offset[0], &mbx_loc[4], sizeof(est->btr_offset));
 			memcpy(&est->ctr[0], &mbx_loc[12], sizeof(est->ctr));
@@ -652,7 +652,7 @@ static int tc956xmac_pf_ioctl_interface(struct stmmac_priv *priv,
 		}
 		if (msg_size == total_size) {
 			memcpy(&est->gcl[0], &mbx_loc[28], est->gcl_size * sizeof(*est->gcl));
-			tc956xmac_ioctl_set_est(priv, est);
+			stmmac_ioctl_set_est(priv, est);
 			msg_size = 0;
 			total_size = 0;
 			offset = 1;
@@ -675,7 +675,7 @@ static int tc956xmac_pf_ioctl_interface(struct stmmac_priv *priv,
 	{
 		static u16 gcl_size, msg_size, toatl_msg_size, offset;
 		static u8 mbx_loc[MBX_TOT_SIZE * TC956X_TEN];
-		static struct tc956xmac_ioctl_est_cfg *est;
+		static struct stmmac_ioctl_est_cfg *est;
 
 		if (vf_no != TC956XMAC_VF_ADAS)
 			return NACK;
@@ -686,7 +686,7 @@ static int tc956xmac_pf_ioctl_interface(struct stmmac_priv *priv,
 			est = kzalloc(sizeof(*est), GFP_ATOMIC);
 			if (!est)
 				return -ENOMEM;
-			tc956xmac_ioctl_get_est(priv, est);
+			stmmac_ioctl_get_est(priv, est);
 
 			memcpy(&mbx_loc[0], (u8 *)&est->enabled, sizeof(est->enabled));
 			memcpy(&mbx_loc[4], (u8 *)&est->estwid, sizeof(est->estwid));
@@ -756,7 +756,7 @@ static int tc956xmac_pf_ioctl_interface(struct stmmac_priv *priv,
 	{
 		static u16 total_size, msg_size, offset = 1;
 		static u8 *mbx_loc;
-		static struct tc956xmac_ioctl_rxp_cfg *rxp;
+		static struct stmmac_ioctl_rxp_cfg *rxp;
 
 		if (mbx[2] == TC956XMAC_SET_RXP_1) {
 			rxp = kzalloc(sizeof(*rxp), GFP_ATOMIC);
@@ -772,7 +772,7 @@ static int tc956xmac_pf_ioctl_interface(struct stmmac_priv *priv,
 			memset(&mbx_loc[0], 0, sizeof(*rxp));
 			memcpy(&mbx_loc[0], &mbx[3], SIZE_MBX_SET_GET_RXP_1);
 
-			memset(rxp, 0, sizeof(struct tc956xmac_ioctl_rxp_cfg));
+			memset(rxp, 0, sizeof(struct stmmac_ioctl_rxp_cfg));
 			memcpy(&rxp->frpes, &mbx_loc[0], sizeof(rxp->frpes));
 			memcpy(&rxp->enabled, &mbx_loc[4], sizeof(rxp->enabled));
 			memcpy(&rxp->nve, &mbx_loc[8], sizeof(rxp->nve));
@@ -788,7 +788,7 @@ static int tc956xmac_pf_ioctl_interface(struct stmmac_priv *priv,
 
 		if (msg_size == total_size) {
 			memcpy(&rxp->entries[0], &mbx_loc[16], total_size);
-			tc956xmac_ioctl_set_rxp(priv, rxp);
+			stmmac_ioctl_set_rxp(priv, rxp);
 			msg_size = 0;
 			total_size = 0;
 			offset = 1;
@@ -839,7 +839,7 @@ static int tc956xmac_pf_ioctl_interface(struct stmmac_priv *priv,
 	{
 		static u16 rxp_size, msg_size, toatl_msg_size, offset;
 		static u8 *mbx_loc;
-		static struct tc956xmac_ioctl_rxp_cfg *rxp;
+		static struct stmmac_ioctl_rxp_cfg *rxp;
 
 		if (mbx[2] == TC956XMAC_GET_RXP_1) {
 			rxp = kzalloc(sizeof(*rxp), GFP_ATOMIC);
@@ -851,7 +851,7 @@ static int tc956xmac_pf_ioctl_interface(struct stmmac_priv *priv,
 				kfree(rxp);
 				return -ENOMEM;
 			}
-			tc956xmac_ioctl_get_rxp(priv, rxp);
+			stmmac_ioctl_get_rxp(priv, rxp);
 
 			memcpy(&mbx_loc[0], (u8 *)&rxp->frpes, sizeof(rxp->frpes));
 			memcpy(&mbx_loc[4], (u8 *)&rxp->enabled, sizeof(rxp->enabled));
@@ -882,7 +882,7 @@ static int tc956xmac_pf_ioctl_interface(struct stmmac_priv *priv,
 	}
 	case TC956XMAC_SET_FPE_1:
 	{
-		struct tc956xmac_ioctl_fpe_cfg fpe;
+		struct stmmac_ioctl_fpe_cfg fpe;
 
 		if (vf_no != TC956XMAC_VF_ADAS)
 			return NACK;
@@ -895,7 +895,7 @@ static int tc956xmac_pf_ioctl_interface(struct stmmac_priv *priv,
 		memcpy(&fpe.RA_time, &mbx[15], sizeof(fpe.RA_time));
 		memcpy(&fpe.HA_time, &mbx[19], sizeof(fpe.HA_time));
 
-		tc956xmac_ioctl_set_fpe(priv, &fpe);
+		stmmac_ioctl_set_fpe(priv, &fpe);
 
 		/* Clear the ACK buffer as there is no ACK message */
 		ack_buff[0] = OPCODE_MBX_ACK_MSG; /* set ACK opcode */
@@ -904,14 +904,14 @@ static int tc956xmac_pf_ioctl_interface(struct stmmac_priv *priv,
 	}
 	case TC956XMAC_GET_FPE_1:
 	{
-		struct tc956xmac_ioctl_fpe_cfg fpe;
+		struct stmmac_ioctl_fpe_cfg fpe;
 
 		if (vf_no != TC956XMAC_VF_ADAS)
 			return NACK;
 
 		vf_no -= TC956X_ONE;
 
-		tc956xmac_ioctl_get_fpe(priv, &fpe);
+		stmmac_ioctl_get_fpe(priv, &fpe);
 
 		/* Clear the ACK buffer as there is no ACK message */
 		ack_buff[0] = OPCODE_MBX_ACK_MSG; /* set ACK opcode */
@@ -958,7 +958,7 @@ static int tc956xmac_pf_ioctl_interface(struct stmmac_priv *priv,
 		priv->mbx_wq_param.val_out[vf_no] = 0;
 		priv->mbx_wq_param.vf_no = vf_no;
 
-		tc956xmac_service_mbx_event_schedule(priv);
+		stmmac_service_mbx_event_schedule(priv);
 		spin_unlock_irqrestore(&priv->wq_lock, flags);
 
 		ack_buff[0] = OPCODE_MBX_ACK_MSG; /* set ACK opcode */
@@ -980,7 +980,7 @@ static int tc956xmac_pf_ioctl_interface(struct stmmac_priv *priv,
 }
 
 /**
- * tc956xmac_pf_ethtool_interface
+ * stmmac_pf_ethtool_interface
  *
  * \brief API to process ethtool requests
  *
@@ -993,7 +993,7 @@ static int tc956xmac_pf_ioctl_interface(struct stmmac_priv *priv,
  *
  * \return ACK/NACK
  */
-static int tc956xmac_pf_ethtool_interface(struct stmmac_priv *priv, struct net_device *netdev,
+static int stmmac_pf_ethtool_interface(struct stmmac_priv *priv, struct net_device *netdev,
 								u8 *mbx, u8 *ack_buff)
 {
 	struct ethtool_eee edata;
@@ -1008,7 +1008,7 @@ static int tc956xmac_pf_ethtool_interface(struct stmmac_priv *priv, struct net_d
 	case TC956XMAC_GET_PAUSE_PARAM:
 		spin_lock_irqsave(&priv->wq_lock, flags);
 		priv->mbx_wq_param.fn_id = SCH_WQ_GET_PAUSE_PARAM;
-		tc956xmac_service_mbx_event_schedule(priv);
+		stmmac_service_mbx_event_schedule(priv);
 		spin_unlock_irqrestore(&priv->wq_lock, flags);
 
 		ack_buff[0] = OPCODE_MBX_ACK_MSG; /* set ACK opcode */
@@ -1021,7 +1021,7 @@ static int tc956xmac_pf_ethtool_interface(struct stmmac_priv *priv, struct net_d
 			sizeof(struct ethtool_pauseparam));
 		break;
 	case TC956XMAC_GET_EEE:
-		tc956xmac_ethtool_op_get_eee(netdev, &edata);
+		stmmac_ethtool_op_get_eee(netdev, &edata);
 		ack_buff[0] = OPCODE_MBX_ACK_MSG; /* set ACK opcode */
 		ack_buff[1] = sizeof(struct ethtool_eee); /* set size */
 		memcpy(&ack_buff[2], (u8 *)&edata,
@@ -1036,7 +1036,7 @@ static int tc956xmac_pf_ethtool_interface(struct stmmac_priv *priv, struct net_d
 }
 
 /**
- * tc956xmac_pf_set_mac_filter
+ * stmmac_pf_set_mac_filter
  *
  * \brief API to add the mac address filter value
  *
@@ -1051,7 +1051,7 @@ static int tc956xmac_pf_ethtool_interface(struct stmmac_priv *priv, struct net_d
  *
  * \return ACK/NACK
  */
-static int tc956xmac_pf_set_mac_filter(struct stmmac_priv *priv, struct net_device *dev,
+static int stmmac_pf_set_mac_filter(struct stmmac_priv *priv, struct net_device *dev,
 				u8 *mbx_buff, u8 *ack_buff, u8 vf)
 {
 	u8 mac[SIZE_MBX_VF_MAC];
@@ -1094,7 +1094,7 @@ static int tc956xmac_pf_set_mac_filter(struct stmmac_priv *priv, struct net_devi
 }
 
 /**
- * tc956xmac_pf_del_mac_filter
+ * stmmac_pf_del_mac_filter
  *
  * \brief API to delete the mac address filter value
  *
@@ -1109,7 +1109,7 @@ static int tc956xmac_pf_set_mac_filter(struct stmmac_priv *priv, struct net_devi
  *
  * \return ACK/NACK
  */
-static int tc956xmac_pf_del_mac_filter(struct stmmac_priv *priv, struct net_device *dev,
+static int stmmac_pf_del_mac_filter(struct stmmac_priv *priv, struct net_device *dev,
 					u8 *mbx_buff, u8 *ack_buff, u8 vf)
 {
 
@@ -1149,7 +1149,7 @@ static int tc956xmac_pf_del_mac_filter(struct stmmac_priv *priv, struct net_devi
 }
 
 /**
- * tc956xmac_pf_set_vlan_filter
+ * stmmac_pf_set_vlan_filter
  *
  * \brief API to add the vlan ids filter value
  *
@@ -1164,7 +1164,7 @@ static int tc956xmac_pf_del_mac_filter(struct stmmac_priv *priv, struct net_devi
  *
  * \return ACK/NACK
  */
-static int tc956xmac_pf_set_vlan_filter(struct stmmac_priv *priv, struct net_device *dev,
+static int stmmac_pf_set_vlan_filter(struct stmmac_priv *priv, struct net_device *dev,
 				u8 *mbx_buff, u8 *ack_buff, u8 vf)
 {
 	u16 vid;
@@ -1204,7 +1204,7 @@ static int tc956xmac_pf_set_vlan_filter(struct stmmac_priv *priv, struct net_dev
 }
 
 /**
- * tc956xmac_pf_set_vlan_filter
+ * stmmac_pf_set_vlan_filter
  *
  * \brief API to add the vlan ids filter value
  *
@@ -1219,7 +1219,7 @@ static int tc956xmac_pf_set_vlan_filter(struct stmmac_priv *priv, struct net_dev
  *
  * \return ACK/NACK
  */
-static int tc956xmac_pf_del_vlan_filter(struct stmmac_priv *priv, struct net_device *dev,
+static int stmmac_pf_del_vlan_filter(struct stmmac_priv *priv, struct net_device *dev,
 						u8 *mbx_buff, u8 *ack_buff, u8 vf)
 {
 	u16 vid;
@@ -1296,7 +1296,7 @@ static void stm_mbx_rx_crc(struct stmmac_priv *priv)
 	if (priv->clear_to_send[i-vf0] == VF_UP) {
 
 		msg_dst = (enum mbx_msg_fns) i;
-		ret = tc956xmac_mbx_write(priv, &mbx[i-vf0][0], msg_dst,
+		ret = stmmac_mbx_write(priv, &mbx[i-vf0][0], msg_dst,
 							&priv->fn_id_info);
 
 		/* Validation of successfull message posting can be done
@@ -1351,7 +1351,7 @@ static void stm_mbx_rx_csum(struct stmmac_priv *priv)
 	for (i = vf0; i <= vf2; i++) {
 		if (priv->clear_to_send[i-vf0] == VF_UP) {
 			msg_dst = (enum mbx_msg_fns) i;
-			ret = tc956xmac_mbx_write(priv, &mbx[i-vf0][0], msg_dst,
+			ret = stmmac_mbx_write(priv, &mbx[i-vf0][0], msg_dst,
 							&priv->fn_id_info);
 
 		/* Validation of successfull message posting can be done
@@ -1444,7 +1444,7 @@ static int stm_mbx_get_umac_addr(struct stmmac_priv *priv, u8 *mbx_buff, u8 *ack
 	spin_lock_irqsave(&priv->spn_lock.mac_filter, flags);
 #endif
 
-	tc956xmac_get_umac_addr(priv, priv->hw, addr, reg_n);
+	stmmac_get_umac_addr(priv, priv->hw, addr, reg_n);
 
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 	spin_unlock_irqrestore(&priv->spn_lock.mac_filter, flags);
@@ -1498,7 +1498,7 @@ static int stm_mbx_set_umac_addr(struct stmmac_priv *priv, u8 *mbx_buff, u8 *ack
 	spin_lock_irqsave(&priv->spn_lock.mac_filter, flags);
 #endif
 
-	tc956xmac_set_umac_addr(priv, priv->hw, addr, reg_n, vf);
+	stmmac_set_umac_addr(priv, priv->hw, addr, reg_n, vf);
 
 #if defined(TC956X_SRIOV_PF) && defined(TC956X_SRIOV_LOCK)
 	spin_unlock_irqrestore(&priv->spn_lock.mac_filter, flags);
@@ -1537,7 +1537,7 @@ static int stm_mbx_reset_eee_mode(struct stmmac_priv *priv, u8 *mbx_buff, u8 *ac
 	if (mbx_buff[1] != 0)
 		return NACK;
 
-	tc956xmac_reset_eee_mode(priv, priv->hw);
+	stmmac_reset_eee_mode(priv, priv->hw);
 
 	ack_msg[0] = OPCODE_MBX_ACK_MSG;
 	memset(&ack_msg[1], 0, MBX_MSG_SIZE-1);
@@ -1546,7 +1546,7 @@ static int stm_mbx_reset_eee_mode(struct stmmac_priv *priv, u8 *mbx_buff, u8 *ac
 }
 
 /**
- * tc956xmac_mbx_vf_reset
+ * stmmac_mbx_vf_reset
  *
  * \brief API to send tbs sate change to VF
  *
@@ -1559,7 +1559,7 @@ static int stm_mbx_reset_eee_mode(struct stmmac_priv *priv, u8 *mbx_buff, u8 *ac
  *
  * \return 0 or error
  */
-static int tc956xmac_mbx_vf_reset(struct stmmac_priv *priv, u8 *mbx_buff,
+static int stmmac_mbx_vf_reset(struct stmmac_priv *priv, u8 *mbx_buff,
 					u8 *ack_msg, u8 vf)
 {
 	struct stm_mac_addr *mac_table = &priv->mac_table[0];
@@ -1667,7 +1667,7 @@ static int stm_mbx_setup_etf(struct stmmac_priv *priv, u32 ch, u8 vf)
 	if (priv->clear_to_send[vf] == VF_UP) {
 		msg_dst = (enum mbx_msg_fns)(vf + 3);
 
-		ret = tc956xmac_mbx_write(priv, &mbx[0], msg_dst,
+		ret = stmmac_mbx_write(priv, &mbx[0], msg_dst,
 							&priv->fn_id_info);
 
 		/* Validation of successfull message posting can be done
@@ -1719,7 +1719,7 @@ static void stm_mbx_flr(struct stmmac_priv *priv)
 	for (i = vf0; i <= vf2; i++) {
 		if (priv->clear_to_send[i-vf0] == VF_UP) {
 			msg_dst = (enum mbx_msg_fns) i;
-				ret = tc956xmac_mbx_write(priv, &mbx[i-vf0][0], msg_dst,
+				ret = stmmac_mbx_write(priv, &mbx[i-vf0][0], msg_dst,
 								&priv->fn_id_info);
 
 			/* Validation of successfull message posting can be done
@@ -1768,7 +1768,7 @@ static int stm_mbx_rx_dma_err(struct stmmac_priv *priv, u8 vf)
 
 	if (priv->clear_to_send[vf] == VF_UP) {
 		msg_dst = (enum mbx_msg_fns)(vf + 3);
-		ret = tc956xmac_mbx_write(priv, &mbx[0], msg_dst,
+		ret = stmmac_mbx_write(priv, &mbx[0], msg_dst,
 							&priv->fn_id_info);
 
 		/* Validation of successfull message posting can be done
@@ -1787,7 +1787,7 @@ static int stm_mbx_rx_dma_err(struct stmmac_priv *priv, u8 vf)
 	return ret;
 }
 
-const struct stm_mbx_wrapper_ops tc956xmac_mbx_wrapper_ops = {
+const struct stm_mbx_wrapper_ops stmmac_mbx_wrapper_ops = {
 	.phy_link = stm_mbx_phy_link,
 	.set_dma_tx_mode = stm_mbx_set_dma_tx_mode,
 	.set_mtl_tx_queue_weight = stm_mbx_set_mtl_tx_queue_weight,
@@ -1802,13 +1802,13 @@ const struct stm_mbx_wrapper_ops tc956xmac_mbx_wrapper_ops = {
 	.get_umac_addr = stm_mbx_get_umac_addr,
 	.set_umac_addr = stm_mbx_set_umac_addr,
 	.get_drv_cap = stm_mbx_get_drv_cap,
-	.vf_ioctl = tc956xmac_pf_ioctl_interface,
-	.vf_ethtool = tc956xmac_pf_ethtool_interface,
-	.add_mac = tc956xmac_pf_set_mac_filter,
-	.delete_mac = tc956xmac_pf_del_mac_filter,
-	.add_vlan = tc956xmac_pf_set_vlan_filter,
-	.delete_vlan = tc956xmac_pf_del_vlan_filter,
-	.vf_reset = tc956xmac_mbx_vf_reset,
+	.vf_ioctl = stmmac_pf_ioctl_interface,
+	.vf_ethtool = stmmac_pf_ethtool_interface,
+	.add_mac = stmmac_pf_set_mac_filter,
+	.delete_mac = stmmac_pf_del_mac_filter,
+	.add_vlan = stmmac_pf_set_vlan_filter,
+	.delete_vlan = stmmac_pf_del_vlan_filter,
+	.vf_reset = stmmac_mbx_vf_reset,
 	.rx_dma_ch_tlptr = stm_mbx_rx_dma_ch_tlptr,
 	.pf_flr = stm_mbx_flr,
 	.rx_dma_err = stm_mbx_rx_dma_err,

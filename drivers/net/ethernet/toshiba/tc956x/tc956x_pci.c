@@ -577,7 +577,7 @@ static unsigned int mac1_axi_rd_osr_lmt = 31;
 static unsigned int mac0_axi_blen;
 static unsigned int mac1_axi_blen;
 static const struct stm_version stm_drv_version = {0, 6, 0, 0, 0, 0};
-int tc956xmac_pm_usage_counter; /* Device Usage Counter */
+int stmmac_pm_usage_counter; /* Device Usage Counter */
 int stm_dsp_count;
 #ifdef TC956X_SRIOV_PF
 #ifdef CONFIG_TC956X_MAGIC_PACKET_WOL_GPIO
@@ -590,24 +590,24 @@ static void stm_wol_gpio_trigger(void __iomem *reg_base_addr, bool mode);
  * negative value of the address means that MAC controller is not connected
  * with PHY.
  */
-struct tc956xmac_pci_func_data {
+struct stmmac_pci_func_data {
 	unsigned int func;
 	int phy_addr;
 };
 
-struct tc956xmac_pci_dmi_data {
-	const struct tc956xmac_pci_func_data *func;
+struct stmmac_pci_dmi_data {
+	const struct stmmac_pci_func_data *func;
 	size_t nfuncs;
 };
 
-struct tc956xmac_pci_info {
-	int (*setup)(struct pci_dev *pdev, struct plat_tc956xmacenet_data *plat);
+struct stmmac_pci_info {
+	int (*setup)(struct pci_dev *pdev, struct plat_stmmacenet_data *plat);
 };
 
 /* By default, Bypass FRP routing */
 /* User to configure routing for FRP usecase */
 
-static struct tc956xmac_rx_parser_entry snps_rxp_entries[] = {
+static struct stmmac_rx_parser_entry snps_rxp_entries[] = {
 #ifdef TC956X
 	{
 #ifdef TC956X_SRIOV_PF
@@ -620,7 +620,7 @@ static struct tc956xmac_rx_parser_entry snps_rxp_entries[] = {
 };
 
 #ifndef TC956X_SRIOV_VF
-static struct tc956xmac_rx_parser_entry snps_rxp_entries_filter_phy_pause_frames[] = {
+static struct stmmac_rx_parser_entry snps_rxp_entries_filter_phy_pause_frames[] = {
 /* 0th entry */{.match_data = 0x00000888, .match_en = 0x0000FFFF, .af = 0, .rf = 0, .im = 0, .nc = 1, .res1 = 0, .frame_offset = 3, .res2 = 0, .ok_index = 3, .res3 = 0, .dma_ch_no = 1, .res4 = 0,},
 /* Checking SA Address 00:01:02:03:04:05 AQR PHYs SA Address as Ether type Match*/
 /* 1st entry */{.match_data = 0x01000000, .match_en = 0xFFFF0000, .af = 0, .rf = 0, .im = 0, .nc = 1, .res1 = 0, .frame_offset = 1, .res2 = 0, .ok_index = 3, .res3 = 0, .dma_ch_no = 1, .res4 = 0,},
@@ -642,7 +642,7 @@ static struct tc956xmac_rx_parser_entry snps_rxp_entries_filter_phy_pause_frames
  *
  * \return None
  */
-static void tc956xmac_pm_set_power(struct stmmac_priv *priv, enum TC956X_PORT_PM_STATE state)
+static void stmmac_pm_set_power(struct stmmac_priv *priv, enum TC956X_PORT_PM_STATE state)
 {
 	void *nrst_reg = NULL, *nclk_reg = NULL, *commonclk_reg = NULL;
 	u32 nrst_val = 0, nclk_val = 0, commonclk_val = 0;
@@ -713,11 +713,11 @@ static void tc956xmac_pm_set_power(struct stmmac_priv *priv, enum TC956X_PORT_PM
 }
 
 #ifdef TC956X_UNSUPPORTED_UNTESTED_FEATURE
-static int tc956xmac_pci_find_phy_addr(struct pci_dev *pdev,
+static int stmmac_pci_find_phy_addr(struct pci_dev *pdev,
 				const struct dmi_system_id *dmi_list)
 {
-	const struct tc956xmac_pci_func_data *func_data;
-	const struct tc956xmac_pci_dmi_data *dmi_data;
+	const struct stmmac_pci_func_data *func_data;
+	const struct stmmac_pci_dmi_data *dmi_data;
 	const struct dmi_system_id *dmi_id;
 	int func = PCI_FUNC(pdev->devfn);
 	size_t n;
@@ -736,7 +736,7 @@ static int tc956xmac_pci_find_phy_addr(struct pci_dev *pdev,
 	return -ENODEV;
 }
 
-static void common_default_data(struct plat_tc956xmacenet_data *plat)
+static void common_default_data(struct plat_stmmacenet_data *plat)
 {
 	plat->clk_csr = 2;/* clk_csr_i = 20-35MHz & MDC = clk_csr_i/16 */
 	plat->has_gmac = 1;
@@ -770,12 +770,12 @@ static void common_default_data(struct plat_tc956xmacenet_data *plat)
 	plat->rxp_cfg.npe = ARRAY_SIZE(snps_rxp_entries);
 	memcpy(plat->rxp_cfg.entries, snps_rxp_entries,
 			ARRAY_SIZE(snps_rxp_entries) *
-			sizeof(struct tc956xmac_rx_parser_entry));
+			sizeof(struct stmmac_rx_parser_entry));
 
 }
 
-static int tc956xmac_default_data(struct pci_dev *pdev,
-			       struct plat_tc956xmacenet_data *plat)
+static int stmmac_default_data(struct pci_dev *pdev,
+			       struct plat_stmmacenet_data *plat)
 {
 	KPRINT_INFO("%s  >", __func__);
 	/* Set common default data first */
@@ -807,12 +807,12 @@ static int tc956xmac_default_data(struct pci_dev *pdev,
 	return 0;
 }
 
-static const struct tc956xmac_pci_info tc956xmac_pci_info = {
-	.setup = tc956xmac_default_data,
+static const struct stmmac_pci_info stmmac_pci_info = {
+	.setup = stmmac_default_data,
 };
 
 static int intel_mgbe_common_data(struct pci_dev *pdev,
-				struct plat_tc956xmacenet_data *plat)
+				struct plat_stmmacenet_data *plat)
 {
 	int i;
 
@@ -880,15 +880,15 @@ static int intel_mgbe_common_data(struct pci_dev *pdev,
 	plat->ptp_max_adj = plat->clk_ptp_rate;
 
 	/* Set system clock */
-	plat->tc956xmac_clk = clk_register_fixed_rate(&pdev->dev,
-						"tc956xmac-clk", NULL, 0,
+	plat->stmmac_clk = clk_register_fixed_rate(&pdev->dev,
+						"stmmac-clk", NULL, 0,
 						plat->clk_ptp_rate);
 
-	if (IS_ERR(plat->tc956xmac_clk)) {
-		dev_warn(&pdev->dev, "Fail to register tc956xmac-clk\n");
-		plat->tc956xmac_clk = NULL;
+	if (IS_ERR(plat->stmmac_clk)) {
+		dev_warn(&pdev->dev, "Fail to register stmmac-clk\n");
+		plat->stmmac_clk = NULL;
 	}
-	clk_prepare_enable(plat->tc956xmac_clk);
+	clk_prepare_enable(plat->stmmac_clk);
 
 	/* Set default value for multicast hash bins */
 	plat->multicast_filter_bins = HASH_TABLE_SIZE;
@@ -903,7 +903,7 @@ static int intel_mgbe_common_data(struct pci_dev *pdev,
 }
 
 static int ehl_common_data(struct pci_dev *pdev,
-			struct plat_tc956xmacenet_data *plat)
+			struct plat_stmmacenet_data *plat)
 {
 	int ret;
 
@@ -918,7 +918,7 @@ static int ehl_common_data(struct pci_dev *pdev,
 }
 
 static int ehl_sgmii_data(struct pci_dev *pdev,
-			  struct plat_tc956xmacenet_data *plat)
+			  struct plat_stmmacenet_data *plat)
 {
 	plat->bus_id = 1;
 	plat->phy_addr = 0;
@@ -926,12 +926,12 @@ static int ehl_sgmii_data(struct pci_dev *pdev,
 	return ehl_common_data(pdev, plat);
 }
 
-static struct tc956xmac_pci_info ehl_sgmii1g_pci_info = {
+static struct stmmac_pci_info ehl_sgmii1g_pci_info = {
 	.setup = ehl_sgmii_data,
 };
 
 static int ehl_rgmii_data(struct pci_dev *pdev,
-			  struct plat_tc956xmacenet_data *plat)
+			  struct plat_stmmacenet_data *plat)
 {
 	plat->bus_id = 1;
 	plat->phy_addr = 0;
@@ -939,12 +939,12 @@ static int ehl_rgmii_data(struct pci_dev *pdev,
 	return ehl_common_data(pdev, plat);
 }
 
-static struct tc956xmac_pci_info ehl_rgmii1g_pci_info = {
+static struct stmmac_pci_info ehl_rgmii1g_pci_info = {
 	.setup = ehl_rgmii_data,
 };
 
 static int tgl_common_data(struct pci_dev *pdev,
-			   struct plat_tc956xmacenet_data *plat)
+			   struct plat_stmmacenet_data *plat)
 {
 	int ret;
 
@@ -959,7 +959,7 @@ static int tgl_common_data(struct pci_dev *pdev,
 }
 
 static int tgl_sgmii_data(struct pci_dev *pdev,
-			  struct plat_tc956xmacenet_data *plat)
+			  struct plat_stmmacenet_data *plat)
 {
 	plat->bus_id = 1;
 	plat->phy_addr = 0;
@@ -968,23 +968,23 @@ static int tgl_sgmii_data(struct pci_dev *pdev,
 	return tgl_common_data(pdev, plat);
 }
 
-static struct tc956xmac_pci_info tgl_sgmii1g_pci_info = {
+static struct stmmac_pci_info tgl_sgmii1g_pci_info = {
 	.setup = tgl_sgmii_data,
 };
 
-static const struct tc956xmac_pci_func_data galileo_tc956xmac_func_data[] = {
+static const struct stmmac_pci_func_data galileo_stmmac_func_data[] = {
 	{
 		.func = 6,
 		.phy_addr = 1,
 	},
 };
 
-static const struct tc956xmac_pci_dmi_data galileo_tc956xmac_dmi_data = {
-	.func = galileo_tc956xmac_func_data,
-	.nfuncs = ARRAY_SIZE(galileo_tc956xmac_func_data),
+static const struct stmmac_pci_dmi_data galileo_stmmac_dmi_data = {
+	.func = galileo_stmmac_func_data,
+	.nfuncs = ARRAY_SIZE(galileo_stmmac_func_data),
 };
 
-static const struct tc956xmac_pci_func_data iot2040_tc956xmac_func_data[] = {
+static const struct stmmac_pci_func_data iot2040_stmmac_func_data[] = {
 	{
 		.func = 6,
 		.phy_addr = 1,
@@ -995,9 +995,9 @@ static const struct tc956xmac_pci_func_data iot2040_tc956xmac_func_data[] = {
 	},
 };
 
-static const struct tc956xmac_pci_dmi_data iot2040_tc956xmac_dmi_data = {
-	.func = iot2040_tc956xmac_func_data,
-	.nfuncs = ARRAY_SIZE(iot2040_tc956xmac_func_data),
+static const struct stmmac_pci_dmi_data iot2040_stmmac_dmi_data = {
+	.func = iot2040_stmmac_func_data,
+	.nfuncs = ARRAY_SIZE(iot2040_stmmac_func_data),
 };
 
 static const struct dmi_system_id quark_pci_dmi[] = {
@@ -1005,13 +1005,13 @@ static const struct dmi_system_id quark_pci_dmi[] = {
 		.matches = {
 			DMI_EXACT_MATCH(DMI_BOARD_NAME, "Galileo"),
 		},
-		.driver_data = (void *)&galileo_tc956xmac_dmi_data,
+		.driver_data = (void *)&galileo_stmmac_dmi_data,
 	},
 	{
 		.matches = {
 			DMI_EXACT_MATCH(DMI_BOARD_NAME, "GalileoGen2"),
 		},
-		.driver_data = (void *)&galileo_tc956xmac_dmi_data,
+		.driver_data = (void *)&galileo_stmmac_dmi_data,
 	},
 	/*
 	 * There are 2 types of SIMATIC IOT2000: IOT2020 and IOT2040.
@@ -1025,19 +1025,19 @@ static const struct dmi_system_id quark_pci_dmi[] = {
 			DMI_EXACT_MATCH(DMI_BOARD_ASSET_TAG,
 					"6ES7647-0AA00-0YA2"),
 		},
-		.driver_data = (void *)&galileo_tc956xmac_dmi_data,
+		.driver_data = (void *)&galileo_stmmac_dmi_data,
 	},
 	{
 		.matches = {
 			DMI_EXACT_MATCH(DMI_BOARD_NAME, "SIMATIC IOT2000"),
 		},
-		.driver_data = (void *)&iot2040_tc956xmac_dmi_data,
+		.driver_data = (void *)&iot2040_stmmac_dmi_data,
 	},
 	{}
 };
 
 static int quark_default_data(struct pci_dev *pdev,
-			      struct plat_tc956xmacenet_data *plat)
+			      struct plat_stmmacenet_data *plat)
 {
 	int ret;
 
@@ -1048,7 +1048,7 @@ static int quark_default_data(struct pci_dev *pdev,
 	 * Refuse to load the driver and register net device if MAC controller
 	 * does not connect to any PHY interface.
 	 */
-	ret = tc956xmac_pci_find_phy_addr(pdev, quark_pci_dmi);
+	ret = stmmac_pci_find_phy_addr(pdev, quark_pci_dmi);
 	if (ret < 0) {
 		/* Return error to the caller on DMI enabled boards. */
 		if (dmi_get_system_info(DMI_BOARD_NAME))
@@ -1073,12 +1073,12 @@ static int quark_default_data(struct pci_dev *pdev,
 	return 0;
 }
 
-static const struct tc956xmac_pci_info quark_pci_info = {
+static const struct stmmac_pci_info quark_pci_info = {
 	.setup = quark_default_data,
 };
 
 static int snps_gmac5_default_data(struct pci_dev *pdev,
-				   struct plat_tc956xmacenet_data *plat)
+				   struct plat_stmmacenet_data *plat)
 {
 	int i;
 
@@ -1169,7 +1169,7 @@ static int snps_gmac5_default_data(struct pci_dev *pdev,
 	return 0;
 }
 
-static const struct tc956xmac_pci_info snps_gmac5_pci_info = {
+static const struct stmmac_pci_info snps_gmac5_pci_info = {
 	.setup = snps_gmac5_default_data,
 };
 
@@ -1222,7 +1222,7 @@ static int xgmac3_phy_write(void *priv, int phyaddr, int phyreg, u16 phydata)
 }
 #endif /* TC956X_UNSUPPORTED_UNTESTED_FEATURE */
 
-static void xgmac_default_data(struct plat_tc956xmacenet_data *plat)
+static void xgmac_default_data(struct plat_stmmacenet_data *plat)
 {
 	plat->has_xgmac = 1;
 	plat->force_sf_dma_mode = 1;
@@ -1335,7 +1335,7 @@ static void xgmac_default_data(struct plat_tc956xmacenet_data *plat)
 	plat->rxp_cfg.npe = ARRAY_SIZE(snps_rxp_entries);
 	memcpy(plat->rxp_cfg.entries, snps_rxp_entries,
 			ARRAY_SIZE(snps_rxp_entries) *
-			sizeof(struct tc956xmac_rx_parser_entry));
+			sizeof(struct stmmac_rx_parser_entry));
 #ifndef TC956X_SRIOV_VF
 	/* Over writing the Default FRP table with FRP Table for Filtering PHY pause frames */
 	if (plat->filter_phy_pause == ENABLE) {
@@ -1343,7 +1343,7 @@ static void xgmac_default_data(struct plat_tc956xmacenet_data *plat)
 		plat->rxp_cfg.npe = ARRAY_SIZE(snps_rxp_entries_filter_phy_pause_frames);
 		memcpy(plat->rxp_cfg.entries, snps_rxp_entries_filter_phy_pause_frames,
 				ARRAY_SIZE(snps_rxp_entries_filter_phy_pause_frames) *
-				sizeof(struct tc956xmac_rx_parser_entry));
+				sizeof(struct stmmac_rx_parser_entry));
 	}
 #endif
 }
@@ -1351,7 +1351,7 @@ static void xgmac_default_data(struct plat_tc956xmacenet_data *plat)
 #ifdef TC956X_SRIOV_VF
 #ifdef TC956X_SRIOV_DEBUG
 static void stm_print_vf_mac_config(struct pci_dev *pdev,
-				struct plat_tc956xmacenet_data *plat)
+				struct plat_stmmacenet_data *plat)
 {
 	u8 ch, k;
 
@@ -1403,8 +1403,8 @@ static void stm_print_vf_mac_config(struct pci_dev *pdev,
 #endif
 #endif /* TC956X_SRIOV_VF */
 
-static int tc956xmac_xgmac3_default_data(struct pci_dev *pdev,
-				struct plat_tc956xmacenet_data *plat)
+static int stmmac_xgmac3_default_data(struct pci_dev *pdev,
+				struct plat_stmmacenet_data *plat)
 {
 #ifndef TC956X_SRIOV_VF
 	unsigned int queue0_rfd = 0, queue1_rfd = 0, queue0_rfa = 0, queue1_rfa = 0, temp_var = 0;
@@ -1530,19 +1530,19 @@ static int tc956xmac_xgmac3_default_data(struct pci_dev *pdev,
 	plat->tx_queues_to_use = MAX_TX_QUEUES_TO_USE;
 	plat->rx_queues_to_use = MAX_RX_QUEUES_TO_USE;
 #ifdef TC956X_SRIOV_VF
-	plat->rx_queues_to_use_actual = tc956xmac_vf[plat->vf_id].rx_queues_to_use_actual;
-	plat->tx_queues_to_use_actual = tc956xmac_vf[plat->vf_id].tx_queues_to_use_actual;
-	memcpy(plat->ch_in_use, tc956xmac_vf[plat->vf_id].ch_in_use, sizeof(plat->ch_in_use));
-	memcpy(plat->tx_q_in_use, tc956xmac_vf[plat->vf_id].tx_q_in_use, sizeof(plat->tx_q_in_use));
-	memcpy(plat->rx_q_in_use, tc956xmac_vf[plat->vf_id].rx_q_in_use, sizeof(plat->rx_q_in_use));
-	memcpy(plat->tx_q_size, tc956xmac_vf[plat->vf_id].tx_q_size, sizeof(plat->tx_q_size));
-	plat->best_effort_ch_no = tc956xmac_vf[plat->vf_id].best_effort_ch_no;
-	plat->gptp_ch_no = tc956xmac_vf[plat->vf_id].gptp_ch_no;
-	plat->avb_class_a_ch_no = tc956xmac_vf[plat->vf_id].avb_class_a_ch_no;
-	plat->avb_class_b_ch_no = tc956xmac_vf[plat->vf_id].avb_class_b_ch_no;
-	plat->tsn_ch_no = tc956xmac_vf[plat->vf_id].tsn_ch_no;
-	plat->tsn_application = tc956xmac_vf[plat->vf_id].tsn_application;
-	plat->avb_application = tc956xmac_vf[plat->vf_id].avb_application;
+	plat->rx_queues_to_use_actual = stmmac_vf[plat->vf_id].rx_queues_to_use_actual;
+	plat->tx_queues_to_use_actual = stmmac_vf[plat->vf_id].tx_queues_to_use_actual;
+	memcpy(plat->ch_in_use, stmmac_vf[plat->vf_id].ch_in_use, sizeof(plat->ch_in_use));
+	memcpy(plat->tx_q_in_use, stmmac_vf[plat->vf_id].tx_q_in_use, sizeof(plat->tx_q_in_use));
+	memcpy(plat->rx_q_in_use, stmmac_vf[plat->vf_id].rx_q_in_use, sizeof(plat->rx_q_in_use));
+	memcpy(plat->tx_q_size, stmmac_vf[plat->vf_id].tx_q_size, sizeof(plat->tx_q_size));
+	plat->best_effort_ch_no = stmmac_vf[plat->vf_id].best_effort_ch_no;
+	plat->gptp_ch_no = stmmac_vf[plat->vf_id].gptp_ch_no;
+	plat->avb_class_a_ch_no = stmmac_vf[plat->vf_id].avb_class_a_ch_no;
+	plat->avb_class_b_ch_no = stmmac_vf[plat->vf_id].avb_class_b_ch_no;
+	plat->tsn_ch_no = stmmac_vf[plat->vf_id].tsn_ch_no;
+	plat->tsn_application = stmmac_vf[plat->vf_id].tsn_application;
+	plat->avb_application = stmmac_vf[plat->vf_id].avb_application;
 #endif
 #else
 	plat->tx_queues_to_use = 1;
@@ -1618,10 +1618,10 @@ static int tc956xmac_xgmac3_default_data(struct pci_dev *pdev,
 	plat->tx_queues_cfg[7].weight = 0x15;
 #else
 	/* Each VF will have different configuration which is initialised in the
-	 * tc956xmac_vf table. Copy all the tx queue configuration for this vf_id
+	 * stmmac_vf table. Copy all the tx queue configuration for this vf_id
 	 * here
 	 */
-	memcpy(plat->tx_queues_cfg, tc956xmac_vf[plat->vf_id].tx_queues_cfg, sizeof(plat->tx_queues_cfg));
+	memcpy(plat->tx_queues_cfg, stmmac_vf[plat->vf_id].tx_queues_cfg, sizeof(plat->tx_queues_cfg));
 #endif
 
 	/*Rx queue configuration for VFs are done in PF driver, so skip setting it here*/
@@ -1985,12 +1985,12 @@ static int tc956xmac_xgmac3_default_data(struct pci_dev *pdev,
 	return 0;
 }
 
-static const struct tc956xmac_pci_info tc956xmac_xgmac3_pci_info = {
-	.setup = tc956xmac_xgmac3_default_data,
+static const struct stmmac_pci_info stmmac_xgmac3_pci_info = {
+	.setup = stmmac_xgmac3_default_data,
 };
 
 #ifdef TC956X_UNSUPPORTED_UNTESTED_FEATURE
-static void xgmac_2_5g_default_data(struct plat_tc956xmacenet_data *plat)
+static void xgmac_2_5g_default_data(struct plat_stmmacenet_data *plat)
 {
 	plat->clk_csr = 2;
 	plat->has_xgmac = 1;
@@ -2070,8 +2070,8 @@ static void xgmac_2_5g_default_data(struct plat_tc956xmacenet_data *plat)
 	plat->rx_queues_cfg[7].chan = 7;
 }
 
-static int tc956xmac_xgmac3_2_5g_default_data(struct pci_dev *pdev,
-					struct plat_tc956xmacenet_data *plat)
+static int stmmac_xgmac3_2_5g_default_data(struct pci_dev *pdev,
+					struct plat_stmmacenet_data *plat)
 {
 	int i;
 
@@ -2121,20 +2121,20 @@ static int tc956xmac_xgmac3_2_5g_default_data(struct pci_dev *pdev,
 #endif
 	}
 
-	tc956xmac_config_data(plat);
+	stmmac_config_data(plat);
 	return 0;
 }
 
-static const struct tc956xmac_pci_info tc956xmac_xgmac3_2_5g_pci_info = {
-	.setup = tc956xmac_xgmac3_2_5g_default_data,
+static const struct stmmac_pci_info stmmac_xgmac3_2_5g_pci_info = {
+	.setup = stmmac_xgmac3_2_5g_default_data,
 };
 
-static int tc956xmac_xgmac3_2_5g_mdio_default_data(struct pci_dev *pdev,
-						struct plat_tc956xmacenet_data *plat)
+static int stmmac_xgmac3_2_5g_mdio_default_data(struct pci_dev *pdev,
+						struct plat_stmmacenet_data *plat)
 {
 	int ret;
 
-	ret = tc956xmac_xgmac3_2_5g_default_data(pdev, plat);
+	ret = stmmac_xgmac3_2_5g_default_data(pdev, plat);
 	if (ret)
 		return ret;
 
@@ -2147,8 +2147,8 @@ static int tc956xmac_xgmac3_2_5g_mdio_default_data(struct pci_dev *pdev,
 	return 0;
 }
 
-static const struct tc956xmac_pci_info tc956xmac_xgmac3_2_5g_mdio_pci_info = {
-	.setup = tc956xmac_xgmac3_2_5g_mdio_default_data,
+static const struct stmmac_pci_info stmmac_xgmac3_2_5g_mdio_pci_info = {
+	.setup = stmmac_xgmac3_2_5g_mdio_default_data,
 };
 #endif /* TC956X_UNSUPPORTED_UNTESTED_FEATURE */
 
@@ -2159,11 +2159,11 @@ static const struct tc956xmac_pci_info tc956xmac_xgmac3_2_5g_mdio_pci_info = {
  * \details This function Resets both IMEM & DMEM sections of tc956x.
  *
  * \param[in] dev  - pointer to device structure.
- * \param[in] res  - pointer to tc956xmac_resources structure.
+ * \param[in] res  - pointer to stmmac_resources structure.
  *
  * \return none
  */
-static void stm_reset_SRAM(struct device *dev, struct tc956xmac_resources *res)
+static void stm_reset_SRAM(struct device *dev, struct stmmac_resources *res)
 {
 	NMSGPR_INFO(dev,  "Resetting SRAM Region start\n");
 	/* Resetting SRAM IMEM Region */
@@ -2180,14 +2180,14 @@ static void stm_reset_SRAM(struct device *dev, struct tc956xmac_resources *res)
  * The tc956x CM3 starts executing once the firmware loading is complete.
  *
  * \param[in] dev  - pointer to device structure.
- * \param[in] id   - pointer to tc956xmac_resources structure.
+ * \param[in] id   - pointer to stmmac_resources structure.
  *
  * \return integer
  *
  * \retval 0 on success & -ve number on failure.
  */
 
-s32 stm_load_firmware(struct device *dev, struct tc956xmac_resources *res)
+s32 stm_load_firmware(struct device *dev, struct stmmac_resources *res)
 {
 	u32 adrs = 0, val = 0;
 	u32 fw_init_sync;
@@ -2340,7 +2340,7 @@ s32 stm_load_firmware(struct device *dev, struct tc956xmac_resources *res)
  */
 void stm_config_CM3_tamap(struct device *dev,
 				void __iomem *reg_pci_base_addr,
-				struct tc956xmac_cm3_tamap *tamap,
+				struct stmmac_cm3_tamap *tamap,
 				u8 table_entry)
 {
 #ifdef TC956X
@@ -2479,8 +2479,8 @@ static int stm_vf_get_fn_id(void __iomem *reg_pci_bridge_config_addr,
 	return 0;
 }
 
-static int get_vf_id(struct plat_tc956xmacenet_data *plat_dat,
-		     struct tc956xmac_resources *res)
+static int get_vf_id(struct plat_stmmacenet_data *plat_dat,
+		     struct stmmac_resources *res)
 {
 	struct fn_id fn_id_info;
 
@@ -2785,8 +2785,8 @@ uint8_t get_stm_index(struct pci_dev *pdev)
 	uint8_t index;
 	uint32_t pci_bdf = pci_dev_id(pdev); /* [15:8] Bus number, [7:3] Slot number and [2:0] Function number */
 
-	if (stm_eth_ports_bdf[tc956xmac_pm_usage_counter] == 0xFFFF) /* This is required when module parameters cannot be used. Other module parameters should hard coded as per device probe order */
-		return tc956xmac_pm_usage_counter;
+	if (stm_eth_ports_bdf[stmmac_pm_usage_counter] == 0xFFFF) /* This is required when module parameters cannot be used. Other module parameters should hard coded as per device probe order */
+		return stmmac_pm_usage_counter;
 
 
 	for (index = 0; index < (TC956X_TOT_CASCADE_DEV*2); index++) {
@@ -2797,7 +2797,7 @@ uint8_t get_stm_index(struct pci_dev *pdev)
 }
 
 /**
- * tc956xmac_pci_probe()
+ * stmmac_pci_probe()
  *
  * @pdev: pci device pointer
  * @id: pointer to table of device id/id's.
@@ -2808,12 +2808,12 @@ uint8_t get_stm_index(struct pci_dev *pdev)
  * matches the device. The probe functions returns zero when the driver choose
  * to take "ownership" of the device or an error code(-ve no) otherwise.
  */
-static int tc956xmac_pci_probe(struct pci_dev *pdev,
+static int stmmac_pci_probe(struct pci_dev *pdev,
 			    const struct pci_device_id *id)
 {
-	struct tc956xmac_pci_info *info = (struct tc956xmac_pci_info *)id->driver_data;
-	struct plat_tc956xmacenet_data *plat;
-	struct tc956xmac_resources res;
+	struct stmmac_pci_info *info = (struct stmmac_pci_info *)id->driver_data;
+	struct plat_stmmacenet_data *plat;
+	struct stmmac_resources res;
 #if (defined(TC956X_PCIE_DSP_CUT_THROUGH) || defined(CONFIG_TC956X_PCIE_GEN3_SETTING)) && defined(TC956X_SRIOV_PF)
 	u32 val;
 #endif
@@ -2899,7 +2899,7 @@ static int tc956xmac_pci_probe(struct pci_dev *pdev,
 	}
 
 #endif
-	res.probe_seq_no = tc956xmac_pm_usage_counter;
+	res.probe_seq_no = stmmac_pm_usage_counter;
 #ifdef TC956X_SRIOV_PF
 #ifdef CONFIG_PCI_IOV
 
@@ -3650,7 +3650,7 @@ static int tc956xmac_pci_probe(struct pci_dev *pdev,
 #ifdef TC956X_SRIOV_PF
 	ret = tc956xmac_dvr_probe(&pdev->dev, plat, &res);
 #elif defined TC956X_SRIOV_VF
-	ret = tc956xmac_vf_dvr_probe(&pdev->dev, plat, &res);
+	ret = stmmac_vf_dvr_probe(&pdev->dev, plat, &res);
 #endif
 	if (ret) {
 		if (ret == -ENODEV) {
@@ -3720,7 +3720,7 @@ static int tc956xmac_pci_probe(struct pci_dev *pdev,
 
 	/* Increment device usage counter */
 	tx956x_pci_shrd_mem[res.pci_bd].pci_dev_active_cnt++;
-	tc956xmac_pm_usage_counter++;
+	stmmac_pm_usage_counter++;
 	DBGPR_FUNC(&(pdev->dev), "%s : Device Usage Count = [%d] probe sequence number : %d\n", __func__, tx956x_pci_shrd_mem[res.pci_bd].pci_dev_active_cnt, res.probe_seq_no);
 	DBGPR_FUNC(&(pdev->dev), "<--%s\n", __func__);
 	mutex_unlock(&stm_pm_suspend_lock);
@@ -3782,7 +3782,7 @@ err_out_enb_failed:
 }
 
 /**
- * tc956xmac_pci_remove()
+ * stmmac_pci_remove()
  *
  * @pdev: pointer to pci_dev structure.
  *
@@ -3798,7 +3798,7 @@ err_out_enb_failed:
  *
  * \return void
  */
-static void tc956xmac_pci_remove(struct pci_dev *pdev)
+static void stmmac_pci_remove(struct pci_dev *pdev)
 {
 	struct net_device *ndev = dev_get_drvdata(&pdev->dev);
 	struct stmmac_priv *priv = netdev_priv(ndev);
@@ -3862,7 +3862,7 @@ static void tc956xmac_pci_remove(struct pci_dev *pdev)
 		readl(nrst_reg), readl(nclk_reg));
 
 #elif defined TC956X_SRIOV_VF
-	tc956xmac_vf_dvr_remove(&pdev->dev);
+	stmmac_vf_dvr_remove(&pdev->dev);
 #endif
 	pdev->irq = 0;
 
@@ -3874,8 +3874,8 @@ static void tc956xmac_pci_remove(struct pci_dev *pdev)
 	pci_disable_msi(pdev);
 #endif
 
-	if (priv->plat->tc956xmac_clk)
-		clk_unregister_fixed_rate(priv->plat->tc956xmac_clk);
+	if (priv->plat->stmmac_clk)
+		clk_unregister_fixed_rate(priv->plat->stmmac_clk);
 
 
 #ifdef TC956X
@@ -3895,7 +3895,7 @@ static void tc956xmac_pci_remove(struct pci_dev *pdev)
 	pci_disable_device(pdev);
 
 	/* Decrement device usage counter */
-	tc956xmac_pm_usage_counter--;
+	stmmac_pm_usage_counter--;
 	tx956x_pci_shrd_mem[priv->pci_bd].pci_dev_active_cnt--;
 	DBGPR_FUNC(&(pdev->dev), "%s : Device Usage Count = [%d] probe sequence number : %d\n", __func__, tx956x_pci_shrd_mem[priv->pci_bd].pci_dev_active_cnt, priv->probe_seq_no);
 	DBGPR_FUNC(&(pdev->dev), "<--%s\n", __func__);
@@ -4070,7 +4070,7 @@ static int stm_pcie_suspend(struct device *dev)
 	}
 #endif
 #elif defined TC956X_SRIOV_VF
-	tc956xmac_vf_suspend(&pdev->dev);
+	stmmac_vf_suspend(&pdev->dev);
 #endif
 	DBGPR_FUNC(&(pdev->dev), "%s : Port %d %s- Platform Suspend", __func__, priv->port_num, priv->dev->name);
 #ifdef TC956X_SRIOV_PF
@@ -4081,7 +4081,7 @@ static int stm_pcie_suspend(struct device *dev)
 	}
 #endif
 
-	tc956xmac_pm_set_power(priv, SUSPEND);
+	stmmac_pm_set_power(priv, SUSPEND);
 #ifdef TC956X_SRIOV_PF
 #ifdef CONFIG_TC956X_MAGIC_PACKET_WOL_GPIO
 	if (priv->port_num == RM_PF0_ID) {
@@ -4351,7 +4351,7 @@ static int stm_pcie_resume(struct device *dev)
 	if (ret < 0)
 		goto err;
 
-	tc956xmac_pm_set_power(priv, RESUME);
+	stmmac_pm_set_power(priv, RESUME);
 
 	/* Restore the GPIO settings which was saved during GPIO configuration */
 	ret = stm_gpio_restore_configuration(priv);
@@ -4418,7 +4418,7 @@ static int stm_pcie_resume(struct device *dev)
 		writel(NEMACIOCTL_DEFAULT, priv->ioaddr + TC9563_CFG_NEMACIOCTL);
 	}
 #elif defined TC956X_SRIOV_VF
-	tc956xmac_vf_resume(&pdev->dev);
+	stmmac_vf_resume(&pdev->dev);
 #endif
 
 #ifndef TC956X_SRIOV_VF
@@ -4429,10 +4429,10 @@ static int stm_pcie_resume(struct device *dev)
 	priv->stm_port_pm_suspend = false;
 
 	/* Queue Work after resume complete to prevent MSI Disable */
-	if (priv->tc956xmac_pm_wol_interrupt) {
+	if (priv->stmmac_pm_wol_interrupt) {
 		DBGPR_FUNC(&(pdev->dev), "%s : Clearing WOL and queuing phy work", __func__);
 		/* Clear WOL Interrupt after resume, if WOL enabled */
-		priv->tc956xmac_pm_wol_interrupt = false;
+		priv->stmmac_pm_wol_interrupt = false;
 		/* Queue the work in system_wq */
 		queue_work(system_wq, &priv->emac_phy_work);
 	}
@@ -4541,7 +4541,7 @@ static void stm_wol_gpio_trigger(void __iomem *reg_base_addr, bool mode)
 static void stm_pcie_shutdown(struct pci_dev *pdev)
 {
 #ifdef TC956X_SRIOV_VF
-	tc956xmac_vf_dvr_remove(&pdev->dev);
+	stmmac_vf_dvr_remove(&pdev->dev);
 #endif
 
 	DBGPR_FUNC(&(pdev->dev), "-->%s\n", __func__);
@@ -4708,38 +4708,38 @@ static struct pci_error_handlers stm_err_handler = {
 	.driver_data = (kernel_ulong_t)&info		\
 	}
 
-static const struct pci_device_id tc956xmac_id_table[] = {
+static const struct pci_device_id stmmac_id_table[] = {
 #ifdef TC956X_UNSUPPORTED_UNTESTED_FEATURE
-	TC956XMAC_DEVICE(TC956XMAC, TC956XMAC_DEVICE_ID, tc956xmac_pci_info),
-	TC956XMAC_DEVICE(STMICRO, PCI_DEVICE_ID_STMICRO_MAC, tc956xmac_pci_info),
+	TC956XMAC_DEVICE(TC956XMAC, TC956XMAC_DEVICE_ID, stmmac_pci_info),
+	TC956XMAC_DEVICE(STMICRO, PCI_DEVICE_ID_STMICRO_MAC, stmmac_pci_info),
 	TC956XMAC_DEVICE(INTEL, TC956XMAC_QUARK_ID, quark_pci_info),
 	TC956XMAC_DEVICE(INTEL, TC956XMAC_EHL_RGMII1G_ID, ehl_rgmii1g_pci_info),
 	TC956XMAC_DEVICE(INTEL, TC956XMAC_EHL_SGMII1G_ID, ehl_sgmii1g_pci_info),
 	TC956XMAC_DEVICE(INTEL, TC956XMAC_TGL_SGMII1G_ID, tgl_sgmii1g_pci_info),
 	TC956XMAC_DEVICE(SYNOPSYS, TC956XMAC_GMAC5_ID, snps_gmac5_pci_info),
-	TC956XMAC_DEVICE(SYNOPSYS, TC956XMAC_XGMAC3_10G, tc956xmac_xgmac3_pci_info),
-	TC956XMAC_DEVICE(SYNOPSYS, TC956XMAC_XGMAC3_2_5G, tc956xmac_xgmac3_2_5g_pci_info),
+	TC956XMAC_DEVICE(SYNOPSYS, TC956XMAC_XGMAC3_10G, stmmac_xgmac3_pci_info),
+	TC956XMAC_DEVICE(SYNOPSYS, TC956XMAC_XGMAC3_2_5G, stmmac_xgmac3_2_5g_pci_info),
 	TC956XMAC_DEVICE(SYNOPSYS, TC956XMAC_XGMAC3_2_5G_MDIO,
-		      tc956xmac_xgmac3_2_5g_mdio_pci_info),
+		      stmmac_xgmac3_2_5g_mdio_pci_info),
 #endif /* TC956X_UNSUPPORTED_UNTESTED_FEATURE */
 #ifdef TC956X
-	TC956XMAC_DEVICE(TOSHIBA, DEVICE_ID, tc956xmac_xgmac3_pci_info),
+	TC956XMAC_DEVICE(TOSHIBA, DEVICE_ID, stmmac_xgmac3_pci_info),
 #endif
 	{}
 };
 
-static SIMPLE_DEV_PM_OPS(tc956xmac_pm_ops, stm_pcie_suspend, stm_pcie_resume);
+static SIMPLE_DEV_PM_OPS(stmmac_pm_ops, stm_pcie_suspend, stm_pcie_resume);
 
-static struct pci_driver tc956xmac_pci_driver = {
+static struct pci_driver stmmac_pci_driver = {
 	.name = TC956X_RESOURCE_NAME,
-	.id_table = tc956xmac_id_table,
-	.probe = tc956xmac_pci_probe,
-	.remove = tc956xmac_pci_remove,
+	.id_table = stmmac_id_table,
+	.probe = stmmac_pci_probe,
+	.remove = stmmac_pci_remove,
 	.shutdown	= stm_pcie_shutdown,
 	.driver		= {
 		.name		= TC956X_RESOURCE_NAME,
 		.owner		= THIS_MODULE,
-		.pm		= &tc956xmac_pm_ops,
+		.pm		= &stmmac_pm_ops,
 	},
 	.err_handler = &stm_err_handler
 };
@@ -4758,13 +4758,13 @@ static s32 __init stm_init_module(void)
 	s32 ret = 0;
 
 	KPRINT_INFO("-->%s", __func__);
-	ret = pci_register_driver(&tc956xmac_pci_driver);
+	ret = pci_register_driver(&stmmac_pci_driver);
 	if (ret) {
 		KPRINT_INFO("TC956X : Driver registration failed");
 		return ret;
 	}
 
-	tc956xmac_init();
+	stmmac_init();
 	KPRINT_INFO("<--%s", __func__);
 	return ret;
 }
@@ -4780,8 +4780,8 @@ static s32 __init stm_init_module(void)
 static void __exit stm_exit_module(void)
 {
 	KPRINT_INFO("%s", __func__);
-	pci_unregister_driver(&tc956xmac_pci_driver);
-	tc956xmac_exit();
+	pci_unregister_driver(&stmmac_pci_driver);
+	stmmac_exit();
 	KPRINT_INFO("%s", __func__);
 }
 

@@ -278,11 +278,11 @@ enum TC956X_PHY_MDIO_AVAILABILITY {
 #ifdef CONFIG_DEBUG_FS
 
 #ifdef TC956X
-int tc956xmac_init(void);
+int stmmac_init(void);
 #endif
 
 #ifdef TC956X
-void tc956xmac_exit(void);
+void stmmac_exit(void);
 #endif
 
 #endif
@@ -2883,7 +2883,7 @@ extern const struct stmmac_desc_ops ndesc_ops;
 
 struct mac_device_info;
 
-extern const struct stmmac_hwtimestamp tc956xmac_ptp;
+extern const struct stmmac_hwtimestamp stmmac_ptp;
 extern const struct stmmac_mode_ops dwmac4_ring_mode_ops;
 
 struct mac_link {
@@ -2927,10 +2927,10 @@ struct mac_device_info {
 #ifdef TC956X_SRIOV_VF
 	const struct mac_rsc_mng_ops *rsc;
 	const struct mac_mbx_ops *mbx;
-	const struct tc956xmac_mbx_wrapper_ops *mbx_wrapper;
+	const struct stmmac_mbx_wrapper_ops *mbx_wrapper;
 #endif
 	const struct stmmac_mmc_ops *mmc;
-	const struct tc956xmac_pma_ops *pma;
+	const struct stmmac_pma_ops *pma;
 	struct mii_regs mii;	/* MII register Addresses */
 	struct mac_link link;
 	void __iomem *pcsr;     /* vpointer to device CSRs */
@@ -2957,24 +2957,24 @@ int dwmac4_setup(struct stmmac_priv *priv);
 int dwxgmac2_setup(struct stmmac_priv *priv);
 
 #ifdef TC956X_SRIOV_PF
-void tc956xmac_set_mac_addr(void __iomem *ioaddr, u8 addr[6],
+void stmmac_set_mac_addr(void __iomem *ioaddr, u8 addr[6],
 			 unsigned int high, unsigned int low);
-void tc956xmac_get_mac_addr(void __iomem *ioaddr, unsigned char *addr,
+void stmmac_get_mac_addr(void __iomem *ioaddr, unsigned char *addr,
 			 unsigned int high, unsigned int low);
-void tc956xmac_set_mac(struct stmmac_priv *priv, void __iomem *ioaddr, bool enable);
+void stmmac_set_mac(struct stmmac_priv *priv, void __iomem *ioaddr, bool enable);
 int stm_add_mac_addr(struct net_device *dev, const unsigned char *mac);
 #elif defined TC956X_SRIOV_VF
-void tc956xmac_vf_set_mac_addr(void __iomem *ioaddr, u8 addr[6],
+void stmmac_vf_set_mac_addr(void __iomem *ioaddr, u8 addr[6],
 			 unsigned int high, unsigned int low);
-void tc956xmac_vf_get_mac_addr(void __iomem *ioaddr, unsigned char *addr,
+void stmmac_vf_get_mac_addr(void __iomem *ioaddr, unsigned char *addr,
 			 unsigned int high, unsigned int low);
-void tc956xmac_set_mac(struct stmmac_priv *priv, void __iomem *ioaddr, bool enable);
+void stmmac_set_mac(struct stmmac_priv *priv, void __iomem *ioaddr, bool enable);
 #endif
-void tc956xmac_dwmac4_set_mac_addr(void __iomem *ioaddr, u8 addr[6],
+void stmmac_dwmac4_set_mac_addr(void __iomem *ioaddr, u8 addr[6],
 				unsigned int high, unsigned int low);
-void tc956xmac_dwmac4_get_mac_addr(void __iomem *ioaddr, unsigned char *addr,
+void stmmac_dwmac4_get_mac_addr(void __iomem *ioaddr, unsigned char *addr,
 				unsigned int high, unsigned int low);
-void tc956xmac_dwmac4_set_mac(struct stmmac_priv *priv, void __iomem *ioaddr, bool enable);
+void stmmac_dwmac4_set_mac(struct stmmac_priv *priv, void __iomem *ioaddr, bool enable);
 
 void dwmac_dma_flush_tx_fifo(void __iomem *ioaddr);
 
@@ -2983,6 +2983,6 @@ extern const struct stmmac_mode_ops chain_mode_ops;
 extern const struct stmmac_desc_ops dwmac4_desc_ops;
 
 #ifdef TC956X_SRIOV_VF
-void tc956xmac_mailbox_service_event_schedule(struct stmmac_priv *priv);
+void stmmac_mailbox_service_event_schedule(struct stmmac_priv *priv);
 #endif
 #endif /* __COMMON_H__ */
