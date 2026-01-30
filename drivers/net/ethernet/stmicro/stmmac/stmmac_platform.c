@@ -127,10 +127,10 @@ static struct stmmac_axi *stmmac_axi_setup(struct device *dev)
 
 /**
  * stmmac_mtl_setup - parse DT parameters for multiple queues configuration
- * @pdev: platform device
+ * @dev: device
  * @plat: enet data
  */
-static int stmmac_mtl_setup(struct platform_device *pdev,
+static int stmmac_mtl_setup(struct device *dev,
 			    struct plat_stmmacenet_data *plat)
 {
 	struct device_node *q_node;
@@ -146,11 +146,11 @@ static int stmmac_mtl_setup(struct platform_device *pdev,
 	plat->rx_queues_cfg[0].mode_to_use = MTL_QUEUE_DCB;
 	plat->tx_queues_cfg[0].mode_to_use = MTL_QUEUE_DCB;
 
-	rx_node = of_parse_phandle(pdev->dev.of_node, "snps,mtl-rx-config", 0);
+	rx_node = of_parse_phandle(dev->of_node, "snps,mtl-rx-config", 0);
 	if (!rx_node)
 		return ret;
 
-	tx_node = of_parse_phandle(pdev->dev.of_node, "snps,mtl-tx-config", 0);
+	tx_node = of_parse_phandle(dev->of_node, "snps,mtl-tx-config", 0);
 	if (!tx_node) {
 		of_node_put(rx_node);
 		return ret;
@@ -203,7 +203,7 @@ static int stmmac_mtl_setup(struct platform_device *pdev,
 	}
 	if (queue != plat->rx_queues_to_use) {
 		ret = -EINVAL;
-		dev_err(&pdev->dev, "Not all RX queues were configured\n");
+		dev_err(dev, "Not all RX queues were configured\n");
 		goto out;
 	}
 
@@ -265,7 +265,7 @@ static int stmmac_mtl_setup(struct platform_device *pdev,
 	}
 	if (queue != plat->tx_queues_to_use) {
 		ret = -EINVAL;
-		dev_err(&pdev->dev, "Not all TX queues were configured\n");
+		dev_err(dev, "Not all TX queues were configured\n");
 		goto out;
 	}
 
@@ -581,7 +581,7 @@ stmmac_probe_config_dt(struct platform_device *pdev, u8 *mac)
 
 	plat->axi = stmmac_axi_setup(&pdev->dev);
 
-	rc = stmmac_mtl_setup(pdev, plat);
+	rc = stmmac_mtl_setup(&pdev->dev, plat);
 	if (rc) {
 		ret = ERR_PTR(rc);
 		goto error_put_mdio;
