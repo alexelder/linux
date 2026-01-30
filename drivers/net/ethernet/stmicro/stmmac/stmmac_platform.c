@@ -401,16 +401,16 @@ static const char * const stmmac_gmac4_compats[] = {
 
 /**
  * stmmac_probe_config_dt - parse device-tree driver parameters
- * @pdev: platform_device structure
+ * @dev: device structure
  * @mac: MAC address to use
  * Description:
  * this function is to read the driver parameters from device-tree and
  * set some private fields that will be used by the main at runtime.
  */
 static struct plat_stmmacenet_data *
-stmmac_probe_config_dt(struct platform_device *pdev, u8 *mac)
+stmmac_probe_config_dt(struct device *dev, u8 *mac)
 {
-	struct device_node *np = pdev->dev.of_node;
+	struct device_node *np = dev->of_node;
 	struct plat_stmmacenet_data *plat;
 	struct stmmac_dma_cfg *dma_cfg;
 	static int bus_id = -ENODEV;
@@ -418,7 +418,7 @@ stmmac_probe_config_dt(struct platform_device *pdev, u8 *mac)
 	void *ret;
 	int rc;
 
-	plat = stmmac_plat_dat_alloc(&pdev->dev);
+	plat = stmmac_plat_dat_alloc(dev);
 	if (!plat)
 		return ERR_PTR(-ENOMEM);
 
@@ -430,7 +430,7 @@ stmmac_probe_config_dt(struct platform_device *pdev, u8 *mac)
 		eth_zero_addr(mac);
 	}
 
-	phy_mode = device_get_phy_mode(&pdev->dev);
+	phy_mode = device_get_phy_mode(dev);
 	if (phy_mode < 0)
 		return ERR_PTR(phy_mode);
 
@@ -438,7 +438,7 @@ stmmac_probe_config_dt(struct platform_device *pdev, u8 *mac)
 
 	rc = stmmac_of_get_mac_mode(np);
 	if (rc >= 0 && rc != phy_mode)
-		dev_warn(&pdev->dev,
+		dev_warn(dev,
 			 "\"mac-mode\" property used for %s but differs to \"phy-mode\" of %s, and will be ignored. Please report.\n",
 			 phy_modes(rc), phy_modes(phy_mode));
 
@@ -469,9 +469,9 @@ stmmac_probe_config_dt(struct platform_device *pdev, u8 *mac)
 	 * and warn of its use. Remove this when phy node support is added.
 	 */
 	if (of_property_read_u32(np, "snps,phy-addr", &plat->phy_addr) == 0)
-		dev_warn(&pdev->dev, "snps,phy-addr property is deprecated\n");
+		dev_warn(dev, "snps,phy-addr property is deprecated\n");
 
-	rc = stmmac_mdio_setup(plat, np, &pdev->dev);
+	rc = stmmac_mdio_setup(plat, np, dev);
 	if (rc) {
 		ret = ERR_PTR(rc);
 		goto error_put_phy;
@@ -485,7 +485,7 @@ stmmac_probe_config_dt(struct platform_device *pdev, u8 *mac)
 		of_property_read_bool(np, "snps,force_sf_dma_mode");
 
 	if (of_property_read_bool(np, "snps,en-tx-lpi-clockgating")) {
-		dev_warn(&pdev->dev,
+		dev_warn(dev,
 			 "OF property snps,en-tx-lpi-clockgating is deprecated, please convert driver to use STMMAC_FLAG_EN_TX_LPI_CLK_PHY_CAP\n");
 		plat->flags |= STMMAC_FLAG_EN_TX_LPI_CLOCKGATING;
 	}
@@ -513,9 +513,9 @@ stmmac_probe_config_dt(struct platform_device *pdev, u8 *mac)
 		of_property_read_u32(np, "snps,perfect-filter-entries",
 				     &plat->unicast_filter_entries);
 		plat->unicast_filter_entries = dwmac1000_validate_ucast_entries(
-				&pdev->dev, plat->unicast_filter_entries);
+				dev, plat->unicast_filter_entries);
 		plat->multicast_filter_bins = dwmac1000_validate_mcast_bins(
-				&pdev->dev, plat->multicast_filter_bins);
+				dev, plat->multicast_filter_bins);
 		plat->core_type = DWMAC_CORE_GMAC;
 		plat->pmt = 1;
 	}
@@ -551,8 +551,7 @@ stmmac_probe_config_dt(struct platform_device *pdev, u8 *mac)
 				     &plat->multicast_filter_bins);
 	}
 
-	dma_cfg = devm_kzalloc(&pdev->dev, sizeof(*dma_cfg),
-			       GFP_KERNEL);
+	dma_cfg = devm_kzalloc(dev, sizeof(*dma_cfg), GFP_KERNEL);
 	if (!dma_cfg) {
 		ret = ERR_PTR(-ENOMEM);
 		goto error_put_mdio;
@@ -573,15 +572,15 @@ stmmac_probe_config_dt(struct platform_device *pdev, u8 *mac)
 	plat->force_thresh_dma_mode = of_property_read_bool(np, "snps,force_thresh_dma_mode");
 	if (plat->force_thresh_dma_mode && plat->force_sf_dma_mode) {
 		plat->force_sf_dma_mode = 0;
-		dev_warn(&pdev->dev,
+		dev_warn(dev,
 			 "force_sf_dma_mode is ignored if force_thresh_dma_mode is set.\n");
 	}
 
 	of_property_read_u32(np, "snps,ps-speed", &plat->mac_port_sel_speed);
 
-	plat->axi = stmmac_axi_setup(&pdev->dev);
+	plat->axi = stmmac_axi_setup(dev);
 
-	rc = stmmac_mtl_setup(&pdev->dev, plat);
+	rc = stmmac_mtl_setup(dev, plat);
 	if (rc) {
 		ret = ERR_PTR(rc);
 		goto error_put_mdio;
@@ -589,16 +588,15 @@ stmmac_probe_config_dt(struct platform_device *pdev, u8 *mac)
 
 	/* clock setup */
 	if (!of_device_is_compatible(np, "snps,dwc-qos-ethernet-4.10")) {
-		plat->stmmac_clk = devm_clk_get(&pdev->dev,
-						STMMAC_RESOURCE_NAME);
+		plat->stmmac_clk = devm_clk_get(dev, STMMAC_RESOURCE_NAME);
 		if (IS_ERR(plat->stmmac_clk)) {
-			dev_warn(&pdev->dev, "Cannot get CSR clock\n");
+			dev_warn(dev, "Cannot get CSR clock\n");
 			plat->stmmac_clk = NULL;
 		}
 		clk_prepare_enable(plat->stmmac_clk);
 	}
 
-	plat->pclk = devm_clk_get_optional(&pdev->dev, "pclk");
+	plat->pclk = devm_clk_get_optional(dev, "pclk");
 	if (IS_ERR(plat->pclk)) {
 		ret = plat->pclk;
 		goto error_pclk_get;
@@ -606,25 +604,24 @@ stmmac_probe_config_dt(struct platform_device *pdev, u8 *mac)
 	clk_prepare_enable(plat->pclk);
 
 	/* Fall-back to main clock in case of no PTP ref is passed */
-	plat->clk_ptp_ref = devm_clk_get(&pdev->dev, "ptp_ref");
+	plat->clk_ptp_ref = devm_clk_get(dev, "ptp_ref");
 	if (IS_ERR(plat->clk_ptp_ref)) {
 		plat->clk_ptp_rate = clk_get_rate(plat->stmmac_clk);
 		plat->clk_ptp_ref = NULL;
-		dev_info(&pdev->dev, "PTP uses main clock\n");
+		dev_info(dev, "PTP uses main clock\n");
 	} else {
 		plat->clk_ptp_rate = clk_get_rate(plat->clk_ptp_ref);
-		dev_dbg(&pdev->dev, "PTP rate %lu\n", plat->clk_ptp_rate);
+		dev_dbg(dev, "PTP rate %lu\n", plat->clk_ptp_rate);
 	}
 
-	plat->stmmac_rst = devm_reset_control_get_optional(&pdev->dev,
+	plat->stmmac_rst = devm_reset_control_get_optional(dev,
 							   STMMAC_RESOURCE_NAME);
 	if (IS_ERR(plat->stmmac_rst)) {
 		ret = plat->stmmac_rst;
 		goto error_hw_init;
 	}
 
-	plat->stmmac_ahb_rst = devm_reset_control_get_optional_shared(
-							&pdev->dev, "ahb");
+	plat->stmmac_ahb_rst = devm_reset_control_get_optional_shared(dev, "ahb");
 	if (IS_ERR(plat->stmmac_ahb_rst)) {
 		ret = plat->stmmac_ahb_rst;
 		goto error_hw_init;
@@ -666,7 +663,7 @@ devm_stmmac_probe_config_dt(struct platform_device *pdev, u8 *mac)
 	struct plat_stmmacenet_data *plat;
 	int ret;
 
-	plat = stmmac_probe_config_dt(pdev, mac);
+	plat = stmmac_probe_config_dt(&pdev->dev, mac);
 	if (IS_ERR(plat))
 		return plat;
 
