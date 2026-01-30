@@ -287,6 +287,21 @@ config DWMAC_SUN55I
 	  stmmac device driver. This driver is used for A523/T527
 	  GMAC200 ethernet controller.
 
+config DWMAC_TC956X
+	tristate "Toshiba TC956x DWMAC support"
+	default y
+	depends on OF
+	depends on PCI
+	depends on COMMON_CLK
+	select STMMAC_LIBPCI
+	help
+	  Support for the Ethernet controllers behind the embedded
+	  PCI endpoint in the TC TC956x switch
+
+	  XXX The definition of this config option needs more work,
+	  XXX including making it depend on an architecture as well
+	  XXX as COMPILE_TEST, and fixing its default value.
+
 config DWMAC_THEAD
 	tristate "T-HEAD dwmac support"
 	depends on OF && (ARCH_THEAD || COMPILE_TEST)
