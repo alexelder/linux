@@ -86,22 +86,22 @@ static int dwmac1000_validate_ucast_entries(struct device *dev,
 
 /**
  * stmmac_axi_setup - parse DT parameters for programming the AXI register
- * @pdev: platform device
+ * @dev: device
  * Description:
  * if required, from device-tree the AXI internal register can be tuned
  * by using platform parameters.
  */
-static struct stmmac_axi *stmmac_axi_setup(struct platform_device *pdev)
+static struct stmmac_axi *stmmac_axi_setup(struct device *dev)
 {
 	struct device_node *np;
 	struct stmmac_axi *axi;
 	u32 axi_blen[AXI_BLEN];
 
-	np = of_parse_phandle(pdev->dev.of_node, "snps,axi-config", 0);
+	np = of_parse_phandle(dev->of_node, "snps,axi-config", 0);
 	if (!np)
 		return NULL;
 
-	axi = devm_kzalloc(&pdev->dev, sizeof(*axi), GFP_KERNEL);
+	axi = devm_kzalloc(dev, sizeof(*axi), GFP_KERNEL);
 	if (!axi) {
 		of_node_put(np);
 		return ERR_PTR(-ENOMEM);
@@ -579,7 +579,7 @@ stmmac_probe_config_dt(struct platform_device *pdev, u8 *mac)
 
 	of_property_read_u32(np, "snps,ps-speed", &plat->mac_port_sel_speed);
 
-	plat->axi = stmmac_axi_setup(pdev);
+	plat->axi = stmmac_axi_setup(&pdev->dev);
 
 	rc = stmmac_mtl_setup(pdev, plat);
 	if (rc) {
