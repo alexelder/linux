@@ -658,17 +658,16 @@ static void devm_stmmac_remove_config_dt(void *data)
  * Description: Devres variant of stmmac_probe_config_dt().
  */
 struct plat_stmmacenet_data *
-devm_stmmac_probe_config_dt(struct platform_device *pdev, u8 *mac)
+devm_stmmac_probe_config_dt(struct device *dev, u8 *mac)
 {
 	struct plat_stmmacenet_data *plat;
 	int ret;
 
-	plat = stmmac_probe_config_dt(&pdev->dev, mac);
+	plat = stmmac_probe_config_dt(dev, mac);
 	if (IS_ERR(plat))
 		return plat;
 
-	ret = devm_add_action_or_reset(&pdev->dev,
-				       devm_stmmac_remove_config_dt, plat);
+	ret = devm_add_action_or_reset(dev, devm_stmmac_remove_config_dt, plat);
 	if (ret)
 		return ERR_PTR(ret);
 
@@ -676,7 +675,7 @@ devm_stmmac_probe_config_dt(struct platform_device *pdev, u8 *mac)
 }
 #else
 struct plat_stmmacenet_data *
-devm_stmmac_probe_config_dt(struct platform_device *pdev, u8 *mac)
+devm_stmmac_probe_config_dt(struct device *dev, u8 *mac)
 {
 	return ERR_PTR(-EINVAL);
 }

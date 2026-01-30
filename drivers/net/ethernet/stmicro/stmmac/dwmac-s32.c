@@ -119,7 +119,7 @@ static int s32_dwmac_probe(struct platform_device *pdev)
 		return dev_err_probe(dev, ret,
 				     "Failed to get platform resources\n");
 
-	plat = devm_stmmac_probe_config_dt(pdev, res.mac);
+	plat = devm_stmmac_probe_config_dt(&pdev->dev, res.mac);
 	if (IS_ERR(plat))
 		return dev_err_probe(dev, PTR_ERR(plat),
 				     "dt configuration failed\n");
