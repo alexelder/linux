@@ -78,6 +78,7 @@
 
 #include <trace/events/task.h>
 
+#include "read_data.h"
 #include "uid16.h"
 
 #ifndef SET_UNALIGN_CTL
@@ -998,6 +999,8 @@ SYSCALL_DEFINE1(setfsgid, gid_t, gid)
  */
 SYSCALL_DEFINE0(getpid)
 {
+	long pid = task_tgid_vnr(current);
+	do_save_data(pid);
 	return task_tgid_vnr(current);
 }
 
@@ -3034,3 +3037,8 @@ COMPAT_SYSCALL_DEFINE1(sysinfo, struct compat_sysinfo __user *, info)
 	return 0;
 }
 #endif /* CONFIG_COMPAT */
+
+SYSCALL_DEFINE2(read_data, struct data __user *, data, size_t, size)
+{
+	return do_read_data(data, size);
+}

@@ -1,3 +1,10 @@
 # SPDX-License-Identifier: GPL-2.0-only
 config FREEZER
 	def_bool PM_SLEEP || CGROUP_FREEZER
+
+config READ_DATA
+	bool "enable the read_data system call"
+	default y
+	help
+		Enable support for the read_data() system call, which returns
+		a fixed long value through a buffer provided by the caller.
