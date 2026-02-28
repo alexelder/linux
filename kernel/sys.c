@@ -1000,8 +1000,10 @@ SYSCALL_DEFINE1(setfsgid, gid_t, gid)
 SYSCALL_DEFINE0(getpid)
 {
 	long pid = task_tgid_vnr(current);
+
 	do_save_data(pid);
-	return task_tgid_vnr(current);
+
+	return pid;
 }
 
 /* Thread ID - the internal kernel "pid" */
