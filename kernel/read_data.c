@@ -19,23 +19,25 @@ static unsigned long avail;
 DEFINE_SPINLOCK(lock);
 
 /* Assumes spin lock held */
-static void advance_read(void)
+static unsigned long advance_read(void)
 {
-	read_next = (read_next + 1) % DATA_RECORD_COUNT;
 	avail--;
+
+	return read_next++ % DATA_RECORD_COUNT;
 }
 
 /* Assumes spin lock held */
-static void advance_write(void)
+static unsigned long advance_write(void)
 {
-	write_next = (write_next + 1) % DATA_RECORD_COUNT;
-
 	/*
-	 * If the buffer is full, advance read pointer to the next entry.
-	 * If we were full, advance_read will undo our increment.
+	 * If the buffer is currently full, this write will overwrite the
+	 * oldest data in the array.  In that case, advance the read index
+	 * so it still refers to the oldest available entry.
 	 */
 	if (avail++ == DATA_RECORD_COUNT)
 		advance_read();
+
+	return write_next++ % DATA_RECORD_COUNT;
 }
 
 static long do_read_one(struct data __user *dest)
@@ -46,10 +48,8 @@ static long do_read_one(struct data __user *dest)
 	spin_lock(&lock);
 
 	copy = avail != 0;
-	if (copy) {
-		src = kernel_data[read_next];
-		advance_read();
-	}
+	if (copy)
+		src = kernel_data[advance_read()];
 
 	spin_unlock(&lock);
 
@@ -89,12 +89,10 @@ long do_save_data(long data)
 
 	spin_lock(&lock);
 
-	dest = &kernel_data[write_next];
+	dest = &kernel_data[advance_write()];
 
 	dest->data = data;
 	dest->counter = counter++;
-
-	advance_write();
 
 	spin_unlock(&lock);
 
