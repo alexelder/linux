@@ -25,7 +25,8 @@ static int school_device_destroy(const char *name);
 struct school_device {
 	struct device dev;
 	char name[MAX_DEV_NAME_LENGTH + 1];
-	size_t size;
+	size_t size;		/* In sectors */
+	void *data;		/* Backing data */
 	struct blk_mq_tag_set tag_set;
 	struct gendisk *disk;
 	struct list_head links;		/* List of school_devices */
@@ -141,7 +142,7 @@ list_show(const struct bus_type *bus_type, char *buf)
 	mutex_lock(&school_devices_mutex);
 
 	ret = snprintf(bp, resid, "%-9s  %-*s  %s\n", "device",
-		       MAX_DEV_NAME_LENGTH, "name", "size (bytes)");
+		       MAX_DEV_NAME_LENGTH, "name", "size (sectors)");
 	if (ret < 0)
 		return ret;
 	bp += ret;
@@ -239,8 +240,11 @@ static void school_device_release(struct device *dev)
 
 	sdev = container_of(dev, struct school_device, dev);
 
+	/* XXX For some reason /dev/school0 is not getting removed */
+	/* XXX Maybe refcount-related; that block special still works */
 	del_gendisk(sdev->disk);
 	put_disk(sdev->disk);
+	device_unregister(dev);
 	blk_mq_free_tag_set(&sdev->tag_set);
 	kfree(sdev);
 	ida_free(&school_ida, id);
@@ -296,11 +300,53 @@ struct school_device_request {
 static blk_status_t school_queue_rq(struct blk_mq_hw_ctx *hctx,
 				    const struct blk_mq_queue_data *bd)
 {
+	struct school_device *sdev = hctx->queue->queuedata;
+	struct request *req = bd->rq;
+	size_t request_offset = 0;
+	struct req_iterator iter;
+	struct bio_vec bvec;
+
+	rq_for_each_segment(bvec, req, iter) {
+		size_t offset = bvec.bv_offset + request_offset;
+		struct page *page = bvec.bv_page;
+		void *buf = bvec_virt(&bvec);
+		size_t len = bvec.bv_len;
+
+		if (rq_data_dir(req) == READ)
+			memcpy(buf, sdev->data + offset, len);
+		else
+			memcpy(sdev->data + offset, buf, len);
+		request_offset += len;
+	}
+	blk_mq_end_request(req, BLK_STS_OK);
+
 	return BLK_STS_OK;
 }
 
 struct blk_mq_ops school_mq_ops = {
 	.queue_rq	= school_queue_rq,
+};
+
+static int school_open(struct gendisk *disk, blk_mode_t mode)
+{
+	struct school_device *sdev = disk->private_data;
+
+	get_device(&sdev->dev);
+
+	return 0;
+}
+
+static void school_release(struct gendisk *disk)
+{
+	struct school_device *sdev = disk->private_data;
+
+	put_device(&sdev->dev);
+}
+
+static const struct block_device_operations school_bd_ops = {
+        .owner                  = THIS_MODULE,
+        .open                   = school_open,
+        .release                = school_release,
 };
 
 static int school_device_create(const char *name, size_t size)
@@ -311,6 +357,7 @@ static int school_device_create(const char *name, size_t size)
 	struct device *dev;
 	unsigned int id;
 	int ret = 0;
+	void *data;
 
 	/* Make sure the name isn't already in use */
 
@@ -333,25 +380,31 @@ static int school_device_create(const char *name, size_t size)
 		goto out_unlock;
 	id = ret;
 
+	data = kzalloc(size * SECTOR_SIZE, GFP_KERNEL);
+	if (!data)
+		goto err_free_id;
+
 	sdev = kzalloc(sizeof(*sdev), GFP_KERNEL);
 	if (!sdev) {
 		ret = -ENOMEM;
-		goto err_free_id;
+		goto err_free_data;
 	}
 
 	/* OK we can proceed with creating the device */
 	strncpy(sdev->name, name, sizeof(sdev->name));
 	sdev->size = size;
+	sdev->data = data;
 
 	/*
 	 * Modern storage devices (like SSDs) support multiple request
 	 * queues.  This allows more I/O requests to be in flight for the
 	 * device, taking advantage of parallelism such devices offer.  A
-	 * generic blk-mq API was developed to provide this capability.
+	 * generic blk-mq API was developed to expose this capability.
 	 *
 	 * This API includes the notion of a *tag* associated with each
-	 * I/O request.  When a submitted request completes, the block
-	 * layer will notify the initiator, providing this tag.  We need
+	 * I/O request.  When a request is submitted, it is given a unique
+	 * tag.  When the request completes, the generic code will notify
+	 * the initiator tag.  We need
 	 * to initialize a per-device tag_set structure to use this.
 	 */
 	tag_set = &sdev->tag_set;
@@ -381,7 +434,8 @@ static int school_device_create(const char *name, size_t size)
 	disk->first_minor = id;
 	disk->minors = SCHOOL_DEVICE_ID_MAX + 1;
 	disk->private_data = sdev;
-	set_capacity(disk, size / SECTOR_SIZE);
+	disk->fops = &school_bd_ops;
+	set_capacity(disk, size);
 
 	dev = &sdev->dev;
 	dev->parent = &school_bus;
@@ -389,14 +443,13 @@ static int school_device_create(const char *name, size_t size)
 	dev->bus = &school_bus_type;
 	dev->id = id;
 
-	/* The next two are just device_register() */
-	device_initialize(dev);
-	ret = device_add(dev);
+	ret = device_register(dev);
 	if (!ret)
 		list_add_tail(&sdev->links, &school_devices);
 
 	mutex_unlock(&school_devices_mutex);
 
+	/* XXX Should test for and handle non-zero ret here */
 	ret = device_add_disk(dev, disk, NULL);
 	if (ret)
 		put_device(dev);
@@ -407,6 +460,8 @@ err_free_tag_set:
 	blk_mq_free_tag_set(tag_set);
 err_free_sdev:
 	kfree(sdev);
+err_free_data:
+	kfree(data);
 err_free_id:
 	ida_free(&school_ida, id);
 out_unlock:
