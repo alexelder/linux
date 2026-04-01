@@ -375,4 +375,14 @@ config BLK_DEV_ZONED_LOOP
 
 	  If unsure, say N.
 
+config CSCI5980_BLK
+	bool "CSCI5980 block device support"
+	default y
+	help
+	  Enabling this option causes support for the CSCi 5980 block
+	  device to be built in to the kernel.  Devices of this type
+	  are backed by RAM, and are not persistent.  The device content
+	  is initially zero, but data written at a particular location
+	  can be read back from that location later.
+
 endif # BLK_DEV
