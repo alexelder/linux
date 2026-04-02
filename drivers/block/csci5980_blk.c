@@ -3,8 +3,16 @@
 #include <linux/blkdev.h>
 #include <linux/blk-mq.h>
 #include <linux/module.h>
+#include <linux/sizes.h>
+#include <linux/vmalloc.h>
 
 #define DRIVER_NAME	"csci5980_blk"
+
+/* Size of the buffer */
+#define DISK_SIZE	SZ_1M
+
+/* Buffer pointer */
+static void *data;
 
 /* Allocated major device number */
 static unsigned int major;
@@ -15,6 +23,24 @@ static struct blk_mq_tag_set tag_set;
 static blk_status_t csci5980_queue_rq(struct blk_mq_hw_ctx *hctx,
 				      const struct blk_mq_queue_data *bd)
 {
+	struct request *rq = bd->rq;
+	struct req_iterator iter;
+	struct bio_vec bvec;
+	bool from_device;
+	void *buf;
+
+	from_device = rq_data_dir(rq) == READ;
+	buf = data + blk_rq_pos(rq) * SECTOR_SIZE;
+
+	rq_for_each_segment(bvec, rq, iter) {
+		if (from_device)
+			memcpy_to_bvec(&bvec, buf);
+		else
+			memcpy_from_bvec(buf, &bvec);
+		buf += bvec.bv_len;
+	}
+	blk_mq_end_request(rq, BLK_STS_OK);
+
 	return BLK_STS_OK;
 }
 
@@ -26,9 +52,13 @@ static int __init csci5980_init(void)
 {
 	int ret;
 
+	data = vzalloc(DISK_SIZE);
+	if (!data)
+		return -ENOMEM;
+
 	ret = register_blkdev(0, DRIVER_NAME);
 	if (ret < 0)
-		return ret;
+		goto err_free_data;
 
 	major = ret;
 	printk(" === major device number %u\n", major);
@@ -45,6 +75,8 @@ static int __init csci5980_init(void)
 
 err_unregister_blkdev:
 	unregister_blkdev(major, DRIVER_NAME);
+err_free_data:
+	vfree(data);
 
 	return ret;
 }
@@ -53,6 +85,7 @@ static void __exit csci5980_exit(void)
 {
 	blk_mq_free_tag_set(&tag_set);
 	unregister_blkdev(major, DRIVER_NAME);
+	vfree(data);
 }
 
 MODULE_DESCRIPTION("U of M CSCi 5980 block device driver");
