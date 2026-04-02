@@ -20,6 +20,9 @@ static unsigned int major;
 /* Tag set used for requests */
 static struct blk_mq_tag_set tag_set;
 
+/* Generic disk structure representing our disk */
+static struct gendisk *disk;
+
 static blk_status_t csci5980_queue_rq(struct blk_mq_hw_ctx *hctx,
 				      const struct blk_mq_queue_data *bd)
 {
@@ -48,6 +51,10 @@ struct blk_mq_ops csci5980_mq_ops = {
 	.queue_rq	= csci5980_queue_rq,
 };
 
+static const struct block_device_operations csci5980_blk_fops = {
+	.owner		= THIS_MODULE,
+};
+
 static int __init csci5980_init(void)
 {
 	int ret;
@@ -71,8 +78,29 @@ static int __init csci5980_init(void)
 	if (ret)
 		goto err_unregister_blkdev;
 
+	disk = blk_mq_alloc_disk(&tag_set, NULL, NULL);
+	if (IS_ERR(disk)) {
+		ret = PTR_ERR(disk);
+		goto err_free_tag_set;
+	}
+
+	disk->major = major;
+	disk->first_minor = 0;
+	disk->minors = 1;
+	strcpy(disk->disk_name, DRIVER_NAME);
+	disk->fops = &csci5980_blk_fops;
+	set_capacity(disk, DISK_SIZE / SECTOR_SIZE);
+
+	ret = add_disk(disk);
+	if (ret)
+		goto err_put_disk;
+
 	return 0;
 
+err_put_disk:
+	put_disk(disk);
+err_free_tag_set:
+	blk_mq_free_tag_set(&tag_set);
 err_unregister_blkdev:
 	unregister_blkdev(major, DRIVER_NAME);
 err_free_data:
@@ -83,6 +111,9 @@ err_free_data:
 
 static void __exit csci5980_exit(void)
 {
+	del_gendisk(disk);
+	put_disk(disk);
+	blk_mq_free_tag_set(&tag_set);
 	blk_mq_free_tag_set(&tag_set);
 	unregister_blkdev(major, DRIVER_NAME);
 	vfree(data);
