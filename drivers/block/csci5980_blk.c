@@ -9,7 +9,7 @@
 #define DRIVER_NAME	"csci5980_blk"
 
 /* Size of the buffer */
-#define DISK_SIZE	SZ_1M
+#define DISK_SIZE	SZ_16M
 
 /* Buffer pointer */
 static void *data;
