@@ -9,11 +9,13 @@
 #define PM7250B_SID 8
 #define PM7250B_SID1 9
 
+#include <dt-bindings/clock/toshiba,tc9564.h>
 #include <dt-bindings/iio/qcom,spmi-adc7-pmk8350.h>
 #include <dt-bindings/iio/qcom,spmi-adc7-pm7325.h>
 #include <dt-bindings/leds/common.h>
 #include <dt-bindings/pinctrl/qcom,pmic-gpio.h>
 #include <dt-bindings/regulator/qcom,rpmh-regulator.h>
+#include <dt-bindings/reset/toshiba,tc9564.h>
 #include "kodiak.dtsi"
 #include "pm7250b.dtsi"
 #include "pm7325.dtsi"
@@ -323,6 +325,15 @@
 		pinctrl-0 = <&ntn_1p8_en>;
 		pinctrl-names = "default";
 		regulator-enable-ramp-delay = <10000>;
+	};
+
+	qep_1p8: regulator-qep-1p8 {
+		compatible = "regulator-fixed";
+		regulator-name = "qep_1p8";
+		gpio = <&pm7325_gpios 8 GPIO_ACTIVE_HIGH>;
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+		enable-active-high;
 	};
 
 	wcn6750-pmu {
@@ -955,20 +966,56 @@
 			bus-range = <0x5 0xff>;
 
 			pci@0,0 {
+				compatible = "pci1179,0220";
 				reg = <0x50000 0x0 0x0 0x0 0x0>;
 				#address-cells = <3>;
 				#size-cells = <2>;
-				device_type = "pci";
 				ranges;
+				device_type = "pci";
+
+				#include "tc9564_ethernet_fn0.dtsi"
 			};
 
 			pci@0,1 {
+				compatible = "pci1179,0220";
 				reg = <0x50100 0x0 0x0 0x0 0x0>;
 				#address-cells = <3>;
 				#size-cells = <2>;
-				device_type = "pci";
 				ranges;
+				device_type = "pci";
+
+				#include "tc9564_ethernet_fn1.dtsi"
 			};
+		};
+	};
+};
+
+&tc9564_emac1 {
+	status = "okay";
+
+	/* SID comes from the iommu-map for &pcie1 */
+	iommus = <&apps_smmu 0x1c90 0x0>;
+
+	phy-mode = "sgmii";
+	phy-handle = <&tc9564_emac1_phy>;
+
+	mdio {
+		compatible = "snps,dwmac-mdio";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		tc9564_emac1_phy: ethernet-phy@1c {
+			compatible = "ethernet-phy-id004d.d101";
+			reg = <0x1c>;
+
+			reset-assert-us = <11000>;
+			reset-deassert-us = <70000>;
+
+			vdd18-supply = <&qep_1p8>;
+
+			pinctrl-names = "default";
+			pinctrl-0 = <&qep_irq_pin>;
+			interrupts-extended = <&tlmm 101 IRQ_TYPE_LEVEL_LOW>;
 		};
 	};
 };
@@ -1551,6 +1598,13 @@
 
 	usb_hub_reset_state: usb-hub-reset-state {
 		pins = "gpio162";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	qep_irq_pin: qep-irq-state {
+		pins = "gpio101";
 		function = "gpio";
 		drive-strength = <2>;
 		bias-disable;
