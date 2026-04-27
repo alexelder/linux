@@ -27351,6 +27351,16 @@ F:	Documentation/devicetree/bindings/media/i2c/toshiba,tc358743.txt
 F:	drivers/media/i2c/tc358743*
 F:	include/media/i2c/tc358743.h
 
+TOSHIBA TC956X/QUALCOMM QPS615 DWMAC ETHERNET DRIVER
+M:	Alex Elder <elder@kernel.org>
+M:	Daniel Thompson <danielt@kernel.org>
+S:	Maintained
+F:	Documentation/devicetree/bindings/net/toshiba,tc9564-dwmac.yaml
+F:	drivers/gpio/gpio-tc956x.c
+F:	drivers/misc/tc956x_pci.c
+F:	drivers/net/ethernet/stmicro/stmmac/dwmac-tc956x.c
+F:	include/soc/toshiba/tc956x-dwmac.h
+
 TOSHIBA WMI HOTKEYS DRIVER
 M:	Azael Avalos <coproscefalo@gmail.com>
 L:	platform-driver-x86@vger.kernel.org
