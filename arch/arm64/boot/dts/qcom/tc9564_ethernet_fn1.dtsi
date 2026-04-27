@@ -1,0 +1,160 @@
+#include <dt-bindings/clock/toshiba,tc9564.h>
+#include <dt-bindings/reset/toshiba,tc9564.h>
+
+/*
+ * TC9564_INSTANCE_NUMBER is needed to avoid symbol collisions when two
+ * TC9564 instances are present in the same device tree. Ignore it otherwise!
+ */
+#ifdef TC9564_INSTANCE_NUMBER
+#define TC9564(x) tc9564_##TC9564_INSTANCE_NUMBER##x
+#else
+#define TC9564(x) tc9564_##x
+#endif
+
+#interrupt-cells = <1>;
+interrupt-controller;
+
+pci-ep-bus@4 {
+	compatible = "simple-bus";
+	#address-cells = <1>;
+	#size-cells = <1>;
+	/* Map 0x0-0x1fffff to BAR 4 */
+	ranges = <0x0  0x4 0x0 0x0  0x200000>;
+
+	TC9564(msigen1): interrupt-controller@f100 {
+		compatible = "toshiba,tc9564-msigen";
+		reg = <0xf100 0x0100>;
+		interrupt-controller;
+		#interrupt-cells = <1>;
+
+		clocks = <&TC9564(clock0) CLOCK_MSIGEN>;
+		clock-names = "toshiba,tc9564-msigen-clock";
+		resets = <&TC9564(reset0) RESET_MSIGEN>;
+		reset-names = "toshiba,tc9564-msigen-reset";
+	};
+
+	TC9564(emac1): ethernet@48000 {
+		compatible = "toshiba,tc9564-xgmac";
+		status = "disabled";
+		reg = <0x48000 0x8000>;
+		toshiba,config-syscon = <&TC9564(config_syscon0) 0x1074>;
+
+		clocks = <&TC9564(ref_125mhz_clk)>,
+			 <&TC9564(ref_250mhz_clk)>,
+			 <&TC9564(clock0) CLOCK_MAC1_TX>,
+			 <&TC9564(clock0) CLOCK_MAC1_RX>,
+			 <&TC9564(clock0) CLOCK_MAC1_ALL>,
+			 <&TC9564(clock0) CLOCK_MAC1_RMII>;
+		clock-names = "stmmaceth",
+			      "ptp_ref",
+			      "mac-tx-clock",
+			      "mac-rx-clock",
+			      "mac-all-clock",
+			      "mac-rmii-clock";
+
+		resets = <&TC9564(reset0) RESET_MAC1_MAC>,
+			 <&TC9564(reset0) RESET_MAC1_PMA>,
+			 <&TC9564(reset0) RESET_MAC1_XPCS>;
+		reset-names = "mac-reset",
+			      "pma-reset",
+			      "xpcs-reset";
+
+		interrupts-extended = <&TC9564(msigen1) 2>,
+				      <&TC9564(msigen1) 3>,
+				      <&TC9564(msigen1) 4>,
+				      <&TC9564(msigen1) 5>,
+				      <&TC9564(msigen1) 6>,
+				      <&TC9564(msigen1) 7>,
+				      <&TC9564(msigen1) 8>,
+				      <&TC9564(msigen1) 9>,
+				      <&TC9564(msigen1) 10>,
+				      <&TC9564(msigen1) 11>,
+				      <&TC9564(msigen1) 12>,
+				      <&TC9564(msigen1) 13>,
+				      <&TC9564(msigen1) 14>,
+				      <&TC9564(msigen1) 15>,
+				      <&TC9564(msigen1) 16>,
+				      <&TC9564(msigen1) 17>,
+				      <&TC9564(msigen1) 18>;
+		interrupt-names = "macirq",
+			          "tx-queue-0",
+			          "tx-queue-1",
+			          "tx-queue-2",
+			          "tx-queue-3",
+			          "tx-queue-4",
+			          "tx-queue-5",
+			          "tx-queue-6",
+			          "tx-queue-7",
+			          "rx-queue-0",
+			          "rx-queue-1",
+			          "rx-queue-2",
+			          "rx-queue-3",
+			          "rx-queue-4",
+			          "rx-queue-5",
+			          "rx-queue-6",
+			          "rx-queue-7";
+
+		snps,tso;
+		snps,pbl = <32>;
+		snps,force_sf_dma_mode;
+		snps,perfect-filter-entries = <32>;
+
+		snps,mtl-rx-config = <&TC9564(mtl_rx_emac1_setup)>;
+		snps,mtl-tx-config = <&TC9564(mtl_tx_emac1_setup)>;
+		rx-fifo-depth = <32768>;
+		tx-fifo-depth = <32768>;
+
+		snps,axi-config = <&TC9564(axi_emac1_setup)>;
+
+		TC9564(mtl_rx_emac1_setup): rx-queues-config {
+			snps,rx-queues-to-use = <4>;
+			snps,rx-sched-sp;
+			queue0 {
+				snps,dcb-algorithm;
+				snps,map-to-dma-channel = <0x0>;
+			};
+			queue1 {
+				snps,dcb-algorithm;
+				snps,map-to-dma-channel = <0x1>;
+			};
+			queue2 {
+				snps,dcb-algorithm;
+				snps,map-to-dma-channel = <0x2>;
+			};
+			queue3 {
+				snps,dcb-algorithm;
+				snps,map-to-dma-channel = <0x3>;
+			};
+		};
+
+		TC9564(mtl_tx_emac1_setup): tx-queues-config {
+			snps,tx-queues-to-use = <4>;
+			snps,tx-sched-wrr;
+			queue0 {
+				snps,weight = <0x0c>;
+				snps,dcb-algorithm;
+			};
+			queue1 {
+				snps,weight = <0x0c>;
+				snps,dcb-algorithm;
+			};
+			queue2 {
+				snps,weight = <0x0c>;
+				snps,dcb-algorithm;
+			};
+			queue3 {
+				snps,weight = <0x0c>;
+				snps,dcb-algorithm;
+			};
+		};
+
+		TC9564(axi_emac1_setup): stmmac-axi-config {
+			snps,lpi_en;
+			snps,wr_osr_lmt = <31>;
+			snps,rd_osr_lmt = <31>;
+			snps,blen = <256 128 64 32 16 8 4>;
+		};
+	};
+};
+
+#undef TC9564
