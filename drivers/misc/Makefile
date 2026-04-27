@@ -80,3 +80,4 @@ tc956x-pci-objs			:= tc956x_pci2.o \
 				   tc956x_pci_p1b5d0f1.dtbo.o
 DTC_FLAGS_tc956x_pci_p1b5d0f0 := -@
 DTC_FLAGS_tc956x_pci_p1b5d0f1 := -@
+obj-$(CONFIG_TC956X_TRANSLATE)	+= tc956x-translate.o
