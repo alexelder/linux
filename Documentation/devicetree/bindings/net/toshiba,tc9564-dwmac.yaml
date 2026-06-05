@@ -62,6 +62,7 @@ properties:
     type: object
     description: Embedded GPIO controller
     $ref: /schemas/gpio/gpio.yaml#
+    unevaluatedProperties: false
 
   ethernet:
     type: object
@@ -72,6 +73,7 @@ properties:
         $ref: snps,dwmac.yaml#/properties/mdio
     required:
       - mdio
+    unevaluatedProperties: false
 
 required:
   - compatible
