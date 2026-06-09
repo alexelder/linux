@@ -468,7 +468,6 @@ static int tc956x_mac_setup(void *apriv, struct mac_device_info *mac)
 
 static int tc956x_pcs_init(struct stmmac_priv *priv)
 {
-	struct xpcs_regmap_config xpcs_regmap_cfg;
 	void __iomem *emac = priv->ioaddr;
 	struct regmap *xpcs_regmap;
 	void __iomem *xpcs_addr;
@@ -480,9 +479,7 @@ static int tc956x_pcs_init(struct stmmac_priv *priv)
 	if (IS_ERR(xpcs_regmap))
 		return PTR_ERR(xpcs_regmap);
 
-	xpcs_regmap_cfg.regmap = xpcs_regmap;
-
-	xpcs = devm_xpcs_regmap_register(priv->device, &xpcs_regmap_cfg);
+	xpcs = devm_xpcs_regmap_register(priv->device, xpcs_regmap);
 	if (IS_ERR(xpcs))
 		return PTR_ERR(xpcs);
 

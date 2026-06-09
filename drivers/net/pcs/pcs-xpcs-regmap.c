@@ -129,7 +129,7 @@ static void devm_xpcs_regmap_destroy(void *data)
 }
 
 struct dw_xpcs *devm_xpcs_regmap_register(struct device *dev,
-					  const struct xpcs_regmap_config *config)
+					  struct regmap *regmap)
 {
 	static atomic_t id = ATOMIC_INIT(-1);
 	struct dw_xpcs_regmap *pxpcs;
@@ -141,7 +141,7 @@ struct dw_xpcs *devm_xpcs_regmap_register(struct device *dev,
 		return ERR_PTR(-ENOMEM);
 
 	pxpcs->dev = dev;
-	pxpcs->regmap = config->regmap;
+	pxpcs->regmap = regmap;
 
 	pxpcs->bus = devm_mdiobus_alloc_size(dev, 0);
 	if (!pxpcs->bus)
