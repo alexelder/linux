@@ -11,7 +11,6 @@ struct dw_xpcs;
 
 struct xpcs_regmap_config {
 	struct regmap *regmap;
-	bool reg_indir;
 };
 
 struct dw_xpcs *devm_xpcs_regmap_register(

@@ -481,7 +481,6 @@ static int tc956x_pcs_init(struct stmmac_priv *priv)
 		return PTR_ERR(xpcs_regmap);
 
 	xpcs_regmap_cfg.regmap = xpcs_regmap;
-	xpcs_regmap_cfg.reg_indir = true;
 
 	xpcs = devm_xpcs_regmap_register(priv->device, &xpcs_regmap_cfg);
 	if (IS_ERR(xpcs))

@@ -22,7 +22,6 @@ struct dw_xpcs_regmap {
 	struct device *dev;
 	struct mii_bus *bus;
 	struct regmap *regmap;
-	bool reg_indir;
 };
 
 static ptrdiff_t xpcs_regmap_addr_format(int dev, int reg)
@@ -81,29 +80,6 @@ static int xpcs_regmap_write_reg_indirect(struct dw_xpcs_regmap *pxpcs, int dev,
 	return regmap_write(pxpcs->regmap, ofs, val);
 }
 
-static int xpcs_regmap_read_reg_direct(struct dw_xpcs_regmap *pxpcs, int dev,
-				       int reg)
-{
-	unsigned int val;
-	ptrdiff_t csr;
-	int res;
-
-	csr = xpcs_regmap_addr_format(dev, reg);
-	res = regmap_read(pxpcs->regmap, csr, &val);
-	if (res < 0)
-		return res;
-
-	return val & 0xffff;
-}
-
-static int xpcs_regmap_write_reg_direct(struct dw_xpcs_regmap *pxpcs, int dev,
-					int reg, u16 val)
-{
-	ptrdiff_t csr = xpcs_regmap_addr_format(dev, reg);
-
-	return regmap_write(pxpcs->regmap, csr, val);
-}
-
 static int xpcs_regmap_read_c22(struct mii_bus *bus, int addr, int reg)
 {
 	struct dw_xpcs_regmap *pxpcs = bus->priv;
@@ -111,10 +87,7 @@ static int xpcs_regmap_read_c22(struct mii_bus *bus, int addr, int reg)
 	if (addr != 0)
 		return -ENODEV;
 
-	if (pxpcs->reg_indir)
-		return xpcs_regmap_read_reg_indirect(pxpcs, MDIO_MMD_VEND2, reg);
-	else
-		return xpcs_regmap_read_reg_direct(pxpcs, MDIO_MMD_VEND2, reg);
+	return xpcs_regmap_read_reg_indirect(pxpcs, MDIO_MMD_VEND2, reg);
 }
 
 static int xpcs_regmap_write_c22(struct mii_bus *bus, int addr, int reg, u16 val)
@@ -124,10 +97,7 @@ static int xpcs_regmap_write_c22(struct mii_bus *bus, int addr, int reg, u16 val
 	if (addr != 0)
 		return -ENODEV;
 
-	if (pxpcs->reg_indir)
-		return xpcs_regmap_write_reg_indirect(pxpcs, MDIO_MMD_VEND2, reg, val);
-	else
-		return xpcs_regmap_write_reg_direct(pxpcs, MDIO_MMD_VEND2, reg, val);
+	return xpcs_regmap_write_reg_indirect(pxpcs, MDIO_MMD_VEND2, reg, val);
 }
 
 static int xpcs_regmap_read_c45(struct mii_bus *bus, int addr, int dev, int reg)
@@ -137,10 +107,7 @@ static int xpcs_regmap_read_c45(struct mii_bus *bus, int addr, int dev, int reg)
 	if (addr != 0)
 		return -ENODEV;
 
-	if (pxpcs->reg_indir)
-		return xpcs_regmap_read_reg_indirect(pxpcs, dev, reg);
-	else
-		return xpcs_regmap_read_reg_direct(pxpcs, dev, reg);
+	return xpcs_regmap_read_reg_indirect(pxpcs, dev, reg);
 }
 
 static int xpcs_regmap_write_c45(struct mii_bus *bus, int addr, int dev,
@@ -151,10 +118,7 @@ static int xpcs_regmap_write_c45(struct mii_bus *bus, int addr, int dev,
 	if (addr != 0)
 		return -ENODEV;
 
-	if (pxpcs->reg_indir)
-		return xpcs_regmap_write_reg_indirect(pxpcs, dev, reg, val);
-	else
-		return xpcs_regmap_write_reg_direct(pxpcs, dev, reg, val);
+	return xpcs_regmap_write_reg_indirect(pxpcs, dev, reg, val);
 }
 
 static void devm_xpcs_regmap_destroy(void *data)
@@ -178,7 +142,6 @@ struct dw_xpcs *devm_xpcs_regmap_register(struct device *dev,
 
 	pxpcs->dev = dev;
 	pxpcs->regmap = config->regmap;
-	pxpcs->reg_indir = config->reg_indir;
 
 	pxpcs->bus = devm_mdiobus_alloc_size(dev, 0);
 	if (!pxpcs->bus)
