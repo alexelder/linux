@@ -51,7 +51,7 @@ examples:
             compatible = "ethernet-phy-id004d.d101";
             reg = <0>;
 
-            vdd-supply = <&phy_vreg_1v8>;
+            vdd18-supply = <&phy_vreg_1v8>;
 
             leds {
                 #address-cells = <1>;
