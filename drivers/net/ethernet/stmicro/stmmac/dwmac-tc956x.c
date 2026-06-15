@@ -549,18 +549,6 @@ static int tc956x_dwmac_parse_dt(struct tc956x_data *td)
 	return 0;
 }
 
-static int tc956x_lookup_max_speed(phy_interface_t phy_interface)
-{
-	switch (phy_interface) {
-	case PHY_INTERFACE_MODE_SGMII:
-	case PHY_INTERFACE_MODE_2500BASEX:
-		return SPEED_2500;
-
-	default:
-		return -EOPNOTSUPP;
-	}
-}
-
 /* Called by tc956x_dwmac_probe(); return errors with dev_err_probe() */
 static int tc956x_plat_dat_init(struct tc956x_data *td)
 {
@@ -568,7 +556,6 @@ static int tc956x_plat_dat_init(struct tc956x_data *td)
 	phy_interface_t phy_interface;
 	struct device *dev = td->dev;
 	struct stmmac_axi *axi;
-	u32 speed;
 	int ret;
 	u32 i;
 
@@ -581,11 +568,6 @@ static int tc956x_plat_dat_init(struct tc956x_data *td)
 	plat = stmmac_plat_dat_alloc(dev);
 	if (!plat)
 		return -ENOMEM;
-
-	ret = tc956x_lookup_max_speed(phy_interface);
-	if (ret < 0)
-		return dev_err_probe(dev, ret, "unsupported phy speed\n");
-	speed = ret;
 
 	plat->core_type = DWMAC_CORE_XGMAC;
 	plat->bus_id = td->auxbus_data->mac_id;
@@ -604,7 +586,6 @@ static int tc956x_plat_dat_init(struct tc956x_data *td)
 	plat->clk_csr = 0;	/* MDC clock = clk_csr_i / 62 */
 	plat->default_an_inband = true;
 	plat->force_sf_dma_mode = true;
-	plat->max_speed = speed;
 	plat->unicast_filter_entries = 32;
 
 	/*
@@ -665,7 +646,6 @@ static int tc956x_plat_dat_init(struct tc956x_data *td)
 	axi->axi_blen_regval = DMA_AXI_BLEN_MASK;
 	plat->axi = axi;
 
-	plat->mac_port_sel_speed = speed;
 	plat->flags = STMMAC_FLAG_MULTI_MSI_EN | STMMAC_FLAG_TSO_EN;
 
 	td->plat = plat;
