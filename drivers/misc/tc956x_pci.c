@@ -51,6 +51,7 @@
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/of.h>
+#include <linux/of_platform.h>
 #include <linux/pci.h>
 #include <linux/property.h>
 #include <linux/regmap.h>
@@ -65,7 +66,6 @@
 #define PCI_DEVICE_ID_TOSHIBA_TC956X	0x0220
 
 /* PCI BAR assignments */
-#define PCI_BAR_BRIDGE_CONFIG		0	/* For TAMAP */
 #define PCI_BAR_SFR			4	/* For all other features */
 
 /* Chip and revision ID register */
@@ -106,35 +106,6 @@ enum clock_id {
 };
 
 /*
- * The TAMAP function has four AXI translation tables each with eight
- * 4-byte registers.  The Ethernet MAC accesses PCI resources through
- * addressses based at TC956X_SLV00_SRC_ADDR, and the first translation
- * table converts those to PCIe address space starting based at 0x0.
- * We don't use the other three available TAMAC tables.
- */
-#define ATR_AXI4_SLV0_OFFSET		0x0800
-#define AXI4_TABLE_ENTRY_COUNT		4
-#define AXI4_ENTRY_BASE(id)		((id) * AXI4_TABLE_STRIDE)
-#define AXI4_TABLE_STRIDE               0x20
-
-/* Address translation space parameters used for entry 0 */
-#define SLV00_ATR_SIZE			35	/* 2^36 (64 gigabytes) */
-/* TC956X_SLV00_SRC_ADDR is the source address, defined in the common header */
-#define SLV00_TRSL_ADDR			0x0000000000000000ULL
-
-/* Translation entry registers, fields, and values used */
-#define SRC_ADDR_LO_OFFSET		0x0000
-#define ATR_IMPL			BIT(0)		/* 1 = enabled */
-#define ATR_SIZE_MASK			GENMASK(6, 1)	/* size 2^(ATR + 1) */
-#define SRC_ADDR_HI_OFFSET		0x0004
-#define TRSL_ADDR_LO_OFFSET		0x0008
-#define TRSL_ADDR_HI_OFFSET		0x000c
-#define TRSL_PARAM_OFFSET		0x0010
-#define TRSL_ID_MASK			GENMASK(3, 0)
-#define TRSL_ID_PCIE_TX_RX		0
-#define TRSL_PARAM_MASK			GENMASK(27, 16)
-
-/*
  * The TC956X implements an "SFR" address space, which provides access
  * to *all* internal IP block registers, both MAC and non-MAC.  This
  * space is also accessible via an I2C interface used by the PCI pwrctl
@@ -150,14 +121,12 @@ enum clock_id {
  * struct tc956x_chip - Common information related to the TC956X chip
  * @dev:		Device structure for function 0
  * @sfr:		Mapped SFR regions (BAR 4, one per PCI function)
- * @bridge_config:	Regmap used for bridge configuration (BAR 0)
  * @reset_clock_regmap:	Regmap used for resets and clocks
  * @rev_id:		Chip revision ID (for quirks)
  */
 struct tc956x_chip {
 	struct device *dev;
 	void __iomem *sfr[2];
-	void __iomem *bridge_config;
 	struct regmap *reset_clock_regmap;
 	u8 rev_id;
 };
@@ -377,87 +346,6 @@ static int chip_reset_clock_init(struct tc956x_chip *chip)
 	return 0;
 }
 
-static int chip_tamap_init(struct tc956x_chip *chip, struct pci_dev *pdev)
-{
-	void __iomem *base;
-
-	base = pcim_iomap_region(pdev, PCI_BAR_BRIDGE_CONFIG, DRIVER_NAME);
-	if (IS_ERR(base))
-		return PTR_ERR(base);
-
-	chip->bridge_config = base + ATR_AXI4_SLV0_OFFSET;
-
-	return 0;
-}
-
-/**
- * chip_tamap_config() - Configure the table address map registers
- * @chip:	The TC956X chip pointer
- *
- * Populate the registers used to translate AXI bus accesses to PCI TLPs.
- * TC956X_SLV00_SRC_ADDR defines the base address of the AXI address range.
- * AXI addresses are translated to the PCIe address range, whose base address
- * is defined by SLV00_TRSL_ADDR (which is 0x0).
- */
-static void chip_tamap_config(struct tc956x_chip *chip)
-{
-	void __iomem *table_base = chip->bridge_config;
-	void __iomem *entry_base;
-	u32 trsl_param_val;
-	u32 atr_size_val;
-	u32 val;
-	u32 i;
-
-	/*
-	 * The lower bits of the source address must be zero, because the
-	 * SRC_ADDR_LO register encodes the address translation space size
-	 * and "implmented" bit there.  The size field defines the size of
-	 * the translation space (2^(ATR_SIZE + 1)).  The minimum size is
-	 * 4096 bytes, so ATR_SIZE value must be 11 or more.
-	 */
-	BUILD_BUG_ON(!!u32_get_bits(lower_32_bits(TC956X_SLV00_SRC_ADDR),
-						  ATR_SIZE_MASK));
-	BUILD_BUG_ON(TC956X_SLV00_SRC_ADDR & ATR_IMPL);
-	BUILD_BUG_ON(SLV00_ATR_SIZE < 11);
-
-	/*
-	 * We only use the first AXI4 slave TAMAC table:
-	 *	EDMA address region:	0x10 0000 0000 - 0x1f ffff ffff
-	 *	is translated to:	0x00 0000 0000 - 0x0f ffff ffff
-	 */
-	entry_base = table_base + AXI4_ENTRY_BASE(0);
-
-	atr_size_val = u32_encode_bits(SLV00_ATR_SIZE, ATR_SIZE_MASK);
-	atr_size_val |= ATR_IMPL;
-	val = lower_32_bits(TC956X_SLV00_SRC_ADDR) | atr_size_val;
-	writel(val, entry_base + SRC_ADDR_LO_OFFSET);
-
-	val = upper_32_bits(TC956X_SLV00_SRC_ADDR);
-	writel(val, entry_base + SRC_ADDR_HI_OFFSET);
-
-	val = lower_32_bits(SLV00_TRSL_ADDR);
-	writel(val, entry_base + TRSL_ADDR_LO_OFFSET);
-
-	val = upper_32_bits(SLV00_TRSL_ADDR);
-	writel(val, entry_base + TRSL_ADDR_HI_OFFSET);
-
-	/* This TRSL_PARAM value is assigned for all four TAMAC tables */
-	trsl_param_val = u32_encode_bits(TRSL_ID_PCIE_TX_RX, TRSL_ID_MASK);
-
-	writel(trsl_param_val, entry_base + TRSL_PARAM_OFFSET);
-
-	/* Set all other unused entries to default values (no translation) */
-	for (i = 1; i < AXI4_TABLE_ENTRY_COUNT; i++) {
-		entry_base = table_base + AXI4_ENTRY_BASE(i);
-
-		writel(0x0, entry_base + SRC_ADDR_LO_OFFSET);
-		writel(0x0, entry_base + SRC_ADDR_HI_OFFSET);
-		writel(0x0, entry_base + TRSL_ADDR_LO_OFFSET);
-		writel(0x0, entry_base + TRSL_ADDR_HI_OFFSET);
-		writel(trsl_param_val, entry_base + TRSL_PARAM_OFFSET);
-	}
-}
-
 static void chip_msigen_enable(struct tc956x_chip *chip)
 {
 	chip_clock_enable(chip, CLOCK_MSIGEN);
@@ -520,9 +408,6 @@ static struct tc956x_chip *chip_get(struct pci_dev *pdev)
 		if (!chip)
 			return ERR_PTR(-ENOMEM);
 
-		dev_info(dev, " ======== tamap BAR %u: %pR\n",
-			 0, pci_resource_n(pdev, 0));
-
 		/*
 		 * The function whose device pointer matches the chip's
 		 * device pointer manages common resources (like MSIGEN).
@@ -578,10 +463,6 @@ static int chip_init(struct tc956x_chip *chip, struct pci_dev *pdev)
 	if (id)
 		return 0;
 
-	ret = chip_tamap_init(chip, pdev);
-	if (ret)
-		return ret;
-
 	ret = chip_reset_clock_init(chip);
 	if (ret)
 		return ret;
@@ -596,7 +477,6 @@ static int chip_init(struct tc956x_chip *chip, struct pci_dev *pdev)
 	val = readl(chip->sfr[0] + NCID_OFFSET);
 	chip->rev_id = u32_get_bits(val, NCID_REV_ID_MASK);
 
-	chip_tamap_config(chip);
 	chip_msigen_enable(chip);
 
 	return 0;
@@ -629,7 +509,6 @@ tc956x_function_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 	unsigned int msigen_irq;
 	int ret;
 
-dev_info(dev, " ======== %s starting\n", __func__);
 	/* Despite being a PCI device, we require devicetree */
 	if (!dev->of_node)
 		return dev_err_probe(dev, -EINVAL, "no devicetree node\n");
@@ -656,6 +535,10 @@ dev_info(dev, " ======== %s starting\n", __func__);
 		return dev_err_probe(dev, ret ? : -EIO, "failed to get IRQ\n");
 	msigen_irq = ret;
 
+	ret = of_platform_default_populate(dev_of_node(dev), NULL, dev);
+	if (ret)
+		return dev_err_probe(dev, ret, "populating bus failed\n");
+
 	ret = chip_init(chip, pdev);
 	if (ret)
 		return dev_err_probe(dev, ret, "failed to initialize chip\n");
@@ -667,16 +550,19 @@ dev_info(dev, " ======== %s starting\n", __func__);
 	/* We're ready; the other function can now probe */
 	dev->platform_data = chip;
 
-dev_info(dev, " ======== %s successful\n", __func__);
 	return 0;
 }
 
 static void tc956x_function_remove(struct pci_dev *pdev)
 {
-	struct tc956x_chip *chip = dev_get_platdata(&pdev->dev);
+	struct device *dev = &pdev->dev;
+	struct tc956x_chip *chip;
 
-	if (&pdev->dev == chip->dev)
+	chip = dev_get_platdata(dev);
+	if (dev == chip->dev)
 		chip_msigen_disable(chip);
+
+	of_platform_depopulate(dev);
 
 	pci_free_irq_vectors(pdev);
 
@@ -715,9 +601,6 @@ static int tc956x_chip_resume_noirq(struct device *dev)
 
 	if (dev != chip->dev)
 		return 0;
-
-	/* Reconfigure tamap tables following suspend */
-	chip_tamap_config(chip);
 
 	chip_msigen_enable(chip);
 
