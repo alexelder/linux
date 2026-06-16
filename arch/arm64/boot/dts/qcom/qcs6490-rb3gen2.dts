@@ -978,7 +978,7 @@
 					/* Map 0x0-0x3fff to BAR 0 */
 					ranges = <0x0  0x02000000 0x0 0x41800000  0x4000>;
 
-					tamap@0,0 {
+					tamap: tamap@0,0 {
 						compatible = "toshiba,tc956x-config";
 						reg = <0x0 0x4000>;
 					};
@@ -997,6 +997,9 @@
 				#size-cells = <2>;
 				device_type = "pci";
 				ranges;
+
+				/* Enforce probe order dependency */
+				wait-for = <&tamap>;
 
 				ethernet {
 					phy-mode = "sgmii";

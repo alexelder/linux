@@ -46,6 +46,7 @@
 #include <linux/bitfield.h>
 #include <linux/compiler_types.h>
 #include <linux/device.h>
+#include <linux/platform_device.h>
 #include <linux/dev_printk.h>
 #include <linux/init.h>
 #include <linux/io.h>
@@ -508,6 +509,23 @@ tc956x_function_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 	struct tc956x_chip *chip;
 	unsigned int msigen_irq;
 	int ret;
+
+	if (PCI_FUNC(pdev->devfn)) {
+		struct platform_device *tamap_pdev;
+		struct device_node *tamap;
+
+		tamap = of_parse_phandle(dev->of_node, "wait-for", 0);
+		if (!tamap)
+			return dev_err_probe(dev, -EINVAL,
+					     "missing \"wait-for\" property\n");
+
+		tamap_pdev = of_find_device_by_node(tamap);
+		of_node_put(tamap);
+
+		if (!tamap_pdev || !device_is_bound(&tamap_pdev->dev))
+			return dev_err_probe(dev, -EPROBE_DEFER,
+					     "waiting for address mapper\n");
+	}
 
 	/* Despite being a PCI device, we require devicetree */
 	if (!dev->of_node)
