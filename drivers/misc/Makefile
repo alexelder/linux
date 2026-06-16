@@ -75,3 +75,4 @@ obj-y				+= keba/
 obj-y				+= amd-sbi/
 obj-$(CONFIG_MISC_RP1)		+= rp1/
 obj-$(CONFIG_TOSHIBA_TC956X_PCI) += tc956x_pci.o
+obj-$(CONFIG_TC956X_CONFIG)	+= tc956x_config.o

@@ -520,6 +520,9 @@ static struct tc956x_chip *chip_get(struct pci_dev *pdev)
 		if (!chip)
 			return ERR_PTR(-ENOMEM);
 
+		dev_info(dev, " ======== tamap BAR %u: %pR\n",
+			 0, pci_resource_n(pdev, 0));
+
 		/*
 		 * The function whose device pointer matches the chip's
 		 * device pointer manages common resources (like MSIGEN).
@@ -626,6 +629,7 @@ tc956x_function_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 	unsigned int msigen_irq;
 	int ret;
 
+dev_info(dev, " ======== %s starting\n", __func__);
 	/* Despite being a PCI device, we require devicetree */
 	if (!dev->of_node)
 		return dev_err_probe(dev, -EINVAL, "no devicetree node\n");
@@ -663,6 +667,7 @@ tc956x_function_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 	/* We're ready; the other function can now probe */
 	dev->platform_data = chip;
 
+dev_info(dev, " ======== %s successful\n", __func__);
 	return 0;
 }
 

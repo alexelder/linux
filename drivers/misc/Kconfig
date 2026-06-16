@@ -646,6 +646,22 @@ config TOSHIBA_TC956X_PCI
 	  creates auxiliary devices and requires drivers for these devices
 	  to function.
 
+config TC956X_CONFIG
+	tristate "Toshiba TC956X configuration support"
+	depends on TOSHIBA_TC956X_PCI
+	default TOSHIBA_TC956X_PCI
+	help
+	  For the moment, this driver only configures the address translation
+	  unit found inside the TC9564 SoC, using addresses in the PCIe
+	  endpoint bridge configuration range.  It is implemented as a
+	  platform driver, and it is is currently given full access to
+	  the PCIe BAR0 space, which includes the PCIe endpoint bridge
+	  configuration, PCIe configuration, and PCIe resource manager
+	  registers.  So it could theoretically be expanded to do more.
+
+	  Right now it simply gets enabled when TOSHIBA_TC956X_PCI is
+	  enabled.  This will get reworked soon.
+
 source "drivers/misc/c2port/Kconfig"
 source "drivers/misc/eeprom/Kconfig"
 source "drivers/misc/cb710/Kconfig"
