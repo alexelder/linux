@@ -971,6 +971,19 @@
 				device_type = "pci";
 				ranges;
 
+				pci-ep-bus@0 {
+					compatible = "simple-bus";
+					#address-cells = <1>;
+					#size-cells = <1>;
+					/* Map 0x0-0x3fff to BAR 0 */
+					ranges = <0x0  0x02000000 0x0 0x41800000  0x4000>;
+
+					tamap@0,0 {
+						compatible = "toshiba,tc956x-config";
+						reg = <0x0 0x4000>;
+					};
+				};
+
 				tc9564_gpio0: gpio {
 					gpio-controller;
 					#gpio-cells = <2>;
