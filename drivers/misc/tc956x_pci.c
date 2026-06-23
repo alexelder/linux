@@ -62,8 +62,6 @@
 
 #define DRIVER_NAME			TC956X_PCIE_DRIVER_NAME
 
-#define GPIO_DEVICE_NAME		"tc9564-gpio"
-
 #define PCI_DEVICE_ID_TOSHIBA_TC956X	0xabcd	/* 0x0220 */
 
 /* PCI BAR assignments */
@@ -130,15 +128,6 @@ struct tc956x_chip {
 	void __iomem *sfr[2];
 	struct regmap *reset_clock_regmap;
 	u8 rev_id;
-};
-
-static const struct regmap_config gpio_regmap_config = {
-	.name		= "tc956x-gpio",
-	.reg_bits	= 32,
-	.reg_stride	= 4,
-	.reg_base	= 0x1200,	/* Register GPIOI0 */
-	.val_bits	= 32,
-	.max_register	= 0x1214,	/* Register GPIOO1 */
 };
 
 static const struct regmap_config reset_clock_regmap_config = {
@@ -240,52 +229,6 @@ static int adev_device_add(struct device *dev, const char *name, u32 id,
 	}
 
 	return devm_add_action_or_reset(dev, adev_remove, adev);
-}
-
-/* Returns a reference to the GPIO's DT sub-node, or a null pointer */
-static struct device_node *dev_node_child_gpio(struct device *dev)
-{
-	struct device_node *np;
-
-	/* The GPIO sub-node is not required (platform might not need it) */
-	for_each_child_of_node(dev->of_node, np)
-		if (!strcmp(np->name, "gpio"))
-			break;
-	if (!np)
-		return NULL;
-
-	/* If it's there, make sure it contains its required properties */
-	if (!of_property_present(np, "gpio-controller"))
-		dev_err(dev, "gpio node contains no gpio-controller property\n");
-	else if (!of_property_present(np, "#gpio-cells"))
-		dev_err(dev, "gpio node contains no #gpio-cells property\n");
-	else
-		return np;	/* Found a GPIO sub-node */
-
-	/* If we reported a problem, pretend there was no gpio node */
-	of_node_put(np);
-
-	return NULL;
-}
-
-/* The embedded GPIO controller has an auxiliary device driver */
-static int chip_gpio_adev_add(struct tc956x_chip *chip)
-{
-	struct device *dev = chip->dev;
-	struct device_node *np;
-	struct regmap *regmap;
-
-	np = dev_node_child_gpio(dev);
-	if (!np)
-		return 0;
-
-	regmap = devm_regmap_init_mmio(dev, chip->sfr[0], &gpio_regmap_config);
-	if (IS_ERR(regmap)) {
-		of_node_put(np);
-		return PTR_ERR(regmap);
-	}
-
-	return adev_device_add(dev, GPIO_DEVICE_NAME, 0, np, regmap);
 }
 
 /* The two embedded XGMAC controllers have an auxiliary device driver */
@@ -469,10 +412,6 @@ static int chip_init(struct tc956x_chip *chip, struct pci_dev *pdev)
 		return ret;
 
 	chip_init_state(chip);
-
-	ret = chip_gpio_adev_add(chip);
-	if (ret)
-		return ret;
 
 	/* Get the revision ID */
 	val = readl(chip->sfr[0] + NCID_OFFSET);
