@@ -64,7 +64,7 @@
 
 #define GPIO_DEVICE_NAME		"tc9564-gpio"
 
-#define PCI_DEVICE_ID_TOSHIBA_TC956X	0x0220
+#define PCI_DEVICE_ID_TOSHIBA_TC956X	0xabcd	/* 0x0220 */
 
 /* PCI BAR assignments */
 #define PCI_BAR_SFR			4	/* For all other features */
