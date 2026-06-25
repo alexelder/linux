@@ -67,6 +67,21 @@
 #define TRSL_ID_PCIE_TX_RX		0
 #define TRSL_PARAM_MASK			GENMASK(27, 16)
 
+/*
+ * The lower bits of the source address must be zero, because the
+ * "implemented" bit and the address translation space size are
+ * encoded there in the SRC_ADDR_LO register.
+ */
+static_assert(!(TC956X_SLV00_SRC_ADDR & ATR_IMPL));
+static_assert(!(lower_32_bits(TC956X_SLV00_SRC_ADDR) & ATR_SIZE_MASK));
+
+/*
+ * The size field defines the size of the translation space as
+ * (2^(ATR_SIZE + 1)).  The minimum size is 4096 bytes, so ATR_SIZE
+ * value must be 11 or more.
+ * */
+static_assert(SLV00_ATR_SIZE >= 11);
+
 /**
  * tc956x_translate_config() - Configure the translation unit registers
  * @regmap:	Regmap used to configure the translation table entries
@@ -83,19 +98,6 @@ static void tc956x_translate_config(struct regmap *regmap)
 	u32 entry_offset;
 	u32 val;
 	u32 i;
-
-	/*
-	 * The lower bits of the source address must be zero, because the
-	 * SRC_ADDR_LO register encodes the address translation space size
-	 * and "implmented" bit there.  The size field defines the size of
-	 * the translation space (2^(ATR_SIZE + 1)).  The minimum size is
-	 * 4096 bytes, so ATR_SIZE value must be 11 or more.
-	 */
-	/* XXX Make these static asserts in place */
-	BUILD_BUG_ON(!!u32_get_bits(lower_32_bits(TC956X_SLV00_SRC_ADDR),
-						  ATR_SIZE_MASK));
-	BUILD_BUG_ON(TC956X_SLV00_SRC_ADDR & ATR_IMPL);
-	BUILD_BUG_ON(SLV00_ATR_SIZE < 11);
 
 	/*
 	 * We only use the first AXI4 slave TAMAC table:
