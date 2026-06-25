@@ -36,9 +36,8 @@
  * The Ethernet MACs access the PCIe subsystem via this bus.  Currently
  * we only use the first translation table entry.
  */
-#define ATR_AXI4_SLV0_OFFSET		0x0800
-#define AXI4_TABLE_ENTRY_COUNT		4
 #define AXI4_ENTRY_BASE(id)		((id) * AXI4_TABLE_STRIDE)
+#define AXI4_TABLE_ENTRY_COUNT		4
 #define AXI4_TABLE_STRIDE               0x20
 
 /*
@@ -48,12 +47,12 @@
  * address space, which begins at TC956X_SLV00_SRC_ADDR.  It defines a
  * mask that extracts the lower bits from the AXI space to determine
  * the bus-relative offset.  That address is added (actually, OR'd) to
- * SLV00_TRSL_ADDR to produce a PCIe bus space address.
+ * the translated base address (recorded in TRSL_ADDR_HI and TRSL_ADDR_LO
+ * registers) to produce a PCIe bus address.  We simply use zero as the
+ * translated base address.
  */
 #define SLV00_ATR_SIZE			35	/* 2^36 (64 gigabytes) */
 /* TC956X_SLV00_SRC_ADDR is the source address, defined in the common header */
-#define SLV00_TRSL_ADDR			0x0000000000000000ULL
-/* XXX Can we just *say* this address is 0? */
 
 /* Translation entry registers, fields, and values used */
 #define SRC_ADDR_LO_OFFSET		0x0000
@@ -82,92 +81,120 @@ static_assert(!(lower_32_bits(TC956X_SLV00_SRC_ADDR) & ATR_SIZE_MASK));
  * */
 static_assert(SLV00_ATR_SIZE >= 11);
 
+struct tc956x_translate {
+	struct regmap *regmap;
+	u32 offset;		/* Offset to the translation table base */
+};
+
+/**
+ * tc956x_translate_entry() - Configure one translation table entry
+ * @regmap:	Regmap used to configure the translation table entries
+ * @offset:	Offset of the base of the entry within the regmap
+ * @src:	64-bit source address (translated address is always 0x0)
+ * @atr_size:	Translation address space size endcoding
+ * @trsl_param:	Translation parameter value
+ */
+static void tc956x_translate_entry(struct regmap *regmap, u32 offset, u64 src,
+				   u32 atr_size, u32 trsl_param)
+{
+	u32 val;
+
+	val = lower_32_bits(src) | atr_size;
+	/* No errors returned for MMIO regmap */
+	regmap_write(regmap, offset + SRC_ADDR_LO_OFFSET, val);
+
+	val = upper_32_bits(src);
+	regmap_write(regmap, offset + SRC_ADDR_HI_OFFSET, val);
+
+	/* The translated base address is always just 0x0 */
+	regmap_write(regmap, offset + TRSL_ADDR_LO_OFFSET, 0);
+	regmap_write(regmap, offset + TRSL_ADDR_HI_OFFSET, 0);
+}
+
 /**
  * tc956x_translate_config() - Configure the translation unit registers
- * @regmap:	Regmap used to configure the translation table entries
+ * @translate:	Private translation structure
  *
  * Define the translation between AXI bus accesses and PCI TLPs.
  * TC956X_SLV00_SRC_ADDR defines the base address of the AXI address
  * range.  AXI addresses are translated to the PCIe address range,
- * whose base address is defined by SLV00_TRSL_ADDR (which is 0x0).
+ * whose base address we set to be 0x0.
  */
-static void tc956x_translate_config(struct regmap *regmap)
+static void tc956x_translate_config(struct tc956x_translate *translate)
 {
-	u32 trsl_param_val;
-	u32 atr_size_val;
-	u32 entry_offset;
-	u32 val;
+	struct regmap *regmap = translate->regmap;
+	u32 offset = translate->offset;
+	u32 trsl_param;
+	u32 atr_size;
 	u32 i;
 
+	/* This TRSL_PARAM value is assigned for all four table entries */
+	trsl_param = u32_encode_bits(TRSL_ID_PCIE_TX_RX, TRSL_ID_MASK);
+
 	/*
-	 * We only use the first AXI4 slave TAMAC table:
+	 * We only use the first AXI4 translation table entry:
 	 *	EDMA address region:	0x10 0000 0000 - 0x1f ffff ffff
 	 *	is translated to:	0x00 0000 0000 - 0x0f ffff ffff
 	 */
-	entry_offset = ATR_AXI4_SLV0_OFFSET + AXI4_ENTRY_BASE(0);
-
-	atr_size_val = u32_encode_bits(SLV00_ATR_SIZE, ATR_SIZE_MASK);
-	atr_size_val |= ATR_IMPL;
-	val = lower_32_bits(TC956X_SLV00_SRC_ADDR) | atr_size_val;
-	/* No errors returned for MMIO regmap */
-	regmap_write(regmap, entry_offset + SRC_ADDR_LO_OFFSET, val);
-
-	val = upper_32_bits(TC956X_SLV00_SRC_ADDR);
-	regmap_write(regmap, entry_offset + SRC_ADDR_HI_OFFSET, val);
-
-	val = lower_32_bits(SLV00_TRSL_ADDR);
-	regmap_write(regmap, entry_offset + TRSL_ADDR_LO_OFFSET, val);
-
-	val = upper_32_bits(SLV00_TRSL_ADDR);
-	regmap_write(regmap, entry_offset + TRSL_ADDR_HI_OFFSET, val);
-
-	/* This TRSL_PARAM value is assigned for all four TAMAC tables */
-	trsl_param_val = u32_encode_bits(TRSL_ID_PCIE_TX_RX, TRSL_ID_MASK);
-	regmap_write(regmap, entry_offset + TRSL_PARAM_OFFSET, trsl_param_val);
+	atr_size = u32_encode_bits(SLV00_ATR_SIZE, ATR_SIZE_MASK);
+	atr_size |= ATR_IMPL;
+	tc956x_translate_entry(regmap, offset, TC956X_SLV00_SRC_ADDR,
+			       atr_size, trsl_param);
 
 	/* Set all other unused entries to default values (no translation) */
-	for (i = 1; i < AXI4_TABLE_ENTRY_COUNT; i++) {
-		entry_offset = ATR_AXI4_SLV0_OFFSET + AXI4_ENTRY_BASE(i);
-
-		regmap_write(regmap, entry_offset + SRC_ADDR_LO_OFFSET, 0);
-		regmap_write(regmap, entry_offset + SRC_ADDR_HI_OFFSET, 0);
-		regmap_write(regmap, entry_offset + TRSL_ADDR_LO_OFFSET, 0);
-		regmap_write(regmap, entry_offset + TRSL_ADDR_HI_OFFSET, 0);
-		regmap_write(regmap, entry_offset + TRSL_PARAM_OFFSET,
-			     trsl_param_val);
-	}
+	for (i = 1; i < AXI4_TABLE_ENTRY_COUNT; i++)
+		tc956x_translate_entry(regmap, offset + AXI4_ENTRY_BASE(i),
+				       0, 0, trsl_param);
 }
 
 static int tc956x_translate_probe(struct platform_device *pdev)
 {
+	struct tc956x_translate *translate;
 	struct device *dev = &pdev->dev;
 	struct device_node *np;
 	struct regmap *regmap;
+	u32 offset;
+	u64 addr;
+	u64 size;
+	int ret;
 
 	dev_info(dev, " === %s starting\n", __func__);
 
 	np = dev_of_node(dev);
 	if (!np)
 		return dev_err_probe(dev, -EINVAL, "no devicetree node\n");
+
+	ret = of_property_read_reg(np, 0, &addr, &size);
+	if (ret)
+		return dev_err_probe(dev, ret, "failed to get table offset\n");
+
+	if (size < AXI4_TABLE_ENTRY_COUNT * AXI4_TABLE_STRIDE)
+		return dev_err_probe(dev, -EINVAL,
+				     "bad table size %llu\n", size);
+	offset = lower_32_bits(addr);
+
 	regmap = syscon_regmap_lookup_by_phandle(np, "toshiba,bridge-syscon");
 	if (IS_ERR(regmap))
 		return dev_err_probe(dev, PTR_ERR(regmap),
 				    "failed to get bridge regmap\n");
 
-	dev->platform_data = regmap;
+	translate = devm_kzalloc(dev, sizeof(*translate), GFP_KERNEL);
+	if (!translate)
+		return dev_err_probe(dev, -ENOMEM,
+				     "failed to allocate translation data\n");
+
+	translate->regmap = regmap;
+	translate->offset = offset;
+
+	dev_set_drvdata(dev, translate);
 
 	/* Do the initial configuraiton */
 
-	tc956x_translate_config(regmap);
+	tc956x_translate_config(translate);
 
 	dev_info(dev, " === %s successful\n", __func__);
 
 	return 0;
-}
-
-static void tc956x_translate_remove(struct platform_device *pdev)
-{
-	/* Nothing to do at this point */
 }
 
 static int tc956x_translate_suspend_noirq(struct device *dev)
@@ -178,9 +205,9 @@ static int tc956x_translate_suspend_noirq(struct device *dev)
 /* We need to reconfigure address translation when we resume */
 static int tc956x_translate_resume_noirq(struct device *dev)
 {
-	struct regmap *regmap = dev->platform_data;
+	struct tc956x_translate *translate = dev_get_drvdata(dev);
 
-	tc956x_translate_config(regmap);
+	tc956x_translate_config(translate);
 
 	return 0;
 }
@@ -197,7 +224,6 @@ MODULE_DEVICE_TABLE(of, tc956x_translate_match);
 
 static struct platform_driver tc956x_translate_driver = {
 	.probe		= tc956x_translate_probe,
-	.remove		= tc956x_translate_remove,
 	.driver		= {
 		.name		= DRIVER_NAME,
 		.of_match_table	= of_match_ptr(tc956x_translate_match),
