@@ -997,6 +997,13 @@
 			reg = <0x0 0x2000>;
 		};
 
+		tc9564_reset0: clock@1008 {
+			compatible = "toshiba,tc956x-resets";
+			reg = <0x1008 0x4>, <0x1010 4>;
+			toshiba,config-syscon = <&config_syscon0>;
+			#reset-cells = <1>;
+		};
+
 		tc9564_gpio0: gpio@1200 {
 			compatible = "toshiba,tc9564-gpio";
 			reg = <0x1200 0x18>;
