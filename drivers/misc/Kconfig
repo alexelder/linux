@@ -646,21 +646,17 @@ config TC956X_PCI
 	  creates auxiliary devices and requires drivers for these devices
 	  to function.
 
-config TC956X_CONFIG
+config TC956X_TRANSLATE
 	tristate "Toshiba TC956X configuration support"
 	depends on TC956X_PCI
 	default TC956X_PCI
 	help
-	  For the moment, this driver only configures the address translation
-	  unit found inside the TC9564 SoC, using addresses in the PCIe
-	  endpoint bridge configuration range.  It is implemented as a
-	  platform driver, and it is is currently given full access to
-	  the PCIe BAR0 space, which includes the PCIe endpoint bridge
-	  configuration, PCIe configuration, and PCIe resource manager
-	  registers.  So it could theoretically be expanded to do more.
-
-	  Right now it simply gets enabled when TOSHIBA_TC956X_PCI is
-	  enabled.  This will get reworked soon.
+	  Enable support for configuring the address translation unit
+	  found inside the TC9564 SoC.  This translates addresses
+	  between PCIe space and a 36-bit AXI bus space used by the
+	  XGMACs on the TC9564 chip.  The hardware is configured using
+	  addresses in a range is managed by a syscon regmap, defined
+	  by the "toshiba,config-syscon" property.
 
 source "drivers/misc/c2port/Kconfig"
 source "drivers/misc/eeprom/Kconfig"
