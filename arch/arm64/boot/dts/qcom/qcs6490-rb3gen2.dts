@@ -985,11 +985,34 @@
 };
 
 &embedded_function0 {
+	pci-ep-bus@0 {
+		compatible = "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		/* Map 0x0-0x3fff to BAR 0 */
+		// ranges = <0x0  0x02000010 0x0 0x0  0x4000>;
+		// ranges = <0x0  0x0 0x0 0x0  0x4000>;
+		ranges = <0x0  0x02000000 0x0 0x41800000  0x4000>;
+
+		bridge_syscon0: syscon@0 {
+			compatible = "toshiba,tc956x-bridge-syscon", "syscon";
+			reg = <0x0 0x1000>;
+		};
+
+		tc9564_translate0: translate@800 {
+			compatible = "toshiba,tc956x-translate";
+			reg = <0x800 0x80>;
+			toshiba,bridge-syscon = <&bridge_syscon0>;
+		};
+	};
+
 	pci-ep-bus@4 {
 		compatible = "simple-bus";
 		#address-cells = <1>;
 		#size-cells = <1>;
 		/* Map 0x0-0x1fffff to BAR 4 */
+		// ranges = <0x0  0x0200001c 0x0 0x0  0x200000>;
+		// ranges = <0x0  0x4 0x0 0x0  0x200000>;
 		ranges = <0x0  0x02000000 0x0 0x40400000  0x200000>;
 
 		config_syscon0: syscon@0 {
