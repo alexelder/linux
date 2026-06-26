@@ -107,6 +107,13 @@ static const char *tc956x_reset_names[] = {
 	[RESET_ID_PMA]	= "toshiba,tc956x-pma-reset",
 };
 
+static const char *tc956x_clock_names[] = {
+	"toshiba,tc956x-mac-tx-clock",
+	"toshiba,tc956x-mac-rx-clock",
+	"toshiba,tc956x-mac-all-clock",
+	"toshiba,tc956x-mac-rmii-clock",	/* eMAC 1 only; must be last */
+};
+
 /**
  * struct tc956x_data - Toshiba-specific platform data
  * @dev:		Device pointer
@@ -114,6 +121,8 @@ static const char *tc956x_reset_names[] = {
  * @auxbus_data:	Pointer to data passed from the parent device
  * @plat:		Pointer to our stmmac platform data
  * @resets:		Reset controller bulk array
+ * @clocks:		Clock controller bulk array
+ * @clock_count:	Number of valid elements in the clock array
  * @dma_cfg:		DMA config buffer used by plat_stmmacenet_data
  * @mdio_bus_data:	MDIO bus data used by plat_stmmacenet_data
  * @axi:		AXI data used by plat_stmmacenet_data
@@ -127,6 +136,8 @@ struct tc956x_data {
 	struct tc956x_dwmac_data *auxbus_data;
 	struct plat_stmmacenet_data *plat;
 	struct reset_control_bulk_data resets[ARRAY_SIZE(tc956x_reset_names)];
+	struct clk_bulk_data clocks[ARRAY_SIZE(tc956x_clock_names)];
+	u32 clock_count;
 
 	/* These three fields are used by the plat_stmmacenet_data structure */
 	struct stmmac_dma_cfg dma_cfg;
@@ -351,43 +362,24 @@ static int tc956x_mac_configure(struct tc956x_data *td,
 
 static void tc956x_mac_enable(struct tc956x_data *td)
 {
-	const struct tc956x_chip *chip = td->auxbus_data->chip;
-	u32 id = td->auxbus_data->mac_id;
-
-	tc956x_clock_enable(chip, id, MAC_CLOCK_TX);
-	tc956x_clock_enable(chip, id, MAC_CLOCK_RX);
-	tc956x_clock_enable(chip, id, MAC_CLOCK_ALL);
-	if (id)
-		tc956x_clock_enable(chip, id, MAC_CLOCK_RMII);
+	WARN_ON(clk_bulk_prepare_enable(td->clock_count, td->clocks));
 
 	WARN_ON(reset_control_deassert(td->resets[RESET_ID_MAC].rstc));
 
 	tc956x_pma_init(td);
+
 	WARN_ON(reset_control_deassert(td->resets[RESET_ID_XPCS].rstc));
 }
 
 static void tc956x_mac_disable(struct tc956x_data *td)
 {
-	const struct tc956x_chip *chip = td->auxbus_data->chip;
-	u32 id = td->auxbus_data->mac_id;
-
 	WARN_ON(reset_control_bulk_assert(ARRAY_SIZE(td->resets), td->resets));
 
-	tc956x_clock_disable(chip, id, MAC_CLOCK_ALL);
-	tc956x_clock_disable(chip, id, MAC_CLOCK_RX);
-	tc956x_clock_disable(chip, id, MAC_CLOCK_TX);
-	if (id)
-		tc956x_clock_disable(chip, id, MAC_CLOCK_RMII);
+	clk_bulk_disable_unprepare(td->clock_count, td->clocks);
 }
 
 static void tc956x_mac_init_state(struct tc956x_data *td)
 {
-	const struct tc956x_chip *chip = td->auxbus_data->chip;
-	u32 id = td->auxbus_data->mac_id;
-
-	tc956x_clock_disable(chip, id, MAC_CLOCK_125M);
-	tc956x_clock_disable(chip, id, MAC_CLOCK_312_5M);
-
 	tc956x_mac_disable(td);
 }
 
@@ -728,6 +720,30 @@ static int tc956x_reset_init(struct tc956x_data *td)
 	return reset_control_bulk_assert(reset_count, td->resets);
 }
 
+static int tc956x_clock_init(struct tc956x_data *td)
+{
+	struct device *dev = td->dev;
+	u32 clock_count;
+	int ret;
+	u32 i;
+
+	/* MAC 1 has one more clock than MAC0 does (RMII) */
+	clock_count = ARRAY_SIZE(td->clocks);
+	if (!td->auxbus_data->mac_id)
+		clock_count--;
+
+	for (i = 0; i < clock_count; i++)
+		td->clocks[i].id = tc956x_clock_names[i];
+
+	ret = devm_clk_bulk_get(dev, clock_count, td->clocks);
+	if (ret)
+		return ret;
+
+	td->clock_count = clock_count;
+
+	return 0;
+}
+
 static int tc956x_dwmac_probe(struct auxiliary_device *adev,
 			      const struct auxiliary_device_id *id)
 {
@@ -748,6 +764,10 @@ static int tc956x_dwmac_probe(struct auxiliary_device *adev,
 	if (ret)
 		return dev_err_probe(dev, -EINVAL,
 				     "failed to initalize resets\n");
+
+	ret = tc956x_clock_init(td);
+	if (ret)
+		return dev_err_probe(dev, ret, "failed to initalize clocks\n");
 
 	ret = tc956x_plat_dat_init(td);
 	if (ret)
