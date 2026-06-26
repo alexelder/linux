@@ -963,7 +963,7 @@
 			ranges;
 			bus-range = <0x5 0xff>;
 
-			pci@0,0 {
+			embedded_function0: pci@0,0 {
 				compatible = "pci1179,0220";
 				reg = <0x50000 0x0 0x0 0x0 0x0>;
 				#address-cells = <3>;
@@ -980,6 +980,21 @@
 				device_type = "pci";
 				ranges;
 			};
+		};
+	};
+};
+
+&embedded_function0 {
+	pci-ep-bus@4 {
+		compatible = "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		/* Map 0x0-0x1fffff to BAR 4 */
+		ranges = <0x0  0x02000000 0x0 0x40400000  0x200000>;
+
+		config_syscon0: syscon@0 {
+			compatible = "toshiba,tc956x-config-syscon", "syscon";
+			reg = <0x0 0x2000>;
 		};
 	};
 };
