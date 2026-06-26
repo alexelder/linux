@@ -996,6 +996,14 @@
 			compatible = "toshiba,tc956x-config-syscon", "syscon";
 			reg = <0x0 0x2000>;
 		};
+
+		tc9564_gpio0: gpio@1200 {
+			compatible = "toshiba,tc9564-gpio";
+			reg = <0x1200 0x18>;
+			toshiba,config-syscon = <&config_syscon0>;
+			gpio-controller;
+			#gpio-cells = <2>;
+		};
 	};
 };
 
