@@ -538,11 +538,9 @@ static int tc956x_dwmac_parse_dt(struct tc956x_data *td)
 		return dev_err_probe(dev, -EINVAL, "no devicetree node\n");
 
 	/* Find the MDIO bus */
-	for_each_child_of_node(np, mdio_node) {
-		if (of_device_is_compatible(mdio_node,
-					    "snps,dwmac-mdio"))
+	for_each_child_of_node(np, mdio_node)
+		if (of_device_is_compatible(mdio_node, "snps,dwmac-mdio"))
 			break;
-	}
 
 	/* Pass the MDIO bus (if there is one) to the core driver */
 	if (mdio_node) {
@@ -762,8 +760,7 @@ static int tc956x_dwmac_probe(struct auxiliary_device *adev,
 
 	ret = tc956x_reset_init(td);
 	if (ret)
-		return dev_err_probe(dev, -EINVAL,
-				     "failed to initalize resets\n");
+		return dev_err_probe(dev, ret ,"failed to initalize resets\n");
 
 	ret = tc956x_clock_init(td);
 	if (ret)
@@ -776,7 +773,7 @@ static int tc956x_dwmac_probe(struct auxiliary_device *adev,
 	/* If successful, we hold a reference to the platform MDIO DT node */
 	ret = tc956x_dwmac_parse_dt(td);
 	if (ret)
-		return ret;
+		return dev_err_probe(dev, ret, "failed to parse devicetree\n");
 
 	td->irq_domain = tc956x_msigen_irq_domain_instantiate(td);
 	if (IS_ERR(td->irq_domain)) {

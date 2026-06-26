@@ -140,8 +140,8 @@ static const struct regmap_config reset_clock_regmap_config = {
 };
 
 /* Common clock/reset register update function (also used for MACs) */
-void tc956x_reset_clock_set(const struct tc956x_chip *chip, bool reset,
-			    bool reg0, bool set, u8 bit)
+static void tc956x_reset_clock_set(const struct tc956x_chip *chip, bool reset,
+				   bool reg0, bool set, u8 bit)
 {
 	u32 mask = BIT(bit);
 	u32 offset;
@@ -155,7 +155,6 @@ void tc956x_reset_clock_set(const struct tc956x_chip *chip, bool reset,
 	(void)regmap_update_bits(chip->reset_clock_regmap, offset, mask,
 				 set ? mask : 0);
 }
-EXPORT_SYMBOL_GPL(tc956x_reset_clock_set);
 
 static void chip_reset_assert(const struct tc956x_chip *chip, enum reset_id id)
 {
@@ -261,7 +260,6 @@ static int function_xgmac_adev_add(struct pci_dev *pdev,
 
 	sfr = chip->sfr[mac_id];
 
-	data->chip = chip;
 	data->msigen = sfr + MSIGEN_OFFSET(mac_id);
 	data->msigen_irq = msigen_irq;
 	data->emac = sfr + DWMAC_OFFSET(mac_id);
