@@ -95,12 +95,25 @@ enum msigen_hwirq {
 #define COMM_CFG_WRITE_DATA_MASK		GENMASK(7, 0)
 #define WRITE_DATA_VALUE			0x04	/* Power-on value */
 
+enum {
+	RESET_ID_MAC,
+	RESET_ID_XPCS,
+	RESET_ID_PMA,
+};
+
+static const char *tc956x_reset_names[] = {
+	[RESET_ID_MAC]	= "toshiba,tc956x-mac-reset",
+	[RESET_ID_XPCS]	= "toshiba,tc956x-xpcs-reset",
+	[RESET_ID_PMA]	= "toshiba,tc956x-pma-reset",
+};
+
 /**
  * struct tc956x_data - Toshiba-specific platform data
  * @dev:		Device pointer
  * @irq_domain:		MSIGEN IRQ domain
  * @auxbus_data:	Pointer to data passed from the parent device
  * @plat:		Pointer to our stmmac platform data
+ * @resets:		Reset controller bulk array
  * @dma_cfg:		DMA config buffer used by plat_stmmacenet_data
  * @mdio_bus_data:	MDIO bus data used by plat_stmmacenet_data
  * @axi:		AXI data used by plat_stmmacenet_data
@@ -113,6 +126,7 @@ struct tc956x_data {
 	struct irq_domain *irq_domain;
 	struct tc956x_dwmac_data *auxbus_data;
 	struct plat_stmmacenet_data *plat;
+	struct reset_control_bulk_data resets[ARRAY_SIZE(tc956x_reset_names)];
 
 	/* These three fields are used by the plat_stmmacenet_data structure */
 	struct stmmac_dma_cfg dma_cfg;
@@ -253,9 +267,8 @@ tc956x_msigen_irq_domain_instantiate(struct tc956x_data *td)
  */
 static void tc956x_pma_init(struct tc956x_data *td)
 {
-	const struct tc956x_chip *chip = td->auxbus_data->chip;
+	struct reset_control *rstc = td->resets[RESET_ID_PMA].rstc;
 	void __iomem *emac_ctl = td->auxbus_data->emac_ctl;
-	u32 id = td->auxbus_data->mac_id;
 	void __iomem *pmatop;
 	u32 val;
 	u32 i;
@@ -265,7 +278,7 @@ static void tc956x_pma_init(struct tc956x_data *td)
 	 * been deasserted. We must make sure the PMA reset is asserted
 	 * before we change the clock settings.
 	 */
-	tc956x_reset_assert(chip, id, MAC_RESET_PMA);
+	WARN_ON(reset_control_assert(rstc));
 
 	pmatop = td->auxbus_data->emac + DWMAC_PMATOP_OFFSET;
 
@@ -289,7 +302,7 @@ static void tc956x_pma_init(struct tc956x_data *td)
 		writel(val, pmatop + PMA_COMM_CFG_0_1 + offset);
 	}
 
-	tc956x_reset_deassert(chip, id, MAC_RESET_PMA);
+	WARN_ON(reset_control_deassert(rstc));
 
 	WARN_ON(readl_poll_timeout(emac_ctl, val, val & EMAC_INIT_DONE,
 				   50, 1000000));
@@ -347,9 +360,10 @@ static void tc956x_mac_enable(struct tc956x_data *td)
 	if (id)
 		tc956x_clock_enable(chip, id, MAC_CLOCK_RMII);
 
-	tc956x_reset_deassert(chip, id, MAC_RESET_MAC);
+	WARN_ON(reset_control_deassert(td->resets[RESET_ID_MAC].rstc));
+
 	tc956x_pma_init(td);
-	tc956x_reset_deassert(chip, id, MAC_RESET_XPCS);
+	WARN_ON(reset_control_deassert(td->resets[RESET_ID_XPCS].rstc));
 }
 
 static void tc956x_mac_disable(struct tc956x_data *td)
@@ -357,9 +371,7 @@ static void tc956x_mac_disable(struct tc956x_data *td)
 	const struct tc956x_chip *chip = td->auxbus_data->chip;
 	u32 id = td->auxbus_data->mac_id;
 
-	tc956x_reset_assert(chip, id, MAC_RESET_MAC);
-	tc956x_reset_assert(chip, id, MAC_RESET_PMA);
-	tc956x_reset_assert(chip, id, MAC_RESET_XPCS);
+	WARN_ON(reset_control_bulk_assert(ARRAY_SIZE(td->resets), td->resets));
 
 	tc956x_clock_disable(chip, id, MAC_CLOCK_ALL);
 	tc956x_clock_disable(chip, id, MAC_CLOCK_RX);
@@ -698,6 +710,24 @@ static void tc956x_stmmac_resources_exit(struct tc956x_data *td)
 	irq_dispose_mapping(res->irq);
 }
 
+/* Look up resets, and ensure they're initally all asserted */
+static int tc956x_reset_init(struct tc956x_data *td)
+{
+	u32 reset_count = ARRAY_SIZE(td->resets);
+	int ret;
+	u32 i;
+
+	for (i = 0; i < reset_count; i++)
+		td->resets[i].id = tc956x_reset_names[i];
+
+	ret = devm_reset_control_bulk_get_exclusive(td->dev, reset_count,
+						    td->resets);
+	if (ret)
+		return ret;
+
+	return reset_control_bulk_assert(reset_count, td->resets);
+}
+
 static int tc956x_dwmac_probe(struct auxiliary_device *adev,
 			      const struct auxiliary_device_id *id)
 {
@@ -713,6 +743,11 @@ static int tc956x_dwmac_probe(struct auxiliary_device *adev,
 	td->auxbus_data = dev_get_platdata(dev);
 	if (!td->auxbus_data)
 		return dev_err_probe(dev, -EINVAL, "no platform data\n");
+
+	ret = tc956x_reset_init(td);
+	if (ret)
+		return dev_err_probe(dev, -EINVAL,
+				     "failed to initalize resets\n");
 
 	ret = tc956x_plat_dat_init(td);
 	if (ret)
