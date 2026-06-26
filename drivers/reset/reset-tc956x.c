@@ -9,6 +9,7 @@
 #include <linux/mfd/syscon.h>
 #include <linux/mod_devicetable.h>
 #include <linux/module.h>
+#include <linux/of_address.h>
 #include <linux/platform_device.h>
 #include <linux/regmap.h>
 #include <linux/reset-controller.h>
@@ -17,28 +18,21 @@
 
 #define DRIVER_NAME		"tc956x-reset"
 
-/*
- * Reset register offsets used to assert/deassert resets.  These offsets
- * are relative to the base of the chip configuration space mapped by the
- * system controller referred to by the "toshiba,config-syscon" property.
- */
-#define RSTCTRL0_OFFSET			0x1008
-#define RSTCTRL1_OFFSET			0x1010
-
 struct tc956x_reset {
-	u32 offset;
-	u32 mask;			/* Zero means undefined reset */
+	u32 zero_one;		/* Index into resets->offset[] */
+	u32 mask;		/* Zero means undefined reset */
 };
 
 struct tc956x_resets {
 	struct regmap *regmap;
+	u32 offset[2];
 	struct reset_controller_dev rcdev;
 };
 
-#define TC956X_RESET_INIT(_name, _zero_one, _bit)		\
-	[RESET_ ## _name] = {					\
-		.offset	= RSTCTRL ## _zero_one ## _OFFSET,	\
-		.mask	= BIT(_bit),				\
+#define TC956X_RESET_INIT(_name, _zero_one, _bit)	\
+	[RESET_ ## _name] = {				\
+		.zero_one	= _zero_one,		\
+		.mask		= BIT(_bit),		\
 	}
 
 static const struct tc956x_reset tc9564_reset[] = {
@@ -59,52 +53,51 @@ static const struct tc956x_reset tc9564_reset[] = {
 	TC956X_RESET_INIT(MAC1_XPCS, 1, 31),
 };
 
+/* Mask that includes all meaningful bits in each reset control register */
+#define TC956X_RESET0_ALL_MASK	0xc0050093	/* 0xc0051293 */
+#define TC956X_RESET1_ALL_MASK	0xc0000080
+
 static struct tc956x_resets *
 tc956x_rcdev_to_resets(struct reset_controller_dev *rcdev)
 {
 	return container_of(rcdev, struct tc956x_resets, rcdev);
 }
 
-static void tc956x_reset_manage(struct regmap *regmap,
-				const struct tc956x_reset *reset, bool assert)
+static int
+tc956x_reset_manage(struct tc956x_resets *resets, unsigned long id, bool assert)
 {
-	/* No errors returned for MMIO regmap */
-	regmap_update_bits(regmap, reset->offset, reset->mask,
-			   assert ? reset->mask : 0);
+	const struct tc956x_reset *reset = &tc9564_reset[id];
+
+	if (id < resets->rcdev.nr_resets && reset->mask) {
+		u32 offset = resets->offset[reset->zero_one];
+		struct regmap *regmap = resets->regmap;
+		u32 mask = reset->mask;
+
+		/* No errors returned for MMIO regmap */
+		regmap_update_bits(regmap, offset, mask, assert ? mask : 0);
+
+		return 0;
+	}
+
+	pr_warn("invalid reset (%sassert id %lu)!\n", assert ? "" : "de", id);
+
+	return -EINVAL;
 }
 
 static int tc956x_reset_assert(struct reset_controller_dev *rcdev,
 			       unsigned long id)
 {
 	struct tc956x_resets *resets = tc956x_rcdev_to_resets(rcdev);
-	const struct tc956x_reset *reset = &tc9564_reset[id];
 
-	if (id < rcdev->nr_resets && reset->mask) {
-		tc956x_reset_manage(resets->regmap, reset, true);
-
-		return 0;
-	}
-
-	pr_warn("invalid reset (assert id %lu)!\n", id);
-
-	return -EINVAL;
+	return tc956x_reset_manage(resets, id, true);
 }
 
 static int tc956x_reset_deassert(struct reset_controller_dev *rcdev,
 				 unsigned long id)
 {
 	struct tc956x_resets *resets = tc956x_rcdev_to_resets(rcdev);
-	const struct tc956x_reset *reset = &tc9564_reset[id];
 
-	if (id < rcdev->nr_resets && reset->mask) {
-		tc956x_reset_manage(resets->regmap, reset, false);
-
-		return 0;
-	}
-
-	pr_warn("invalid reset (deassert id %lu)!\n", id);
-
-	return -EINVAL;;
+	return tc956x_reset_manage(resets, id, false);
 }
 
 static const struct reset_control_ops tc956x_reset_control_ops = {
@@ -112,12 +105,24 @@ static const struct reset_control_ops tc956x_reset_control_ops = {
 	.deassert	= tc956x_reset_deassert,
 };
 
+static void tc956x_reset_assert_all(struct tc956x_resets *resets)
+{
+	struct regmap *regmap = resets->regmap;
+
+	regmap_write(regmap, resets->offset[0], TC956X_RESET0_ALL_MASK);
+	regmap_write(regmap, resets->offset[1], TC956X_RESET1_ALL_MASK);
+}
+
 static int tc956x_reset_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
 	struct tc956x_resets *resets;
 	struct device_node *np;
 	struct regmap *regmap;
+	u32 offset0;
+	u32 offset1;
+	u64 addr;
+	u64 size;
 	int ret;
 
 	dev_info(dev, " === %s starting\n", __func__);
@@ -131,12 +136,33 @@ static int tc956x_reset_probe(struct platform_device *pdev)
 		return dev_err_probe(dev, PTR_ERR(regmap),
 				     "failed to get config regmap\n");
 
+	ret = of_property_read_reg(np, 0, &addr, &size);
+	if (ret)
+		return dev_err_probe(dev, ret, "failed to get offset 0\n");
+
+	if (size != sizeof(offset0))
+		return dev_err_probe(dev, -EINVAL,
+				     "bad offset 0 size %llu\n", size);
+	offset0 = lower_32_bits(addr);
+
+	ret = of_property_read_reg(np, 1, &addr, &size);
+	if (ret)
+		return dev_err_probe(dev, ret, "failed to get offset 1\n");
+
+	if (size != sizeof(offset1))
+		return dev_err_probe(dev, -EINVAL,
+				     "bad offset 1 size %llu\n", size);
+	offset1 = lower_32_bits(addr);
+
 	resets = kzalloc_obj(*resets);
 	if (!resets)
 		return dev_err_probe(dev, -ENOMEM,
 				     "failed to allocate resets\n");
 
 	resets->regmap = regmap;
+	resets->offset[0] = offset0;
+	resets->offset[1] = offset1;
+
 	resets->rcdev.ops = &tc956x_reset_control_ops;
 	resets->rcdev.owner = THIS_MODULE;
 	resets->rcdev.dev = dev;
@@ -148,6 +174,10 @@ static int tc956x_reset_probe(struct platform_device *pdev)
 		kfree(resets);
 		return dev_err_probe(dev, ret, "failed registration\n");
 	}
+	platform_set_drvdata(pdev, resets);
+
+	/* Force all resets to be initially asserted */
+	tc956x_reset_assert_all(resets);
 
 	dev_info(dev, " === %s successful\n", __func__);
 
@@ -156,7 +186,11 @@ static int tc956x_reset_probe(struct platform_device *pdev)
 
 static void tc956x_reset_remove(struct platform_device *pdev)
 {
-	/* Nothing to do for now */
+	struct tc956x_resets *resets = platform_get_drvdata(pdev);
+
+	/* Leave all resets asserted when done */
+	tc956x_reset_assert_all(resets);
+	kfree(resets);
 }
 
 static const struct of_device_id tc956x_reset_ids[] = {
@@ -172,7 +206,7 @@ static struct platform_driver tc956x_reset_driver = {
 		.name		= DRIVER_NAME,
 		.of_match_table = tc956x_reset_ids,
 		.owner		= THIS_MODULE,
-		// .probe_type	= PROBE_PREFER_ASYNCHRONOUS,
+		.probe_type	= PROBE_PREFER_ASYNCHRONOUS,
 	},
 };
 module_platform_driver(tc956x_reset_driver);
