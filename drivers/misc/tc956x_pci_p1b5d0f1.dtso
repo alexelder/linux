@@ -1,0 +1,30 @@
+// SPDX-License-Identifier: GPL-2.0
+
+/*
+ * Devicetree overlay for the TC9564 SoC.  This overlay defines the PCI
+ * endpoint bus provided by function 1 of the embedded PCIe endpoint.
+ */
+
+/dts-v1/;
+/plugin/;
+
+/ {
+	fragment@1 {
+		target-path = "";
+
+		__overlay__ {
+			#address-cells = <3>;
+			#size-cells = <2>;
+
+			pci-ep-bus@4 {
+				compatible = "simple-bus";
+				#address-cells = <1>;
+				#size-cells = <1>;
+				/* Map 0x0-0x1fffff to BAR 4 */
+				// ranges = <0x0  0x4 0x0 0x0  0x200000>;
+				// ranges = <0x0  0x0200001c 0x0 0x0  0x200000>;
+				ranges = <0x0  0x02000000 0x0 0x40c00000  0x200000>;
+			};
+		};
+	};
+};

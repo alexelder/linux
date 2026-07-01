@@ -75,5 +75,8 @@ obj-y				+= keba/
 obj-y				+= amd-sbi/
 obj-$(CONFIG_MISC_RP1)		+= rp1/
 obj-$(CONFIG_TC956X_PCI)	+= tc956x_pci.o
-obj-$(CONFIG_TC956X_PCI)	+= tc956x_pci2.o
+obj-$(CONFIG_TC956X_PCI)	+= tc956x-pci.o
+tc956x-pci-objs			:= tc956x_pci2.o \
+				   tc956x_pci_p1b5d0f0.dtbo.o \
+				   tc956x_pci_p1b5d0f1.dtbo.o
 obj-$(CONFIG_TC956X_TRANSLATE)	+= tc956x-translate.o

@@ -24,6 +24,7 @@
  */
 
 #include <linux/device.h>
+#include <linux/of.h>
 #include <linux/of_platform.h>
 #include <linux/pci.h>
 
@@ -33,14 +34,51 @@
 
 #define PCI_DEVICE_ID_TOSHIBA_TC956X	0x0220
 
+/**
+ * struct tc956x_func - PCIe function device information
+ * @dev:	Device pointer
+ * @ovcs_id:	Devicetree overlay changeset ID
+ */
+struct tc956x_func {
+	struct device *dev;
+	int ovcs_id;
+};
+
+/* These are defined tc956x_pci.dtbo.S, created by the build process */
+extern const char __dtbo_tc956x_pci_p1b5d0f0_begin[];
+extern const char __dtbo_tc956x_pci_p1b5d0f0_end[];
+extern const char __dtbo_tc956x_pci_p1b5d0f1_begin[];
+extern const char __dtbo_tc956x_pci_p1b5d0f1_end[];
+
+static int
+tc956x_load_overlay(unsigned int fn, struct device_node *np, int *ovcs_id)
+{
+	const char *begin = fn ? __dtbo_tc956x_pci_p1b5d0f1_begin
+			       : __dtbo_tc956x_pci_p1b5d0f0_begin;
+	const char *end = fn ? __dtbo_tc956x_pci_p1b5d0f1_end
+			     : __dtbo_tc956x_pci_p1b5d0f0_end;
+
+	return of_overlay_fdt_apply(begin, end - begin, ovcs_id, np);
+}
+
+static void tc956x_unload_overlay(int *ovcs_id)
+{
+	of_overlay_remove(ovcs_id);
+}
+
 static int
 tc956x_function_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 {
+	unsigned int fn = PCI_FUNC(pdev->devfn);
 	struct device *dev = &pdev->dev;
+	struct tc956x_func *func;
 	struct device_node *np;
 	int ret;
 
 	dev_info(dev, " === %s: starting\n", __func__);
+
+	if (fn > 1)
+		return dev_err_probe(dev, -EINVAL, "bad function %u\n", fn);
 
 	/* Despite being a PCI device, we require devicetree */
 	np = dev_of_node(dev);
@@ -53,21 +91,40 @@ tc956x_function_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 
 	pci_set_master(pdev);
 
+	func = devm_kzalloc(dev, sizeof(*func), GFP_KERNEL);
+	if (!func)
+		return -ENOMEM;
+	func->dev = dev;
+
+	ret = tc956x_load_overlay(fn, np, &func->ovcs_id);
+	if (ret)
+		return dev_err_probe(dev, ret, "failed to load overlay\n");
+
 	dev_info(dev, " === calling of_platform_default_populate()\n");
 	ret = of_platform_default_populate(np, NULL, dev);
 	if (ret)
-		return dev_err_probe(dev, ret, "populating bus failed\n");
+		goto err_unload_overlay;
+
+	pci_set_drvdata(pdev, func);
 
 	dev_info(dev, " === %s: successful\n", __func__);
 
 	return 0;
+
+err_unload_overlay:
+	tc956x_unload_overlay(&func->ovcs_id);
+
+	return dev_err_probe(dev, ret, "failed to populate bus\n");
 }
 
 static void tc956x_function_remove(struct pci_dev *pdev)
 {
-	struct device *dev = &pdev->dev;
+	struct tc956x_func *func = pci_get_drvdata(pdev);
 
-	of_platform_depopulate(dev);
+	of_platform_depopulate(&pdev->dev);
+
+	if (func)
+		tc956x_unload_overlay(&func->ovcs_id);
 
 	pci_clear_master(pdev);
 }
