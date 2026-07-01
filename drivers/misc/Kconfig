@@ -634,7 +634,7 @@ config MCHP_LAN966X_PCI
 	    - lan966x-miim (MDIO_MSCC_MIIM)
 	    - lan966x-switch (LAN966X_SWITCH)
 
-config TOSHIBA_TC956X_PCI
+config TC956X_PCI
 	tristate "Toshiba TC956X PCI function support"
 	depends on PCI
 	select AUXILIARY_BUS
@@ -648,8 +648,8 @@ config TOSHIBA_TC956X_PCI
 
 config TC956X_CONFIG
 	tristate "Toshiba TC956X configuration support"
-	depends on TOSHIBA_TC956X_PCI
-	default TOSHIBA_TC956X_PCI
+	depends on TC956X_PCI
+	default TC956X_PCI
 	help
 	  For the moment, this driver only configures the address translation
 	  unit found inside the TC9564 SoC, using addresses in the PCIe
