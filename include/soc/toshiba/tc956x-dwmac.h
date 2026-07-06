@@ -23,7 +23,6 @@
  * @emac_ctl:		I/O mapped address used for eMAC control
  * @msigen:		I/O mapped address used by MSIGEN
  * @msigen_irq:		IRQ number used by MSIGEN
- * @rev_id:		Chip revision ID (for quirks)
  *
  * This structure is passed via platform data to the stmmac auxiliary devices.
  */
@@ -32,7 +31,6 @@ struct tc956x_dwmac_data {
 	void __iomem *emac_ctl;
 	void __iomem *msigen;
 	unsigned int msigen_irq;
-	u8 rev_id;
 };
 
 #endif /* __TOSHIBA_TC956X_DWMAC_H__*/

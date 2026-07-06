@@ -67,10 +67,6 @@
 /* PCI BAR assignments */
 #define PCI_BAR_SFR			4	/* For all other features */
 
-/* Chip and revision ID register */
-#define NCID_OFFSET			0x0000
-#define NCID_REV_ID_MASK		GENMASK(7, 0)
-
 /* Reset and clock register offsets.  MAC resets and clocks are controlled
  * by bits in register 0 for MAC0, register 1 for MAC1.  Other non-MAC
  * resets and clocks (whose IDs are defined here) are controlled by bits
@@ -121,13 +117,11 @@ enum clock_id {
  * @dev:		Device structure for function 0
  * @sfr:		Mapped SFR regions (BAR 4, one per PCI function)
  * @reset_clock_regmap:	Regmap used for resets and clocks
- * @rev_id:		Chip revision ID (for quirks)
  */
 struct tc956x_chip {
 	struct device *dev;
 	void __iomem *sfr[2];
 	struct regmap *reset_clock_regmap;
-	u8 rev_id;
 };
 
 static const struct regmap_config reset_clock_regmap_config = {
@@ -264,7 +258,6 @@ static int function_xgmac_adev_add(struct pci_dev *pdev,
 	data->msigen_irq = msigen_irq;
 	data->emac = sfr + DWMAC_OFFSET(mac_id);
 	data->emac_ctl = sfr + EMAC_CTL_OFFSET(mac_id);
-	data->rev_id = chip->rev_id;
 
 	ret = adev_device_add(dev, TC956X_XGMAC_DEV_NAME, mac_id, np, data);
 	if (ret)
@@ -392,7 +385,6 @@ err_put_slot:
 static int chip_init(struct tc956x_chip *chip, struct pci_dev *pdev)
 {
 	u32 id = PCI_FUNC(pdev->devfn) ? 1 : 0;
-	u32 val;
 	int ret;
 
 	/* Both chips need to map their SFR region */
@@ -409,10 +401,6 @@ static int chip_init(struct tc956x_chip *chip, struct pci_dev *pdev)
 		return ret;
 
 	chip_init_state(chip);
-
-	/* Get the revision ID */
-	val = readl(chip->sfr[0] + NCID_OFFSET);
-	chip->rev_id = u32_get_bits(val, NCID_REV_ID_MASK);
 
 	chip_msigen_enable(chip);
 
