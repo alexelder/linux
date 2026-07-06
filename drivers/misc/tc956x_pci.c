@@ -108,9 +108,7 @@ enum clock_id {
  * range in a very limited way.  For the MAC functions we divide up the
  * range, providing specific addresses needed by the stmmac driver.
  */
-#define EMAC_CTL_OFFSET(_mac_id)	((_mac_id) ? 0x1074 : 0x1070)
 #define MSIGEN_OFFSET(_mac_id)		((_mac_id) ? 0xf100 : 0xf000)
-#define DWMAC_OFFSET(_mac_id)		((_mac_id) ? 0x48000 : 0x40000)
 
 /*
  * struct tc956x_chip - Common information related to the TC956X chip
@@ -256,7 +254,6 @@ static int function_xgmac_adev_add(struct pci_dev *pdev,
 
 	data->msigen = sfr + MSIGEN_OFFSET(mac_id);
 	data->msigen_irq = msigen_irq;
-	data->emac_ctl = sfr + EMAC_CTL_OFFSET(mac_id);
 
 	ret = adev_device_add(dev, TC956X_XGMAC_DEV_NAME, mac_id, np, data);
 	if (ret)

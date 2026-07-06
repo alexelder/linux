@@ -74,6 +74,20 @@
 					gpio-controller;
 					#gpio-cells = <2>;
 				};
+
+				ethernet@40040000 {
+					compatible = "toshiba,tc9564-xgmac",
+						     "snps,dwxgmac-3.01",
+						     "snps,dwxgmac";
+					reg = <0x40040000 0x8000>;
+					toshiba,config-syscon = <&config_syscon0>;
+					toshiba,msigen-syscon = <&msigen_syscon0>;
+				};
+
+				msigen_syscon0: syscon@4000f000 {
+					compatible = "toshiba,tc956x-msigen-syscon", "syscon";
+					reg = <0x4000f000 0x1000>;
+				};
 			};
 		};
 	};

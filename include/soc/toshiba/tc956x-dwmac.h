@@ -19,14 +19,12 @@
 
 /**
  * struct tc956x_dwmac_data - Structure passed to stmmac auxiliary devices.
- * @emac_ctl:		I/O mapped address used for eMAC control
  * @msigen:		I/O mapped address used by MSIGEN
  * @msigen_irq:		IRQ number used by MSIGEN
  *
  * This structure is passed via platform data to the stmmac auxiliary devices.
  */
 struct tc956x_dwmac_data {
-	void __iomem *emac_ctl;
 	void __iomem *msigen;
 	unsigned int msigen_irq;
 };
