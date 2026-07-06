@@ -256,7 +256,6 @@ static int function_xgmac_adev_add(struct pci_dev *pdev,
 
 	data->msigen = sfr + MSIGEN_OFFSET(mac_id);
 	data->msigen_irq = msigen_irq;
-	data->emac = sfr + DWMAC_OFFSET(mac_id);
 	data->emac_ctl = sfr + EMAC_CTL_OFFSET(mac_id);
 
 	ret = adev_device_add(dev, TC956X_XGMAC_DEV_NAME, mac_id, np, data);

@@ -119,6 +119,7 @@ static const char *tc956x_clock_names[] = {
  * @dev:		Device pointer
  * @irq_domain:		MSIGEN IRQ domain
  * @auxbus_data:	Pointer to data passed from the parent device
+ * @ioaddr:		Pointer to mapped eMAC memory
  * @mac_id:		MAC number (0 or 1)
  * @plat:		Pointer to our stmmac platform data
  * @resets:		Reset controller bulk array
@@ -135,6 +136,7 @@ struct tc956x_data {
 	struct device *dev;
 	struct irq_domain *irq_domain;
 	struct tc956x_dwmac_data *auxbus_data;
+	void __iomem *ioaddr;
 	u8 mac_id;
 	struct plat_stmmacenet_data *plat;
 	struct reset_control_bulk_data resets[ARRAY_SIZE(tc956x_reset_names)];
@@ -293,7 +295,7 @@ static void tc956x_pma_init(struct tc956x_data *td)
 	 */
 	WARN_ON(reset_control_assert(rstc));
 
-	pmatop = td->auxbus_data->emac + DWMAC_PMATOP_OFFSET;
+	pmatop = td->ioaddr + DWMAC_PMATOP_OFFSET;
 
 	/* Power on CML buffer (0 = normal mode, 1 = power down) */
 	writel(0, pmatop + PMA_CML_GL_PM_CFG0);
@@ -683,7 +685,7 @@ static int tc956x_stmmac_resources_init(struct tc956x_data *td)
 			return -EINVAL;
 	}
 
-	res->addr = td->auxbus_data->emac;
+	res->addr = td->ioaddr;
 
 	return 0;
 }
@@ -760,6 +762,10 @@ static int tc956x_dwmac_probe(struct auxiliary_device *adev,
 	td->auxbus_data = dev_get_platdata(dev);
 	if (!td->auxbus_data)
 		return dev_err_probe(dev, -EINVAL, "no platform data\n");
+
+	td->ioaddr = devm_of_iomap(dev, dev_of_node(dev), 0, NULL);
+	if (IS_ERR(td->ioaddr))
+		return dev_err_probe(dev, -EINVAL, "failed to map memory\n");
 
 	/* XXX We need to know the MAC ID; this needs to be done differently */
 	td->mac_id = mac_id++;
