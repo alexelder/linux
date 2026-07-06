@@ -119,6 +119,7 @@ static const char *tc956x_clock_names[] = {
  * @dev:		Device pointer
  * @irq_domain:		MSIGEN IRQ domain
  * @auxbus_data:	Pointer to data passed from the parent device
+ * @mac_id:		MAC number (0 or 1)
  * @plat:		Pointer to our stmmac platform data
  * @resets:		Reset controller bulk array
  * @clocks:		Clock controller bulk array
@@ -134,6 +135,7 @@ struct tc956x_data {
 	struct device *dev;
 	struct irq_domain *irq_domain;
 	struct tc956x_dwmac_data *auxbus_data;
+	u8 mac_id;
 	struct plat_stmmacenet_data *plat;
 	struct reset_control_bulk_data resets[ARRAY_SIZE(tc956x_reset_names)];
 	struct clk_bulk_data clocks[ARRAY_SIZE(tc956x_clock_names)];
@@ -247,7 +249,7 @@ tc956x_msigen_irq_domain_instantiate(struct tc956x_data *td)
 	struct irq_domain_info info;
 
 	dgc_info.name = devm_kasprintf(td->dev, GFP_KERNEL, "tc956x-msigen-%d",
-				       td->auxbus_data->mac_id);
+				       td->mac_id);
 	if (!dgc_info.name)
 		return ERR_PTR(-ENOMEM);
 
@@ -572,7 +574,7 @@ static int tc956x_plat_dat_init(struct tc956x_data *td)
 		return -ENOMEM;
 
 	plat->core_type = DWMAC_CORE_XGMAC;
-	plat->bus_id = td->auxbus_data->mac_id;
+	plat->bus_id = td->mac_id;
 	plat->phy_interface = phy_interface;
 	plat->mdio_bus_data = &td->mdio_bus_data;
 	/* Parent PCI device is used for DMA */
@@ -727,7 +729,7 @@ static int tc956x_clock_init(struct tc956x_data *td)
 
 	/* MAC 1 has one more clock than MAC0 does (RMII) */
 	clock_count = ARRAY_SIZE(td->clocks);
-	if (!td->auxbus_data->mac_id)
+	if (!td->mac_id)
 		clock_count--;
 
 	for (i = 0; i < clock_count; i++)
@@ -747,6 +749,7 @@ static int tc956x_dwmac_probe(struct auxiliary_device *adev,
 {
 	struct device *dev = &adev->dev;
 	struct tc956x_data *td;
+	static u32 mac_id;
 	int ret;
 
 	td = devm_kzalloc(dev, sizeof(*td), GFP_KERNEL);
@@ -757,6 +760,9 @@ static int tc956x_dwmac_probe(struct auxiliary_device *adev,
 	td->auxbus_data = dev_get_platdata(dev);
 	if (!td->auxbus_data)
 		return dev_err_probe(dev, -EINVAL, "no platform data\n");
+
+	/* XXX We need to know the MAC ID; this needs to be done differently */
+	td->mac_id = mac_id++;
 
 	ret = tc956x_reset_init(td);
 	if (ret)

@@ -24,7 +24,6 @@
  * @msigen:		I/O mapped address used by MSIGEN
  * @msigen_irq:		IRQ number used by MSIGEN
  * @rev_id:		Chip revision ID (for quirks)
- * @mac_id:		Unique device ID (0 or 1)
  *
  * This structure is passed via platform data to the stmmac auxiliary devices.
  */
@@ -34,7 +33,6 @@ struct tc956x_dwmac_data {
 	void __iomem *msigen;
 	unsigned int msigen_irq;
 	u8 rev_id;
-	u8 mac_id;
 };
 
 #endif /* __TOSHIBA_TC956X_DWMAC_H__*/
