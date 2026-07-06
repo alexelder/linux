@@ -129,6 +129,7 @@ static const char *tc956x_clock_names[] = {
  * @clock_count:	Number of valid elements in the clock array
  * @config_regmap:	Regmap used to access eMAC configuration registers
  * @msigen_regmap:	Regmap used to access MSIGEN registers
+ * @msigen_irq:		IRQ number for MSIGEN
  * @dma_cfg:		DMA config buffer used by plat_stmmacenet_data
  * @mdio_bus_data:	MDIO bus data used by plat_stmmacenet_data
  * @axi:		AXI data used by plat_stmmacenet_data
@@ -139,7 +140,7 @@ static const char *tc956x_clock_names[] = {
 struct tc956x_data {
 	struct device *dev;
 	struct irq_domain *irq_domain;
-	struct tc956x_dwmac_data *auxbus_data;
+	// struct tc956x_dwmac_data *auxbus_data;
 	void __iomem *ioaddr;
 	u8 mac_id;
 	struct plat_stmmacenet_data *plat;
@@ -149,6 +150,7 @@ struct tc956x_data {
 
 	struct regmap *config_regmap;
 	struct regmap *msigen_regmap;
+	unsigned int msigen_irq;
 
 	/* These three fields are used by the plat_stmmacenet_data structure */
 	struct stmmac_dma_cfg dma_cfg;
@@ -185,6 +187,8 @@ static const struct regmap_config xpcs_regmap_config = {
 	.reg_shift	= REGMAP_UPSHIFT(2),
 };
 
+/* TODO */
+#if 0
 static void tc956x_msigen_irq_handler(struct irq_desc *desc)
 {
 	struct irq_domain *irq_domain = irq_desc_get_handler_data(desc);
@@ -210,9 +214,13 @@ static void tc956x_msigen_irq_handler(struct irq_desc *desc)
 
 	chained_irq_exit(chip, desc);
 }
+#endif
 
+/* TODO */
+// Daniel:  This should use a regmap for the msigen pointer
 static int tc956x_msigen_irq_chip_init(struct irq_chip_generic *gc)
 {
+#if 0
 	struct tc956x_data *td = gc->domain->host_data;
 
 	gc->reg_base = td->auxbus_data->msigen;
@@ -222,34 +230,43 @@ static int tc956x_msigen_irq_chip_init(struct irq_chip_generic *gc)
 
 	/* Disable all interrupts */
 	irq_reg_writel(gc, 0, MSI_OUT_EN_OFFSET);
-
+#endif
 	return 0;
 }
 
+/* TODO */
+// Daniel:  Implement gc->reg_writel() callback?
 static void tc956x_msigen_irq_chip_exit(struct irq_chip_generic *gc)
 {
 	irq_reg_writel(gc, 0, MSI_OUT_EN_OFFSET);
 }
 
+/* TODO */
+// Daniel:  Needs to get the msigen_irq some other way
 static int tc956x_msigen_irq_domain_init(struct irq_domain *irq_domain)
 {
+#if 0
 	struct tc956x_data *td = irq_domain->host_data;
 
 	irq_set_chained_handler_and_data(td->auxbus_data->msigen_irq,
 					 tc956x_msigen_irq_handler,
 					 irq_domain);
-
+#endif
 	return 0;
 }
 
+/* TODO */
 static void tc956x_msigen_irq_domain_exit(struct irq_domain *irq_domain)
 {
+#if 0
 	struct tc956x_data *td = irq_domain->host_data;
 
 	irq_set_chained_handler_and_data(td->auxbus_data->msigen_irq,
 					 NULL, NULL);
+#endif
 }
 
+/* TODO */
 /* We have one IRQ chip instance with 25 IRQs in its domain */
 static struct irq_domain *
 tc956x_msigen_irq_domain_instantiate(struct tc956x_data *td)
@@ -773,9 +790,12 @@ static int tc956x_dwmac_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	td->dev = dev;
+	/* TODO */
+#if 0
 	td->auxbus_data = dev_get_platdata(dev);
 	if (!td->auxbus_data)
 		return dev_err_probe(dev, -EINVAL, "no platform data\n");
+#endif
 
 	np = dev_of_node(dev);
 	regmap = syscon_regmap_lookup_by_phandle(np, "toshiba,config-syscon");
@@ -789,6 +809,7 @@ static int tc956x_dwmac_probe(struct platform_device *pdev)
 		return dev_err_probe(dev, PTR_ERR(regmap),
 				     "failed to get msigen regmap\n");
 	td->msigen_regmap = regmap;
+	td->msigen_irq = 0;	/* TODO Daniel */
 
 	td->ioaddr = devm_of_iomap(dev, np, 0, NULL);
 	if (IS_ERR(td->ioaddr))
@@ -831,6 +852,10 @@ static int tc956x_dwmac_probe(struct platform_device *pdev)
 	/* Put the MAC in a known initial state, then enable it */
 	tc956x_mac_init_state(td);
 	tc956x_mac_enable(td);
+
+	dev_info(dev, " === %s successful (quitting early)\n", __func__);
+
+	return 0;	/* TODO */
 
 	ret = stmmac_dvr_probe(dev, td->plat, &td->res);
 	if (ret) {
