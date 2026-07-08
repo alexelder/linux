@@ -212,8 +212,10 @@ static int tc956x_clk_probe(struct platform_device *pdev)
 	}
 	platform_set_drvdata(pdev, clocks);
 
+#if 0
 	/* Force all clocks to be initially disabled */
 	tc956x_clock_disable_all(clocks);
+#endif
 
 	dev_info(dev, " === %s successful\n", __func__);
 

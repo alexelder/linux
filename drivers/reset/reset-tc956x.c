@@ -176,8 +176,10 @@ static int tc956x_reset_probe(struct platform_device *pdev)
 	}
 	platform_set_drvdata(pdev, resets);
 
+#if 0
 	/* Force all resets to be initially asserted */
 	tc956x_reset_assert_all(resets);
+#endif
 
 	dev_info(dev, " === %s successful\n", __func__);
 
