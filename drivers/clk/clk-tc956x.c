@@ -184,6 +184,7 @@ static int tc956x_clk_probe(struct platform_device *pdev)
 	clocks->regmap = regmap;
 	clocks->offset[0] = offset0;
 	clocks->offset[1] = offset1;
+	clocks->clock_count = ARRAY_SIZE(tc9564_clock_init);
 
 	clock = &clocks->clocks[0];
 	clock_init = &tc9564_clock_init[0];
