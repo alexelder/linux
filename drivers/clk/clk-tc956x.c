@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0-only
 
 /*
  * Copyright (C) 2026 by RISCstar Solutions Corporation.  All rights reserved.
@@ -19,29 +19,30 @@
 
 struct tc956x_clock_init {
 	const char *name;	/* NULL means unused entry */
-	u32 zero_one;		/* Index into clocks->offset[] */
+	u32 offset_index;	/* Index into clocks->offset[] */
 	u32 mask;
 };
 
 struct tc956x_clock {
 	struct clk_hw hw;
-	u16 which;
-	u16 offset;
+	u32 which;
+	u32 offset;
 	u32 mask;		/* Zero means undefined clock */
 };
 
 struct tc956x_clocks {
+	struct device *dev;
 	struct regmap *regmap;
-	u16 offset[2];
+	u32 offset[2];
 	size_t clock_count;
 	struct tc956x_clock clocks[] __counted_by(clock_count);
 };
 
-#define TC956X_CLOCK_INIT(_name, _zero_one, _bit)	\
-	[CLOCK_ ## _name] = {				\
-		.name		= #_name,		\
-		.zero_one	= _zero_one,		\
-		.mask		= BIT(_bit),		\
+#define TC956X_CLOCK_INIT(_name, _offset_index, _bit) \
+	[CLOCK_##_name] = {                           \
+		.name = #_name,                       \
+		.offset_index = _offset_index,        \
+		.mask = BIT(_bit),                    \
 	}
 
 static const struct tc956x_clock_init tc9564_clock_init[] = {
@@ -70,10 +71,6 @@ static const struct tc956x_clock_init tc9564_clock_init[] = {
 	TC956X_CLOCK_INIT(MAC1_ALL, 1, 31),
 };
 
-/* Mask that includes all meaningful bits in each clock control register */
-#define TC956X_CLOCK0_ALL_MASK	0xe7056091	/* 0xe7057291 */
-#define TC956X_CLOCK1_ALL_MASK	0xe000c080	/* 0xe000c080 */
-
 static struct tc956x_clock *hw_to_tc956x_clock(struct clk_hw *hw)
 {
 	return container_of(hw, struct tc956x_clock, hw);
@@ -84,79 +81,96 @@ static struct tc956x_clocks *tc956x_clock_to_clocks(struct tc956x_clock *clock)
 	return container_of(clock, struct tc956x_clocks, clocks[clock->which]);
 }
 
-static void tc956x_clk_manage(struct tc956x_clock *clock, bool enable)
+static int tc956x_clk_manage(struct clk_hw *hw, bool enable)
 {
-	struct tc956x_clocks *clocks = tc956x_clock_to_clocks(clock);
+	struct tc956x_clock *clock = hw_to_tc956x_clock(hw);
+	struct tc956x_clocks *clocks;
 	u32 offset = clock->offset;
 	u32 mask = clock->mask;
 
-	/* No errors returned for MMIO regmap */
-	regmap_update_bits(clocks->regmap, offset, mask, enable ? mask : 0);
+	clocks = tc956x_clock_to_clocks(clock);
+
+	if (!clock->mask) {
+		dev_err(clocks->dev, "invalid clock (%s)!\n",
+			enable ? "enable" : "disable");
+		return -ENXIO;
+	}
+
+	return regmap_update_bits(clocks->regmap, offset, mask,
+				  enable ? mask : 0);
 }
 
-/* Prepare also includes enable */
-static int tc956x_clk_prepare(struct clk_hw *hw)
+static int tc956x_clk_enable(struct clk_hw *hw)
 {
-	struct tc956x_clock *clock = hw_to_tc956x_clock(hw);
-
-	if (clock->mask)
-		tc956x_clk_manage(hw_to_tc956x_clock(hw), true);
-	else
-		pr_warn("invalid clock (prepare)!\n");
-
-	return 0;
+	return tc956x_clk_manage(hw, true);
 }
 
-/* Unprepare also includes disable */
-static void tc956x_clk_unprepare(struct clk_hw *hw)
+static void tc956x_clk_disable(struct clk_hw *hw)
 {
-	struct tc956x_clock *clock = hw_to_tc956x_clock(hw);
-
-	if (clock->mask)
-		tc956x_clk_manage(hw_to_tc956x_clock(hw), false);
-	else
-		pr_warn("invalid clock! (unprepare)\n");
+	(void) tc956x_clk_manage(hw, false);
 }
 
 static struct clk_ops tc956x_clk_ops = {
-	.prepare	= tc956x_clk_prepare,
-	.unprepare	= tc956x_clk_unprepare,
+	.enable = tc956x_clk_enable,
+	.disable = tc956x_clk_disable,
 };
 
 static void tc956x_clock_disable_all(struct tc956x_clocks *clocks)
 {
-	struct regmap *regmap = clocks->regmap;
+	for (int i = 0; i < clocks->clock_count; i++) {
+		struct tc956x_clock *clock = &clocks->clocks[i];
 
-	regmap_write(regmap, clocks->offset[0], ~TC956X_CLOCK0_ALL_MASK);
-	regmap_write(regmap, clocks->offset[1], ~TC956X_CLOCK1_ALL_MASK);
+		if (clock->mask)
+			regmap_update_bits(clocks->regmap, clock->offset,
+					   clock->mask, 0);
+	}
+}
+
+static struct clk_hw *tc956x_clk_hw_get(struct of_phandle_args *clkspec,
+					void *data)
+{
+	struct tc956x_clocks *clocks = data;
+	unsigned int i = clkspec->args[0];
+
+	if (i >= clocks->clock_count) {
+		dev_err(clocks->dev, "invalid index %u\n", i);
+		return ERR_PTR(-EINVAL);
+	}
+
+	return &clocks->clocks[i].hw;
 }
 
 static int tc956x_clk_probe(struct platform_device *pdev)
 {
-	struct clk_hw_onecell_data *hw_data;
 	struct device *dev = &pdev->dev;
 	struct tc956x_clocks *clocks;
 	struct device_node *np;
-	struct regmap *regmap;
-	struct clk_hw *hw;
-	u16 offset[2];
 	int reg_size;
 	u64 addr;
 	u64 size;
 	int ret;
-	u32 i;
 
 	np = dev_of_node(dev);
 	if (!np)
 		return dev_err_probe(dev, -EINVAL, "no devicetree node\n");
 
-	regmap = syscon_node_to_regmap(dev->parent->of_node);
-	if (IS_ERR(regmap))
-		return dev_err_probe(dev, PTR_ERR(regmap),
-				     "failed to get config regmap\n");
-	reg_size = regmap_get_val_bytes(regmap);
+	clocks = devm_kzalloc(
+		dev, struct_size(clocks, clocks, ARRAY_SIZE(tc9564_clock_init)),
+		GFP_KERNEL);
+	if (!clocks)
+		return dev_err_probe(dev, -ENOMEM,
+				     "failed to allocate clocks\n");
 
-	for (i = 0; i < 2; i++) {
+	clocks->dev = dev;
+	clocks->clock_count = ARRAY_SIZE(tc9564_clock_init);
+
+	clocks->regmap = syscon_node_to_regmap(dev->parent->of_node);
+	if (IS_ERR(clocks->regmap))
+		return dev_err_probe(dev, PTR_ERR(clocks->regmap),
+				     "failed to get config regmap\n");
+	reg_size = regmap_get_val_bytes(clocks->regmap);
+
+	for (int i = 0; i < 2; i++) {
 		ret = of_property_read_reg(np, i, &addr, &size);
 		if (ret)
 			return dev_err_probe(dev, ret,
@@ -166,30 +180,13 @@ static int tc956x_clk_probe(struct platform_device *pdev)
 			return dev_err_probe(dev, -EINVAL,
 					     "bad offset %d size %llu\n", i,
 					     size);
-		offset[i] = lower_16_bits(addr);
+		clocks->offset[i] = lower_32_bits(addr);
 	}
 
-	clocks = kzalloc_flex(*clocks, clocks, ARRAY_SIZE(tc9564_clock_init));
-	if (!clocks)
-		return dev_err_probe(dev, -ENOMEM,
-				     "failed to allocate clocks\n");
-
-	clocks->regmap = regmap;
-	memcpy(clocks->offset, offset, sizeof(clocks->offset));
-	clocks->clock_count = ARRAY_SIZE(tc9564_clock_init);
-
-	hw_data = devm_kzalloc(
-		dev, struct_size(hw_data, hws, ARRAY_SIZE(tc9564_clock_init)),
-		GFP_KERNEL);
-	if (!hw_data)
-		return dev_err_probe(dev, -ENOMEM,
-				     "failed to allocate hw_data\n");
-	hw_data->num = ARRAY_SIZE(tc9564_clock_init);
-
-	for (i = 0; i < ARRAY_SIZE(tc9564_clock_init); i++) {
+	for (int i = 0; i < ARRAY_SIZE(tc9564_clock_init); i++) {
 		const struct tc956x_clock_init *clock_init = &tc9564_clock_init[i];
 		struct tc956x_clock *clock = &clocks->clocks[i];
-		struct clk_init_data init = { };
+		struct clk_init_data init = {};
 
 		if (!clock_init->name)
 			continue;
@@ -197,41 +194,29 @@ static int tc956x_clk_probe(struct platform_device *pdev)
 		init.name = clock_init->name;
 		init.ops = &tc956x_clk_ops;
 
-		hw = &clock->hw;
-		hw->init = &init;
+		clock->hw.init = &init;
 
-		ret = devm_clk_hw_register(dev, hw);
-		if (ret) {
-			dev_err_probe(dev, ret,
-				      "failed to register clock \"%s\"\n",
-				      clock_init->name);
-			goto free_clocks;
-		}
-
-		hw_data->hws[i] = hw;
+		ret = devm_clk_hw_register(dev, &clock->hw);
+		if (ret)
+			return dev_err_probe(
+				dev, ret, "failed to register clock \"%s\"\n",
+				clock_init->name);
 
 		clock->which = i;
-		clock->offset = clocks->offset[clock_init->zero_one];
+		clock->offset = clocks->offset[clock_init->offset_index];
 		clock->mask = clock_init->mask;
 	}
+
+	ret = devm_of_clk_add_hw_provider(dev, tc956x_clk_hw_get, clocks);
+	if (ret)
+		return dev_err_probe(dev, ret, "failed to add clk hw provider\n");
+
 	platform_set_drvdata(pdev, clocks);
 
-#if 0
 	/* Force all clocks to be initially disabled */
 	tc956x_clock_disable_all(clocks);
-#endif
-
-	ret = devm_of_clk_add_hw_provider(dev, of_clk_hw_onecell_get, hw_data);
-	if (ret) {
-		dev_err_probe(dev, ret, "failed to add clk hw provider\n");
-		goto free_clocks;
-	}
 
 	return 0;
-
-free_clocks:
-	kfree(clocks);
-	return ret;
 }
 
 static void tc956x_clk_remove(struct platform_device *pdev)
@@ -240,7 +225,6 @@ static void tc956x_clk_remove(struct platform_device *pdev)
 
 	/* Leave all clocks disabled when done */
 	tc956x_clock_disable_all(clocks);
-	kfree(clocks);
 }
 
 static const struct of_device_id tc956x_clk_ids[] = {
@@ -255,7 +239,6 @@ static struct platform_driver tc956x_clk_driver = {
 	.driver	= {
 		.name		= DRIVER_NAME,
 		.of_match_table = tc956x_clk_ids,
-		.owner		= THIS_MODULE,
 		.probe_type	= PROBE_PREFER_ASYNCHRONOUS,
 	},
 };
