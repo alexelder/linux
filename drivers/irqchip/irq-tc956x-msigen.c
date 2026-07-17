@@ -10,20 +10,12 @@
 
 /**
  * struct tc956x_msigen - Context for MSIGEN IRQ domain
- * @dev:		Device pointer
- * @irq_domain:		MSIGEN IRQ domain
  * @ioaddr:		Pointer to mapped MSIGEN memory
  * @irq:		IRQ number for MSIGEN
- * @reset:		Reset controller for MSIGEN
- * @clk:		Clock for MSIGEN
  */
 struct tc956x_msigen {
-	struct device *dev;
-	struct irq_domain *irq_domain;
 	void __iomem *ioaddr;
 	unsigned int irq;
-	struct reset_control *reset;
-	struct clk *clk;
 };
 
 #define HWIRQ_COUNT			25
@@ -64,8 +56,6 @@ static int tc956x_msigen_irq_chip_init(struct irq_chip_generic *gc)
 	struct tc956x_msigen *msigen = gc->domain->host_data;
 
 	gc->reg_base = msigen->ioaddr;
-	if (!gc->reg_base)
-		return -ENOMEM;
 	gc->chip_types[0].regs.mask = MSI_OUT_EN_OFFSET;
 	gc->chip_types[0].chip.irq_mask = irq_gc_mask_clr_bit;
 	gc->chip_types[0].chip.irq_unmask = irq_gc_mask_set_bit;
@@ -96,49 +86,20 @@ static void tc956x_msigen_irq_domain_exit(struct irq_domain *irq_domain)
 	irq_set_chained_handler_and_data(msigen->irq, NULL, NULL);
 }
 
-/* We have one IRQ chip instance with 25 IRQs in its domain */
-static struct irq_domain *
-tc956x_msigen_irq_domain_instantiate(struct tc956x_msigen *msigen)
-{
-	struct irq_domain_chip_generic_info dgc_info;
-	struct irq_domain_info info;
-
-	reset_control_deassert(msigen->reset);
-
-	dgc_info.name = devm_kasprintf(msigen->dev, GFP_KERNEL, "tc956x-msigen");
-	if (!dgc_info.name)
-		return ERR_PTR(-ENOMEM);
-
-	dgc_info.handler = handle_level_irq;
-	dgc_info.irqs_per_chip = HWIRQ_COUNT;
-	dgc_info.num_ct = 1;
-	dgc_info.init = tc956x_msigen_irq_chip_init;
-	dgc_info.exit = tc956x_msigen_irq_chip_exit;
-
-	info.fwnode = of_fwnode_handle(msigen->dev->of_node);
-	info.domain_flags = IRQ_DOMAIN_FLAG_DESTROY_GC;
-	info.size = HWIRQ_COUNT;
-	info.hwirq_max = HWIRQ_COUNT;
-	info.ops = &irq_generic_chip_ops;
-	info.host_data = msigen;
-	info.dgc_info = &dgc_info;
-	info.init = tc956x_msigen_irq_domain_init;
-	info.exit = tc956x_msigen_irq_domain_exit;
-
-	return devm_irq_domain_instantiate(msigen->dev, &info);
-}
-
 static int tc956x_msigen_probe(struct platform_device *pdev)
 {
+	struct irq_domain_chip_generic_info dgc_info;
 	struct device *dev = &pdev->dev;
+	struct irq_domain *irq_domain;
 	struct tc956x_msigen *msigen;
+	struct irq_domain_info info;
+	struct reset_control *reset;
+	struct clk *clk;
 	int ret;
 
 	msigen = devm_kzalloc(dev, sizeof(*msigen), GFP_KERNEL);
 	if (!msigen)
 		return -ENOMEM;
-
-	msigen->dev = dev;
 
 	msigen->ioaddr = devm_platform_ioremap_resource(pdev, 0);
 	if (IS_ERR(msigen->ioaddr))
@@ -150,20 +111,35 @@ static int tc956x_msigen_probe(struct platform_device *pdev)
 		return dev_err_probe(dev, ret, "failed to get MSIGEN IRQ\n");
 	msigen->irq = ret;
 
-	msigen->reset = devm_reset_control_get_shared(dev, "toshiba,tc956x-msigen-reset");
-	if (IS_ERR(msigen->reset))
-		return dev_err_probe(dev, PTR_ERR(msigen->reset), "failed to get MSIGEN reset\n");
+	reset = devm_reset_control_get_shared_deasserted(dev, "toshiba,tc956x-msigen-reset");
+	if (IS_ERR(reset))
+		return dev_err_probe(dev, PTR_ERR(reset), "failed to get MSIGEN reset\n");
 
-	msigen->clk = devm_clk_get_enabled(dev, "toshiba,tc956x-msigen-clock");
-	if (IS_ERR(msigen->clk))
-		return dev_err_probe(dev, PTR_ERR(msigen->clk), "failed to get/enable MSIGEN clock\n");
+	clk = devm_clk_get_enabled(dev, "toshiba,tc956x-msigen-clock");
+	if (IS_ERR(clk))
+		return dev_err_probe(dev, PTR_ERR(clk), "failed to get/enable MSIGEN clock\n");
 
-	msigen->irq_domain = tc956x_msigen_irq_domain_instantiate(msigen);
-	if (IS_ERR(msigen->irq_domain))
-		return dev_err_probe(dev, PTR_ERR(msigen->irq_domain),
+	dgc_info.name = "tc956x-msigen";
+	dgc_info.handler = handle_level_irq;
+	dgc_info.irqs_per_chip = HWIRQ_COUNT;
+	dgc_info.num_ct = 1;
+	dgc_info.init = tc956x_msigen_irq_chip_init;
+	dgc_info.exit = tc956x_msigen_irq_chip_exit;
+
+	info.fwnode = of_fwnode_handle(dev->of_node);
+	info.domain_flags = IRQ_DOMAIN_FLAG_DESTROY_GC;
+	info.size = HWIRQ_COUNT;
+	info.hwirq_max = HWIRQ_COUNT;
+	info.ops = &irq_generic_chip_ops;
+	info.host_data = msigen;
+	info.dgc_info = &dgc_info;
+	info.init = tc956x_msigen_irq_domain_init;
+	info.exit = tc956x_msigen_irq_domain_exit;
+
+	irq_domain = devm_irq_domain_instantiate(dev, &info);
+	if (IS_ERR(irq_domain))
+		return dev_err_probe(dev, PTR_ERR(irq_domain),
 				     "failed to instantiate IRQ domain\n");
-
-	platform_set_drvdata(pdev, msigen);
 
 	return 0;
 }
@@ -183,5 +159,6 @@ static struct platform_driver tc956x_msigen_driver = {
 };
 module_platform_driver(tc956x_msigen_driver);
 
+MODULE_AUTHOR("Daniel Thompson <danielt@kernel.org>");
 MODULE_DESCRIPTION("TC956X MSIGEN IRQ controller driver");
 MODULE_LICENSE("GPL");
