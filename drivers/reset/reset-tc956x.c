@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0-only
 //
 
 /*
@@ -19,20 +19,21 @@
 #define DRIVER_NAME		"tc956x-reset"
 
 struct tc956x_reset {
-	u32 zero_one;		/* Index into resets->offset[] */
+	u32 offset_index;       /* Index into resets->offset[] */
 	u32 mask;		/* Zero means undefined reset */
 };
 
 struct tc956x_resets {
+	struct device *dev;
 	struct regmap *regmap;
 	u32 offset[2];
 	struct reset_controller_dev rcdev;
 };
 
-#define TC956X_RESET_INIT(_name, _zero_one, _bit)	\
-	[RESET_ ## _name] = {				\
-		.zero_one	= _zero_one,		\
-		.mask		= BIT(_bit),		\
+#define TC956X_RESET_INIT(_name, _offset_index, _bit) \
+	[RESET_##_name] = {                           \
+		.offset_index = _offset_index,        \
+		.mask = BIT(_bit),                    \
 	}
 
 static const struct tc956x_reset tc9564_reset[] = {
@@ -53,10 +54,6 @@ static const struct tc956x_reset tc9564_reset[] = {
 	TC956X_RESET_INIT(MAC1_XPCS, 1, 31),
 };
 
-/* Mask that includes all meaningful bits in each reset control register */
-#define TC956X_RESET0_ALL_MASK	0xc0050093	/* 0xc0051293 */
-#define TC956X_RESET1_ALL_MASK	0xc0000080
-
 static struct tc956x_resets *
 tc956x_rcdev_to_resets(struct reset_controller_dev *rcdev)
 {
@@ -69,19 +66,17 @@ tc956x_reset_manage(struct tc956x_resets *resets, unsigned long id, bool assert)
 	const struct tc956x_reset *reset = &tc9564_reset[id];
 
 	if (id < resets->rcdev.nr_resets && reset->mask) {
-		u32 offset = resets->offset[reset->zero_one];
+		u32 offset = resets->offset[reset->offset_index];
 		struct regmap *regmap = resets->regmap;
 		u32 mask = reset->mask;
 
-		/* No errors returned for MMIO regmap */
-		regmap_update_bits(regmap, offset, mask, assert ? mask : 0);
-
-		return 0;
+		return regmap_update_bits(regmap, offset, mask, assert ? mask : 0);
 	}
 
-	pr_warn("invalid reset (%sassert id %lu)!\n", assert ? "" : "de", id);
+	dev_warn(resets->dev, "invalid reset (%sassert id %lu)!\n",
+		 assert ? "" : "de", id);
 
-	return -EINVAL;
+	return -ENXIO;
 }
 
 static int tc956x_reset_assert(struct reset_controller_dev *rcdev,
@@ -107,10 +102,9 @@ static const struct reset_control_ops tc956x_reset_control_ops = {
 
 static void tc956x_reset_assert_all(struct tc956x_resets *resets)
 {
-	struct regmap *regmap = resets->regmap;
-
-	regmap_write(regmap, resets->offset[0], TC956X_RESET0_ALL_MASK);
-	regmap_write(regmap, resets->offset[1], TC956X_RESET1_ALL_MASK);
+	for (int id = 0; id < ARRAY_SIZE(tc9564_reset); id++)
+		if (tc9564_reset[id].mask)
+			tc956x_reset_manage(resets, id, true);
 }
 
 static int tc956x_reset_probe(struct platform_device *pdev)
@@ -124,7 +118,6 @@ static int tc956x_reset_probe(struct platform_device *pdev)
 	u64 addr;
 	u64 size;
 	int ret;
-	int i;
 
 	np = dev_of_node(dev);
 	if (!np)
@@ -136,7 +129,7 @@ static int tc956x_reset_probe(struct platform_device *pdev)
 				     "failed to get config regmap\n");
 	reg_size = regmap_get_val_bytes(regmap);
 
-	for (i = 0; i < 2; i++) {
+	for (int i = 0; i < 2; i++) {
 		ret = of_property_read_reg(np, i, &addr, &size);
 		if (ret)
 			return dev_err_probe(dev, ret,
@@ -149,11 +142,12 @@ static int tc956x_reset_probe(struct platform_device *pdev)
 		offset[i] = lower_32_bits(addr);
 	}
 
-	resets = kzalloc_obj(*resets);
+	resets = devm_kzalloc(dev, sizeof(*resets), GFP_KERNEL);
 	if (!resets)
 		return dev_err_probe(dev, -ENOMEM,
 				     "failed to allocate resets\n");
 
+	resets->dev = dev;
 	resets->regmap = regmap;
 	resets->offset[0] = offset[0];
 	resets->offset[1] = offset[1];
@@ -164,11 +158,10 @@ static int tc956x_reset_probe(struct platform_device *pdev)
 	resets->rcdev.of_node = np;
 	resets->rcdev.nr_resets = ARRAY_SIZE(tc9564_reset);
 
-	ret = reset_controller_register(&resets->rcdev);
-	if (ret) {
-		kfree(resets);
+	ret = devm_reset_controller_register(dev, &resets->rcdev);
+	if (ret)
 		return dev_err_probe(dev, ret, "failed registration\n");
-	}
+
 	platform_set_drvdata(pdev, resets);
 
 	/* Force all resets to be initially asserted */
@@ -183,7 +176,6 @@ static void tc956x_reset_remove(struct platform_device *pdev)
 
 	/* Leave all resets asserted when done */
 	tc956x_reset_assert_all(resets);
-	kfree(resets);
 }
 
 static const struct of_device_id tc956x_reset_ids[] = {
@@ -198,7 +190,6 @@ static struct platform_driver tc956x_reset_driver = {
 	.driver	= {
 		.name		= DRIVER_NAME,
 		.of_match_table = tc956x_reset_ids,
-		.owner		= THIS_MODULE,
 		.probe_type	= PROBE_PREFER_ASYNCHRONOUS,
 	},
 };
