@@ -105,6 +105,34 @@ static int of_bus_default_flags_translate(__be32 *addr, u64 offset, int na)
 }
 
 #ifdef CONFIG_PCI
+static int of_bus_pci_endpoint_match(struct device_node *np)
+{
+	if (!of_node_is_type(np, "pci"))
+		return false;
+
+	/*
+	 * If there is at least one pci-ep-bus child (a simple bus), child
+	 * nodes addresses will hold an endpoint BAR number in the first
+	 * cell (not an encoded BDF and type flags).
+	 */
+	for_each_child_of_node_scoped(np, child)
+		if (of_node_name_prefix(child, "pci-ep-bus@") &&
+		    of_device_is_compatible(child, "simple-bus"))
+			return true;
+
+	return false;
+}
+
+static u64 of_bus_pci_endpoint_map(__be32 *addr, const __be32 *range, int na,
+				    int ns, int pna, int fna)
+{
+	/* Check that first cells match, and contain a valid BAR number */
+	if (*addr != *range || *addr >= be32_to_cpu(PCI_STD_NUM_BARS))
+		return OF_BAD_ADDR;
+
+	return of_bus_default_map(addr, range, na, ns, pna, fna);
+}
+
 static unsigned int of_bus_pci_get_flags(const __be32 *addr)
 {
 	unsigned int flags = 0;
@@ -337,6 +365,17 @@ static int of_bus_default_match(struct device_node *np)
 
 static const struct of_bus of_busses[] = {
 #ifdef CONFIG_PCI
+	/* PCI endpoint BAR addressing */
+	{
+		.name = "pci-ep-bus",
+		.addresses = "reg",
+		.match = of_bus_pci_endpoint_match,
+		.count_cells = of_bus_pci_count_cells,
+		.map = of_bus_pci_endpoint_map,
+		.translate = of_bus_default_flags_translate,
+		.flag_cells = 1,
+		.get_flags = of_bus_default_get_flags,
+	},
 	/* PCI */
 	{
 		.name = "pci",
