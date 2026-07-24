@@ -154,9 +154,23 @@ static int of_bus_pci_match(struct device_node *np)
 	 * If none of the device_type match, and that the node name is
 	 * "pcie", accept the device as PCI (with a warning).
 	 */
-	return of_node_is_type(np, "pci") || of_node_is_type(np, "pciex") ||
-		of_node_is_type(np, "vci") || of_node_is_type(np, "ht") ||
-		of_node_is_pcie(np);
+	if (!of_node_is_type(np, "pci") && !of_node_is_type(np, "pciex") &&
+		!of_node_is_type(np, "vci") && !of_node_is_type(np, "ht") &&
+		!of_node_is_pcie(np))
+		return false;
+
+	/*
+	 * When there are pci-ep-bus children then the flags cell contains
+	 * the BAR number rather than PCI flags. Such an address is not
+	 * a PCI address (but it can be correctly handled by the "Default with
+	 * flags cell" handling).
+	 */
+	for_each_child_of_node_scoped(np, child)
+		if (of_node_name_prefix(child, "pci-ep-bus@") &&
+		    of_device_is_compatible(child, "simple-bus"))
+			return false;
+
+	return true;
 }
 
 static void of_bus_pci_count_cells(struct device_node *np,
