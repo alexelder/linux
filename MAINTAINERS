@@ -27355,10 +27355,22 @@ TOSHIBA TC956X/QUALCOMM QPS615 DWMAC ETHERNET DRIVER
 M:	Alex Elder <elder@kernel.org>
 M:	Daniel Thompson <danielt@kernel.org>
 S:	Maintained
+F:	Documentation/devicetree/bindings/clock/toshiba,tc9564-clocks.yaml
+F:	Documentation/devicetree/bindings/gpio/toshiba,tc9564-gpio.yaml
+F:	Documentation/devicetree/bindings/interrupt-controller/toshiba,tc9564-msigen.yaml
+F:	Documentation/devicetree/bindings/misc/toshiba,tc9564-translate.yaml
 F:	Documentation/devicetree/bindings/net/toshiba,tc9564-dwmac.yaml
+F:	Documentation/devicetree/bindings/pci/toshiba,tc9564-pci.yaml
+F:	Documentation/devicetree/bindings/reset/toshiba,tc9564-resets.yaml
+F:	drivers/clk/clk-tc956x.c
 F:	drivers/gpio/gpio-tc956x.c
+F:	drivers/irqchip/irq-tc956x-msigen.c
+F:	drivers/misc/tc956x-translate.c
 F:	drivers/misc/tc956x_pci.c
 F:	drivers/net/ethernet/stmicro/stmmac/dwmac-tc956x.c
+F:	drivers/reset/reset-tc956x.c
+F:	include/dt-bindings/clock/toshiba,tc9564.h
+F:	include/dt-bindings/reset/toshiba,tc9564.h
 F:	include/soc/toshiba/tc956x-dwmac.h
 
 TOSHIBA WMI HOTKEYS DRIVER
