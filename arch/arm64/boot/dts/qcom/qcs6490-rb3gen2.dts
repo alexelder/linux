@@ -897,6 +897,7 @@
 			compatible = "fixed-clock";
 			#clock-cells = <0>;
 			clock-frequency = <25000000>;
+			clock-output-names = "tc9564_xo_board";
 		};
 
 		pcie1_switch0_dsp1: pcie@1,0 {
