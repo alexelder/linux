@@ -891,7 +891,7 @@
 		pinctrl-0 = <&tc9563_resx_n>;
 		pinctrl-names = "default";
 
-		clock-25000000 {
+		tc9564_xo_board: clock-25000000 {
 			compatible = "fixed-clock";
 			#clock-cells = <0>;
 			clock-frequency = <25000000>;
@@ -974,6 +974,15 @@
 					#size-cells = <1>;
 					/* Map 0x0-0x1fffff to BAR 4 */
 					ranges = <0x0  0x4 0x0 0x0  0x200000>;
+
+					syscon@0 {
+						compatible = "toshiba,tc9564-config-syscon",
+							     "syscon";
+						reg = <0x0 0x2000>;
+						clocks = <&tc9564_xo_board>;
+						#clock-cells = <1>;
+						#reset-cells = <1>;
+					};
 				};
 			};
 
