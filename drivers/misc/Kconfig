@@ -571,6 +571,8 @@ config MCHP_LAN966X_PCI
 config TC9564_PCI
 	tristate "Toshiba TC9564 PCI function support"
 	depends on PCI
+	depends on OF
+	depends on PCI_DYNAMIC_OF_NODES
 	help
 	  This enables support for the two PCI functions implemented by
 	  the embedded PCIe endpoint in the Toshiba TC9564 SoC.  This
