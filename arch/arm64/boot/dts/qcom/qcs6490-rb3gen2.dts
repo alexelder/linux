@@ -902,14 +902,14 @@
 		pinctrl-0 = <&tc9563_resx_n>;
 		pinctrl-names = "default";
 
-		tc9564_xo_board: xo-board {
+		tc9564_xo_board: clock-25000000 {
 			compatible = "fixed-clock";
 			#clock-cells = <0>;
 			clock-frequency = <25000000>;
 			clock-output-names = "tc9564_xo_board";
 		};
 
-		tc9564_pll: pll {
+		tc9564_pll: clock-1250000000 {
 			compatible = "fixed-factor-clock";
 			clocks = <&tc9564_xo_board>;
 			#clock-cells = <0>;
@@ -918,7 +918,7 @@
 			clock-output-names = "tc9564_pll";
 		};
 
-		tc9564_ref_125mhz_clk: ref-125mhz-clk {
+		tc9564_ref_125mhz_clk: clock-125000000 {
 			compatible = "fixed-factor-clock";
 			clocks = <&tc9564_pll>;
 			#clock-cells = <0>;
@@ -927,7 +927,7 @@
 			clock-output-names = "tc9564_125mhz_clk";
 		};
 
-		tc9564_ref_250mhz_clk: ref-250mhz-clk {
+		tc9564_ref_250mhz_clk: clock-250000000 {
 			compatible = "fixed-factor-clock";
 			clocks = <&tc9564_pll>;
 			#clock-cells = <0>;
