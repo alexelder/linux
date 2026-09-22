@@ -65,6 +65,10 @@ struct tc9564_clocks {
 		.mask = BIT(_bit),			\
 	}
 
+/*
+ * The PCIe and I2C clocks are controllable, but we depend on PCIe
+ * and that relies on I2C, so we don't allow them to be disabled.
+ */
 static const struct tc9564_clock_init tc9564_clock_init[] = {
 	TC9564_CLOCK_INIT0(MCU, 0),
 	TC9564_CLOCK_INIT0(INTC, 4),
@@ -92,6 +96,10 @@ static const struct tc9564_clock_init tc9564_clock_init[] = {
 };
 #define TC9564_CLOCK_COUNT	ARRAY_SIZE(tc9564_clock_init)
 
+/*
+ * The PCIe and I2C resets are controllable, but we depend on PCIe
+ * and that relies on I2C, so we don't allow them to be asserted.
+ */
 static const struct tc9564_reset tc9564_reset[] = {
 	TC9564_RESET_INIT0(MCU, 0),
 	TC9564_RESET_INIT0(MCU1, 1),
@@ -281,8 +289,8 @@ static int tc9564_reset_deassert(struct reset_controller_dev *rcdev,
 }
 
 static const struct reset_control_ops tc9564_reset_control_ops = {
-	.assert		= tc9564_reset_assert,
-	.deassert	= tc9564_reset_deassert,
+	.assert = tc9564_reset_assert,
+	.deassert = tc9564_reset_deassert,
 };
 
 static void tc9564_reset_assert_all(struct tc9564_clocks *clocks)
@@ -338,7 +346,7 @@ static void tc9564_clk_remove(struct platform_device *pdev)
 {
 	struct tc9564_clocks *clocks = platform_get_drvdata(pdev);
 
-	/* Leave all resets to be deasserted when done */
+	/* Leave all resets asserted when done */
 	tc9564_reset_assert_all(clocks);
 
 	/* Leave all clocks disabled when done */
@@ -352,12 +360,12 @@ static const struct of_device_id tc9564_clk_ids[] = {
 MODULE_DEVICE_TABLE(of, tc9564_clk_ids);
 
 static struct platform_driver tc9564_clk_driver = {
-	.probe	= tc9564_clk_probe,
-	.remove	= tc9564_clk_remove,
-	.driver	= {
-		.name		= KBUILD_MODNAME,
+	.probe = tc9564_clk_probe,
+	.remove = tc9564_clk_remove,
+	.driver = {
+		.name = KBUILD_MODNAME,
 		.of_match_table = tc9564_clk_ids,
-		.probe_type	= PROBE_PREFER_ASYNCHRONOUS,
+		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
 	},
 };
 module_platform_driver(tc9564_clk_driver);

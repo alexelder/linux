@@ -295,13 +295,15 @@ config COMMON_CLK_S2MPS11
 config COMMON_CLK_TC9564
 	tristate "Toshiba TC9564 clock support"
 	depends on TC9564_PCI
+	select MFD_SYSCON
+	select RESET_CONTROLLER
 	default m
 	help
 	  This enables support for the clock and reset controller embedded
 	  in the Toshiba TC9564 (and Qualcomm QPS615) SoC.  The state of
 	  clock and reset lines is controlled by MMIO to a region managed
 	  by a system controller; this ensures access to the region is
-	  coordinated between this and other drivers.
+	  coordinated between this and the XGMAC (stmmac) driver.
 
 config CLK_TWL
 	tristate "Clock driver for the TWL PMIC family"
