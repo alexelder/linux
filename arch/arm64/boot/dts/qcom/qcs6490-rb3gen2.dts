@@ -993,21 +993,16 @@
 };
 
 &pcie_s1b5d0f0_bar4_bus {
-	syscon@0 {
-		compatible = "toshiba,tc9564-config",
-			     "syscon",
-			     "simple-mfd";
+	tc9564_config_syscon0: syscon@0 {
+		compatible = "syscon";
 		reg = <0x0 0x2000>;
-		#address-cells = <1>;
-		#size-cells = <1>;
-		ranges;
+	};
 
-		tc9564_clock0: clock@1004 {
-			compatible = "toshiba,tc9564-clock";
-			reg = <0x1004 0x10>;
-			#clock-cells = <1>;
-			#reset-cells = <1>;
-		};
+	tc9564_clock0: clock@1004 {
+		compatible = "toshiba,tc9564-clock";
+		toshiba,config-syscon = <&tc9564_config_syscon0>;
+		#clock-cells = <1>;
+		#reset-cells = <1>;
 	};
 };
 
