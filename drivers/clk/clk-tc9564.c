@@ -196,8 +196,16 @@ static struct clk_hw *tc9564_clk_hw_get(struct of_phandle_args *clkspec,
 static struct tc9564_clocks *tc9564_clk_init(struct device *dev)
 {
 	struct tc9564_clocks *clocks;
+	struct regmap *regmap;
 	size_t clocks_size;
 	int ret;
+
+	regmap = syscon_regmap_lookup_by_phandle(dev_of_node(dev),
+						 "toshiba,config-syscon");
+	if (IS_ERR(regmap)) {
+		dev_err(dev, "failed to get config regmap\n");
+		return ERR_CAST(regmap);
+	}
 
 	clocks_size = struct_size(clocks, clocks, TC9564_CLOCK_COUNT);
 	clocks = devm_kzalloc(dev, clocks_size, GFP_KERNEL);
@@ -205,13 +213,8 @@ static struct tc9564_clocks *tc9564_clk_init(struct device *dev)
 		return ERR_PTR(-ENOMEM);
 
 	clocks->dev = dev;
+	clocks->regmap = regmap;
 	clocks->clock_count = TC9564_CLOCK_COUNT;
-
-	clocks->regmap = syscon_node_to_regmap(dev_of_node(dev->parent));
-	if (IS_ERR(clocks->regmap)) {
-		dev_err(dev, "failed to get config regmap\n");
-		return ERR_CAST(clocks->regmap);
-	}
 
 	for (u32 i = 0; i < TC9564_CLOCK_COUNT; i++) {
 		const struct tc9564_clock_init *clock_init;
