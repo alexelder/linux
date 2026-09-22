@@ -144,7 +144,7 @@ static int tc9564_clk_manage(struct clk_hw *hw, bool enable)
 
 	clocks = tc9564_clock_to_clocks(clock);
 	if (IS_ERR(clocks) || !mask) {
-		dev_err(clk_hw_get_dev(hw), "invalid clock (%s id %u)\n",
+		dev_err(clocks->dev, "invalid clock (%s id %u)\n",
 			enable ? "enable" : "disable", clock->which);
 		return -ENXIO;
 	}
@@ -273,8 +273,8 @@ static int tc9564_reset_manage(struct reset_controller_dev *rcdev,
 						  assert ? mask : 0);
 	}
 
-	dev_err(clocks->dev, "invalid reset (%sassert id %lu)\n",
-		assert ? "" : "de", id);
+	dev_err(rcdev->dev, "invalid reset (%s id %lu)\n",
+		assert ? "assert" : "deassert", id);
 
 	return -ENXIO;
 }
@@ -303,17 +303,16 @@ static void tc9564_reset_assert_all(struct tc9564_clocks *clocks)
 			tc9564_reset_manage(&clocks->rcdev, id, true);
 }
 
-static int tc9564_reset_init(struct tc9564_clocks *clocks)
+static int
+tc9564_reset_init(struct reset_controller_dev *rcdev, struct device *dev)
 {
-	struct reset_controller_dev *rcdev = &clocks->rcdev;
-
 	rcdev->ops = &tc9564_reset_control_ops;
 	rcdev->owner = THIS_MODULE;
-	rcdev->dev = clocks->dev;
-	rcdev->of_node = dev_of_node(clocks->dev);
+	rcdev->dev = dev;
+	rcdev->of_node = dev_of_node(dev);
 	rcdev->nr_resets = TC9564_RESET_COUNT;
 
-	return devm_reset_controller_register(clocks->dev, rcdev);
+	return devm_reset_controller_register(dev, rcdev);
 }
 
 static int tc9564_clk_probe(struct platform_device *pdev)
@@ -330,7 +329,7 @@ static int tc9564_clk_probe(struct platform_device *pdev)
 		return dev_err_probe(dev, PTR_ERR(clocks),
 				     "failed to initialize clocks\n");
 
-	ret = tc9564_reset_init(clocks);
+	ret = tc9564_reset_init(&clocks->rcdev, dev);
 	if (ret)
 		return dev_err_probe(dev, ret, "failed to initialize resets\n");
 
