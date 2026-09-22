@@ -6,8 +6,8 @@
 
 #include <linux/bits.h>
 #include <linux/clk-provider.h>
+#include <linux/device-id/of.h>
 #include <linux/mfd/syscon.h>
-#include <linux/mod_devicetable.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/regmap.h>
@@ -347,7 +347,7 @@ static void tc9564_clk_remove(struct platform_device *pdev)
 
 static const struct of_device_id tc9564_clk_ids[] = {
 	{ .compatible = "toshiba,tc9564-clock" },
-	{ },
+	{ }
 };
 MODULE_DEVICE_TABLE(of, tc9564_clk_ids);
 
