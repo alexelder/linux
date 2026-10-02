@@ -354,13 +354,13 @@ config DWMAC_LOONGSON1
 
 config DWMAC_TC9564
 	tristate "Toshiba TC9564 DWMAC support"
-	depends on OF && COMMON_CLK
+	depends on OF && COMMON_CLK && TC9564_PCI
 	default TC9564_PCI
 	help
 	  This selects the Toshiba TC9564 (and Qualcomm QPS615) support in the
 	  stmmac driver.
 
-	  This provides support for the ethernet controllers found on these
+	  This provides support for the Ethernet controllers found on these
 	  devices.
 
 config DWMAC_TEGRA
