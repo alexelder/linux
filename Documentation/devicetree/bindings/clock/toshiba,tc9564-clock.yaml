@@ -32,23 +32,34 @@ properties:
   compatible:
     const: toshiba,tc9564-clock
 
+  clocks:
+    maxItems: 1
+
   "#clock-cells":
     const: 1
 
 required:
   - compatible
+  - clocks
   - "#clock-cells"
 
 unevaluatedProperties: false
 
 examples:
   - |
+    tc9564_xo_board: clock-25000000 {
+        compatible = "fixed-clock";
+        clock-frequency = <25000000>;
+        #clock-cells = <0>;
+    };
+
     syscon@0 {
         compatible = "syscon", "simple-mfd";
         reg = <0x0 0x2000>;
 
         clock-controller {
             compatible = "toshiba,tc9564-clock";
+            clocks = <&tc9564_xo_board>;
             #clock-cells = <1>;
         };
     };
