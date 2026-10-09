@@ -5,6 +5,7 @@
  */
 
 #include <linux/bits.h>
+#include <linux/clk.h>
 #include <linux/clk-provider.h>
 #include <linux/device-id/of.h>
 #include <linux/mfd/syscon.h>
@@ -215,9 +216,15 @@ static int tc9564_clk_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
 	struct tc9564_clocks *clocks;
+	struct clk *clk;
 
 	if (!dev_of_node(dev))
 		return dev_err_probe(dev, -EINVAL, "no devicetree node\n");
+
+	clk = devm_clk_get(dev, NULL);
+	if (IS_ERR(clk))
+		return dev_err_probe(dev, PTR_ERR(clk),
+				     "failed to get input clock\n");
 
 	clocks = tc9564_clk_init(dev);
 	if (IS_ERR(clocks))
