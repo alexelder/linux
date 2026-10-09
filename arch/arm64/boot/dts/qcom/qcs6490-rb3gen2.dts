@@ -1039,8 +1039,9 @@
 		compatible = "syscon", "simple-mfd";
 		reg = <0x0 0x2000>;
 
-		tc9564_clock0: clock {
+		tc9564_clock0: clock-controller {
 			compatible = "toshiba,tc9564-clock";
+			clocks = <&tc9564_xo_board>;
 			#clock-cells = <1>;
 		};
 
