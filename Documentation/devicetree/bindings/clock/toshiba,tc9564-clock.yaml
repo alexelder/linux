@@ -43,13 +43,11 @@ unevaluatedProperties: false
 
 examples:
   - |
-    #include <dt-bindings/clock/toshiba,tc9564.h>
-
     syscon@0 {
         compatible = "syscon", "simple-mfd";
         reg = <0x0 0x2000>;
 
-        clock {
+        clock-controller {
             compatible = "toshiba,tc9564-clock";
             #clock-cells = <1>;
         };
