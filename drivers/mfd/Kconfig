@@ -2581,5 +2581,15 @@ config MFD_MAX7360
 	  additional drivers must be enabled in order to use the functionality
 	  of the device.
 
+config MFD_TC9564
+	tristate "Toshiba TC9564 config system controller support"
+	depends on TC9564_PCI
+	default TC9564_PCI
+	help
+	  This enables support for the config system controller for the
+	  TC9564 SoC.  It implements an MMIO regmap to manage access to
+	  two pages of I/O memory, and serves as a clock and reset
+	  controller for IP blocks within the chip.
+
 endmenu
 endif
