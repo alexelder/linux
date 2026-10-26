@@ -195,16 +195,15 @@ static int tc9564_clk_probe(struct platform_device *pdev)
 
 		clock = &clocks->clocks[i];
 		clock->hw.init = &init;
+		clock->which = i;
+		clock->offset = clock_init->offset;
+		clock->mask = clock_init->mask;
 
 		ret = devm_clk_hw_register(dev, &clock->hw);
 		if (ret)
 			return dev_err_probe(dev, ret,
 					     "failed to register clock %s\n",
 					     init.name);
-
-		clock->which = i;
-		clock->offset = clock_init->offset;
-		clock->mask = clock_init->mask;
 	}
 
 	ret = devm_of_clk_add_hw_provider(dev, tc9564_clk_hw_get, clocks);
