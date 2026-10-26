@@ -34,7 +34,6 @@ struct tc9564_clock {
 };
 
 struct tc9564_clocks {
-	struct device *dev;
 	struct regmap *regmap;
 	size_t clock_count;
 	struct tc9564_clock clocks[] __counted_by(clock_count);
@@ -174,7 +173,6 @@ static int tc9564_clk_probe(struct platform_device *pdev)
 	if (!clocks)
 		return -ENOMEM;
 
-	clocks->dev = dev;
 	clocks->regmap = regmap;
 	clocks->clock_count = TC9564_CLOCK_COUNT;
 
