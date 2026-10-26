@@ -11,24 +11,26 @@
 
 #define CLOCK_MCU		0
 #define CLOCK_INTC		1
-#define CLOCK_SRAM		2
-#define CLOCK_UART		3
-#define CLOCK_MSIGEN		4
-#define CLOCK_PLL		5
-#define CLOCK_SGMII		6
-#define CLOCK_REFCLKO		7
+#define CLOCK_PCIE		2
+#define CLOCK_I2C		3
+#define CLOCK_SRAM		4
+#define CLOCK_UART		5
+#define CLOCK_MSIGEN		6
+#define CLOCK_PLL		7
+#define CLOCK_SGMII		8
+#define CLOCK_REFCLKO		9
 
-#define CLOCK_MAC0_TX		8
-#define CLOCK_MAC0_RX		9
-#define CLOCK_MAC0_125M		10
-#define CLOCK_MAC0_312_5M	11
-#define CLOCK_MAC0_ALL		12
+#define CLOCK_MAC0_TX		10
+#define CLOCK_MAC0_RX		11
+#define CLOCK_MAC0_125M		12
+#define CLOCK_MAC0_312_5M	13
+#define CLOCK_MAC0_ALL		14
 
-#define CLOCK_MAC1_TX		13
-#define CLOCK_MAC1_RX		14
-#define CLOCK_MAC1_RMII		15
-#define CLOCK_MAC1_125M		16
-#define CLOCK_MAC1_312_5M	17
-#define CLOCK_MAC1_ALL		18
+#define CLOCK_MAC1_TX		15
+#define CLOCK_MAC1_RX		16
+#define CLOCK_MAC1_RMII		17
+#define CLOCK_MAC1_125M		18
+#define CLOCK_MAC1_312_5M	19
+#define CLOCK_MAC1_ALL		20
 
 #endif /* __CLOCK_TOSHIBA_TC9564_H__*/
