@@ -34,7 +34,6 @@ struct tc9564_clock {
 };
 
 struct tc9564_clocks {
-	struct regmap *regmap;
 	size_t clock_count;
 	struct tc9564_clock clocks[] __counted_by(clock_count);
 };
@@ -90,25 +89,17 @@ static const struct tc9564_clock *hw_to_tc9564_clock(struct clk_hw *hw)
 	return container_of_const(hw, struct tc9564_clock, hw);
 }
 
-static const struct tc9564_clocks *
-tc9564_clock_to_clocks(const struct tc9564_clock *clock)
-{
-	u32 which = clock->which;
-
-	return container_of_const(clock, struct tc9564_clocks, clocks[which]);
-}
-
 static int tc9564_clk_manage(struct clk_hw *hw, bool enable)
 {
 	const struct tc9564_clock *clock = hw_to_tc9564_clock(hw);
-	const struct tc9564_clocks *clocks;
+	struct device *dev = clk_hw_get_dev(hw);
 	u32 offset = clock->offset;
 	u32 mask = clock->mask;
+	struct regmap *regmap;
 
-	clocks = tc9564_clock_to_clocks(clock);
+	regmap = dev_get_drvdata(dev);
 
-	return regmap_update_bits(clocks->regmap, offset, mask,
-				  enable ? mask : 0);
+	return regmap_update_bits(regmap, offset, mask, enable ? mask : 0);
 }
 
 static int tc9564_clk_enable(struct clk_hw *hw)
@@ -124,14 +115,15 @@ static void tc9564_clk_disable(struct clk_hw *hw)
 static int tc9564_clk_is_enabled(struct clk_hw *hw)
 {
 	const struct tc9564_clock *clock = hw_to_tc9564_clock(hw);
-	const struct tc9564_clocks *clocks;
+	struct device *dev = clk_hw_get_dev(hw);
 	u32 offset = clock->offset;
 	u32 mask = clock->mask;
+	struct regmap *regmap;
 	u32 val;
 
-	clocks = tc9564_clock_to_clocks(clock);
+	regmap = dev_get_drvdata(dev);
 
-	regmap_read(clocks->regmap, offset, &val);
+	regmap_read(regmap, offset, &val);
 
 	return val & mask ? 1 : 0;
 }
@@ -167,13 +159,13 @@ static int tc9564_clk_probe(struct platform_device *pdev)
 	if (IS_ERR(regmap))
 		return dev_err_probe(dev, PTR_ERR(regmap),
 				     "failed to get config regmap\n");
+	dev_set_drvdata(dev, regmap);
 
 	clocks_size = struct_size(clocks, clocks, TC9564_CLOCK_COUNT);
 	clocks = devm_kzalloc(dev, clocks_size, GFP_KERNEL);
 	if (!clocks)
 		return -ENOMEM;
 
-	clocks->regmap = regmap;
 	clocks->clock_count = TC9564_CLOCK_COUNT;
 
 	for (u32 i = 0; i < TC9564_CLOCK_COUNT; i++) {
