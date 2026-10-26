@@ -96,9 +96,6 @@ tc9564_clock_to_clocks(const struct tc9564_clock *clock)
 {
 	u32 which = clock->which;
 
-	if (which >= TC9564_CLOCK_COUNT)
-		return ERR_PTR(-ENXIO);
-
 	return container_of_const(clock, struct tc9564_clocks, clocks[which]);
 }
 
@@ -110,11 +107,6 @@ static int tc9564_clk_manage(struct clk_hw *hw, bool enable)
 	u32 mask = clock->mask;
 
 	clocks = tc9564_clock_to_clocks(clock);
-	if (IS_ERR(clocks) || !mask) {
-		dev_err(clocks->dev, "invalid clock (%s id %u)\n",
-			str_enable_disable(enable), clock->which);
-		return -ENXIO;
-	}
 
 	return regmap_update_bits(clocks->regmap, offset, mask,
 				  enable ? mask : 0);
@@ -139,10 +131,6 @@ static int tc9564_clk_is_enabled(struct clk_hw *hw)
 	u32 val;
 
 	clocks = tc9564_clock_to_clocks(clock);
-	if (IS_ERR(clocks) || !mask) {
-		dev_err(clocks->dev, "invalid clock (id %u)\n", clock->which);
-		return -ENXIO;
-	}
 
 	regmap_read(clocks->regmap, offset, &val);
 
@@ -159,14 +147,8 @@ static struct clk_hw *tc9564_clk_hw_get(struct of_phandle_args *clkspec,
 					void *data)
 {
 	struct tc9564_clocks *clocks = data;
-	u32 i = clkspec->args[0];
 
-	if (i < clocks->clock_count)
-		return &clocks->clocks[i].hw;
-
-	dev_err(clocks->dev, "invalid index %u\n", i);
-
-	return ERR_PTR(-EINVAL);
+	return &clocks->clocks[clkspec->args[0]].hw;
 }
 
 static int tc9564_clk_probe(struct platform_device *pdev)
