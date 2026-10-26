@@ -21,7 +21,8 @@
 
 struct tc9564_clock_init {
 	const char *name;	/* NULL means unused entry */
-	u32 offset;
+	bool critical;
+	u16 offset;
 	u32 mask;
 };
 
@@ -39,14 +40,19 @@ struct tc9564_clocks {
 	struct tc9564_clock clocks[] __counted_by(clock_count);
 };
 
-#define TC9564_CLOCK_INIT0(_name, _bit)	__TC9564_CLOCK_INIT(_name, 0, _bit)
-#define TC9564_CLOCK_INIT1(_name, _bit)	__TC9564_CLOCK_INIT(_name, 1, _bit)
+#define TC9564_CLOCK_INIT0(_name, _bit)				\
+	__TC9564_CLOCK_INIT(_name, 0, _bit, false)
+#define TC9564_CLOCK_INIT0_CRITICAL(_name, _bit)		\
+	__TC9564_CLOCK_INIT(_name, 0, _bit, true)
+#define TC9564_CLOCK_INIT1(_name, _bit)				\
+	__TC9564_CLOCK_INIT(_name, 1, _bit, false)
 
-#define __TC9564_CLOCK_INIT(_name, _reg, _bit)		\
-	[CLOCK_##_name] = {				\
-		.name	= #_name,			\
-		.offset	= CLK_CTRL ## _reg ## _OFFSET,	\
-		.mask	= BIT(_bit),			\
+#define __TC9564_CLOCK_INIT(_name, _reg, _bit, _critical)	\
+	[CLOCK_##_name] = {					\
+		.name		= #_name,			\
+		.offset		= CLK_CTRL ## _reg ## _OFFSET,	\
+		.mask		= BIT(_bit),			\
+		.critical	= _critical,			\
 	}
 
 /*
@@ -200,6 +206,7 @@ static int tc9564_clk_probe(struct platform_device *pdev)
 			continue;
 
 		init.name = clock_init->name;
+		init.flags = clock_init->critical ? CLK_IS_CRITICAL : 0;
 		init.ops = &tc9564_clk_ops;
 
 		clock = &clocks->clocks[i];
