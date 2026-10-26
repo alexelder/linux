@@ -124,9 +124,29 @@ static void tc9564_clk_disable(struct clk_hw *hw)
 	(void)tc9564_clk_manage(hw, false);
 }
 
+static int tc9564_clk_is_enabled(struct clk_hw *hw)
+{
+	const struct tc9564_clock *clock = hw_to_tc9564_clock(hw);
+	const struct tc9564_clocks *clocks;
+	u32 offset = clock->offset;
+	u32 mask = clock->mask;
+	u32 val;
+
+	clocks = tc9564_clock_to_clocks(clock);
+	if (IS_ERR(clocks) || !mask) {
+		dev_err(clocks->dev, "invalid clock (id %u)\n", clock->which);
+		return -ENXIO;
+	}
+
+	regmap_read(clocks->regmap, offset, &val);
+
+	return val & mask ? 1 : 0;
+}
+
 static const struct clk_ops tc9564_clk_ops = {
 	.enable = tc9564_clk_enable,
 	.disable = tc9564_clk_disable,
+	.is_enabled = tc9564_clk_is_enabled,
 };
 
 static void tc9564_clock_disable_all(struct tc9564_clocks *clocks)
