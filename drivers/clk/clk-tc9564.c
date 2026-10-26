@@ -149,17 +149,6 @@ static const struct clk_ops tc9564_clk_ops = {
 	.is_enabled = tc9564_clk_is_enabled,
 };
 
-static void tc9564_clock_disable_all(struct tc9564_clocks *clocks)
-{
-	for (u32 i = 0; i < clocks->clock_count; i++) {
-		const struct tc9564_clock *clock = &clocks->clocks[i];
-
-		if (clock->mask)
-			regmap_update_bits(clocks->regmap, clock->offset,
-					   clock->mask, 0);
-	}
-}
-
 static struct clk_hw *tc9564_clk_hw_get(struct of_phandle_args *clkspec,
 					void *data)
 {
@@ -231,25 +220,11 @@ static int tc9564_clk_probe(struct platform_device *pdev)
 		return dev_err_probe(dev, ret,
 				     "failed to add clock provider\n");
 
-	/* Force all clocks to be initially disabled */
-	tc9564_clock_disable_all(clocks);
-
-	platform_set_drvdata(pdev, clocks);
-
 	return 0;
-}
-
-static void tc9564_clk_remove(struct platform_device *pdev)
-{
-	struct tc9564_clocks *clocks = platform_get_drvdata(pdev);
-
-	/* Leave all clocks disabled when done */
-	tc9564_clock_disable_all(clocks);
 }
 
 static struct platform_driver tc9564_clk_driver = {
 	.probe = tc9564_clk_probe,
-	.remove = tc9564_clk_remove,
 	.driver = {
 		.name = "toshiba-tc9564-clock",
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
