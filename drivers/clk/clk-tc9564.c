@@ -82,43 +82,37 @@ static const struct tc9564_clock *hw_to_tc9564_clock(struct clk_hw *hw)
 	return container_of_const(hw, struct tc9564_clock, hw);
 }
 
-static int tc9564_clk_manage(struct clk_hw *hw, bool enable)
+static void tc9564_clk_manage(struct clk_hw *hw, bool enable)
 {
+	struct regmap *regmap = dev_get_drvdata(clk_hw_get_dev(hw));
 	const struct tc9564_clock *clock = hw_to_tc9564_clock(hw);
-	struct device *dev = clk_hw_get_dev(hw);
 	u32 offset = clock->init->offset;
 	u32 mask = clock->init->mask;
-	struct regmap *regmap;
 
-	regmap = dev_get_drvdata(dev);
-
-	return regmap_update_bits(regmap, offset, mask, enable ? mask : 0);
+	regmap_update_bits(regmap, offset, mask, enable ? mask : 0);
 }
 
 static int tc9564_clk_enable(struct clk_hw *hw)
 {
-	return tc9564_clk_manage(hw, true);
+	tc9564_clk_manage(hw, true);
+
+	return 0;
 }
 
 static void tc9564_clk_disable(struct clk_hw *hw)
 {
-	(void)tc9564_clk_manage(hw, false);
+	tc9564_clk_manage(hw, false);
 }
 
 static int tc9564_clk_is_enabled(struct clk_hw *hw)
 {
+	struct regmap *regmap = dev_get_drvdata(clk_hw_get_dev(hw));
 	const struct tc9564_clock *clock = hw_to_tc9564_clock(hw);
-	struct device *dev = clk_hw_get_dev(hw);
-	u32 offset = clock->init->offset;
-	u32 mask = clock->init->mask;
-	struct regmap *regmap;
 	u32 val;
 
-	regmap = dev_get_drvdata(dev);
+	regmap_read(regmap, clock->init->offset, &val);
 
-	regmap_read(regmap, offset, &val);
-
-	return val & mask ? 1 : 0;
+	return val & clock->init->mask ? 1 : 0;
 }
 
 static const struct clk_ops tc9564_clk_ops = {
@@ -140,6 +134,7 @@ static int tc9564_clk_probe(struct platform_device *pdev)
 	if (!parent_np)
 		return dev_err_probe(dev, -EINVAL, "no devicetree node\n");
 
+	/* Note: MMIO regmap (no error checking needed when used) */
 	regmap = device_node_to_regmap(parent_np);
 	if (IS_ERR(regmap))
 		return dev_err_probe(dev, PTR_ERR(regmap),
