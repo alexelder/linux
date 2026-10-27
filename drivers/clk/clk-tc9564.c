@@ -22,14 +22,13 @@
 struct tc9564_clock_init {
 	const char *name;
 	bool critical;
-	u16 offset;
+	u16 offset;		/* CLK_CTRL0_OFFSET or CLK_CTRL1_OFFSET */
 	u32 mask;
 };
 
 struct tc9564_clock {
 	struct clk_hw hw;
-	u32 offset;		/* CLK_CTRL0_OFFSET or CLK_CTRL1_OFFSET */
-	u32 mask;
+	const struct tc9564_clock_init *init;
 };
 
 #define TC9564_CLOCK_INIT0(_name, _bit)				\
@@ -87,8 +86,8 @@ static int tc9564_clk_manage(struct clk_hw *hw, bool enable)
 {
 	const struct tc9564_clock *clock = hw_to_tc9564_clock(hw);
 	struct device *dev = clk_hw_get_dev(hw);
-	u32 offset = clock->offset;
-	u32 mask = clock->mask;
+	u32 offset = clock->init->offset;
+	u32 mask = clock->init->mask;
 	struct regmap *regmap;
 
 	regmap = dev_get_drvdata(dev);
@@ -110,8 +109,8 @@ static int tc9564_clk_is_enabled(struct clk_hw *hw)
 {
 	const struct tc9564_clock *clock = hw_to_tc9564_clock(hw);
 	struct device *dev = clk_hw_get_dev(hw);
-	u32 offset = clock->offset;
-	u32 mask = clock->mask;
+	u32 offset = clock->init->offset;
+	u32 mask = clock->init->mask;
 	struct regmap *regmap;
 	u32 val;
 
@@ -171,9 +170,8 @@ static int tc9564_clk_probe(struct platform_device *pdev)
 
 		clock = &clocks[i];
 		clk_data->hws[i] = &clock->hw;
+		clock->init = clock_init;
 		clock->hw.init = &init;
-		clock->offset = clock_init->offset;
-		clock->mask = clock_init->mask;
 
 		ret = devm_clk_hw_register(dev, &clock->hw);
 		if (ret)
