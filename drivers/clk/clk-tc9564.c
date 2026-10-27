@@ -20,7 +20,7 @@
 #define CLK_CTRL1_OFFSET	0x100c
 
 struct tc9564_clock_init {
-	const char *name;	/* NULL means unused entry */
+	const char *name;
 	bool critical;
 	u16 offset;
 	u32 mask;
@@ -29,7 +29,7 @@ struct tc9564_clock_init {
 struct tc9564_clock {
 	struct clk_hw hw;
 	u32 offset;		/* CLK_CTRL0_OFFSET or CLK_CTRL1_OFFSET */
-	u32 mask;		/* Zero means undefined clock */
+	u32 mask;
 };
 
 #define TC9564_CLOCK_INIT0(_name, _bit)				\
@@ -165,9 +165,6 @@ static int tc9564_clk_probe(struct platform_device *pdev)
 		struct tc9564_clock *clock;
 
 		clock_init = &tc9564_clock_init[i];
-		if (!clock_init->name)
-			continue;
-
 		init.name = clock_init->name;
 		init.flags = clock_init->critical ? CLK_IS_CRITICAL : 0;
 		init.ops = &tc9564_clk_ops;
