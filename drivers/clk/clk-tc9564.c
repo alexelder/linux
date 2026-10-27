@@ -32,11 +32,6 @@ struct tc9564_clock {
 	u32 mask;		/* Zero means undefined clock */
 };
 
-struct tc9564_clocks {
-	size_t num;
-	struct tc9564_clock hws[] __counted_by(num);
-};
-
 #define TC9564_CLOCK_INIT0(_name, _bit)				\
 	__TC9564_CLOCK_INIT(_name, 0, _bit, false)
 #define TC9564_CLOCK_INIT0_CRITICAL(_name, _bit)		\
@@ -133,19 +128,12 @@ static const struct clk_ops tc9564_clk_ops = {
 	.is_enabled = tc9564_clk_is_enabled,
 };
 
-static struct clk_hw *tc9564_clk_hw_get(struct of_phandle_args *clkspec,
-					void *data)
-{
-	struct tc9564_clocks *clk_data = data;
-
-	return &clk_data->hws[clkspec->args[0]].hw;
-}
-
 static int tc9564_clk_probe(struct platform_device *pdev)
 {
+	struct clk_hw_onecell_data *clk_data;
 	struct device *dev = &pdev->dev;
-	struct tc9564_clocks *clk_data;
 	struct device_node *parent_np;
+	struct tc9564_clock *clocks;
 	struct regmap *regmap;
 	size_t clk_data_size;
 	int ret;
@@ -159,6 +147,10 @@ static int tc9564_clk_probe(struct platform_device *pdev)
 		return dev_err_probe(dev, PTR_ERR(regmap),
 				     "failed to get config regmap\n");
 	dev_set_drvdata(dev, regmap);
+
+	clocks = devm_kzalloc_objs(dev, *clocks, TC9564_CLOCK_COUNT);
+	if (!clocks)
+		return -ENOMEM;
 
 	clk_data_size = struct_size(clk_data, hws, TC9564_CLOCK_COUNT);
 	clk_data = devm_kzalloc(dev, clk_data_size, GFP_KERNEL);
@@ -180,7 +172,8 @@ static int tc9564_clk_probe(struct platform_device *pdev)
 		init.flags = clock_init->critical ? CLK_IS_CRITICAL : 0;
 		init.ops = &tc9564_clk_ops;
 
-		clock = &clk_data->hws[i];
+		clock = &clocks[i];
+		clk_data->hws[i] = &clock->hw;
 		clock->hw.init = &init;
 		clock->offset = clock_init->offset;
 		clock->mask = clock_init->mask;
@@ -192,7 +185,7 @@ static int tc9564_clk_probe(struct platform_device *pdev)
 					     init.name);
 	}
 
-	ret = devm_of_clk_add_hw_provider(dev, tc9564_clk_hw_get, clk_data);
+	ret = devm_of_clk_add_hw_provider(dev, of_clk_hw_onecell_get, clk_data);
 	if (ret)
 		return dev_err_probe(dev, ret,
 				     "failed to add clock provider\n");
