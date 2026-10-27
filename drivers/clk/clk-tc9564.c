@@ -28,7 +28,6 @@ struct tc9564_clock_init {
 
 struct tc9564_clock {
 	struct clk_hw hw;
-	u32 which;
 	u32 offset;		/* CLK_CTRL0_OFFSET or CLK_CTRL1_OFFSET */
 	u32 mask;		/* Zero means undefined clock */
 };
@@ -168,7 +167,7 @@ static int tc9564_clk_probe(struct platform_device *pdev)
 
 	clocks->clock_count = TC9564_CLOCK_COUNT;
 
-	for (u32 i = 0; i < TC9564_CLOCK_COUNT; i++) {
+	for (u32 i = 0; i < clocks->clock_count; i++) {
 		const struct tc9564_clock_init *clock_init;
 		struct clk_init_data init = { };
 		struct tc9564_clock *clock;
@@ -183,7 +182,6 @@ static int tc9564_clk_probe(struct platform_device *pdev)
 
 		clock = &clocks->clocks[i];
 		clock->hw.init = &init;
-		clock->which = i;
 		clock->offset = clock_init->offset;
 		clock->mask = clock_init->mask;
 
