@@ -33,8 +33,8 @@ struct tc9564_clock {
 };
 
 struct tc9564_clocks {
-	size_t clock_count;
-	struct tc9564_clock clocks[] __counted_by(clock_count);
+	size_t num;
+	struct tc9564_clock hws[] __counted_by(num);
 };
 
 #define TC9564_CLOCK_INIT0(_name, _bit)				\
@@ -136,18 +136,18 @@ static const struct clk_ops tc9564_clk_ops = {
 static struct clk_hw *tc9564_clk_hw_get(struct of_phandle_args *clkspec,
 					void *data)
 {
-	struct tc9564_clocks *clocks = data;
+	struct tc9564_clocks *clk_data = data;
 
-	return &clocks->clocks[clkspec->args[0]].hw;
+	return &clk_data->hws[clkspec->args[0]].hw;
 }
 
 static int tc9564_clk_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
+	struct tc9564_clocks *clk_data;
 	struct device_node *parent_np;
-	struct tc9564_clocks *clocks;
 	struct regmap *regmap;
-	size_t clocks_size;
+	size_t clk_data_size;
 	int ret;
 
 	parent_np = dev_of_node(dev->parent);
@@ -160,14 +160,14 @@ static int tc9564_clk_probe(struct platform_device *pdev)
 				     "failed to get config regmap\n");
 	dev_set_drvdata(dev, regmap);
 
-	clocks_size = struct_size(clocks, clocks, TC9564_CLOCK_COUNT);
-	clocks = devm_kzalloc(dev, clocks_size, GFP_KERNEL);
-	if (!clocks)
+	clk_data_size = struct_size(clk_data, hws, TC9564_CLOCK_COUNT);
+	clk_data = devm_kzalloc(dev, clk_data_size, GFP_KERNEL);
+	if (!clk_data)
 		return -ENOMEM;
 
-	clocks->clock_count = TC9564_CLOCK_COUNT;
+	clk_data->num = TC9564_CLOCK_COUNT;
 
-	for (u32 i = 0; i < clocks->clock_count; i++) {
+	for (u32 i = 0; i < clk_data->num; i++) {
 		const struct tc9564_clock_init *clock_init;
 		struct clk_init_data init = { };
 		struct tc9564_clock *clock;
@@ -180,7 +180,7 @@ static int tc9564_clk_probe(struct platform_device *pdev)
 		init.flags = clock_init->critical ? CLK_IS_CRITICAL : 0;
 		init.ops = &tc9564_clk_ops;
 
-		clock = &clocks->clocks[i];
+		clock = &clk_data->hws[i];
 		clock->hw.init = &init;
 		clock->offset = clock_init->offset;
 		clock->mask = clock_init->mask;
@@ -192,7 +192,7 @@ static int tc9564_clk_probe(struct platform_device *pdev)
 					     init.name);
 	}
 
-	ret = devm_of_clk_add_hw_provider(dev, tc9564_clk_hw_get, clocks);
+	ret = devm_of_clk_add_hw_provider(dev, tc9564_clk_hw_get, clk_data);
 	if (ret)
 		return dev_err_probe(dev, ret,
 				     "failed to add clock provider\n");
