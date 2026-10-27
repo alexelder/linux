@@ -134,7 +134,6 @@ static int tc9564_clk_probe(struct platform_device *pdev)
 	struct device_node *parent_np;
 	struct tc9564_clock *clocks;
 	struct regmap *regmap;
-	size_t clk_data_size;
 	int ret;
 
 	parent_np = dev_of_node(dev->parent);
@@ -151,8 +150,7 @@ static int tc9564_clk_probe(struct platform_device *pdev)
 	if (!clocks)
 		return -ENOMEM;
 
-	clk_data_size = struct_size(clk_data, hws, TC9564_CLOCK_COUNT);
-	clk_data = devm_kzalloc(dev, clk_data_size, GFP_KERNEL);
+	clk_data = devm_kzalloc_flex(dev, *clk_data, hws, TC9564_CLOCK_COUNT);
 	if (!clk_data)
 		return -ENOMEM;
 
@@ -160,17 +158,17 @@ static int tc9564_clk_probe(struct platform_device *pdev)
 
 	for (u32 i = 0; i < clk_data->num; i++) {
 		const struct tc9564_clock_init *clock_init;
+		struct tc9564_clock *clock = &clocks[i];
 		struct clk_init_data init = { };
-		struct tc9564_clock *clock;
+
+		clk_data->hws[i] = &clock->hw;
 
 		clock_init = &tc9564_clock_init[i];
+		clock->init = clock_init;
+
 		init.name = clock_init->name;
 		init.flags = clock_init->critical ? CLK_IS_CRITICAL : 0;
 		init.ops = &tc9564_clk_ops;
-
-		clock = &clocks[i];
-		clk_data->hws[i] = &clock->hw;
-		clock->init = clock_init;
 		clock->hw.init = &init;
 
 		ret = devm_clk_hw_register(dev, &clock->hw);
