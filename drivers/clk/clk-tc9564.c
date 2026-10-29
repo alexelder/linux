@@ -27,12 +27,12 @@
  * the same rate its parent.
  */
 enum {
-	FIXED_625,
-	FIXED_312_5,
-	FIXED_250,
-	FIXED_125,
-	FIXED_62_5,
-	FIXED_50,
+	CLOCK_FIXED_50M,
+	CLOCK_FIXED_62_5M,
+	CLOCK_FIXED_125M,
+	CLOCK_FIXED_250M,
+	CLOCK_FIXED_312_5M,
+	CLOCK_FIXED_625M,
 };
 
 /*
@@ -52,29 +52,29 @@ struct fixed_init {
 };
 
 static const struct fixed_init fixed_init[] = {
-	[FIXED_625]	= {
-		.suffix	= "625_mhz",
-		.div	= 2,
+	[CLOCK_FIXED_50M] = {
+		.suffix	= "50_mhz",
+		.div	= 25,
 	},
-	[FIXED_312_5]	= {
-		.suffix	= "312_5_mhz",
-		.div	= 4,
-	},
-	[FIXED_250]	= {
-		.suffix	= "250_mhz",
-		.div	= 5,
-	},
-	[FIXED_125]	= {
-		.suffix	= "125_mhz",
-		.div	= 10,
-	},
-	[FIXED_62_5]	= {
+	[CLOCK_FIXED_62_5M] = {
 		.suffix	= "62_5_mhz",
 		.div	= 20,
 	},
-	[FIXED_50]	= {
-		.suffix	= "50_mhz",
-		.div	= 25,
+	[CLOCK_FIXED_125M] = {
+		.suffix	= "125_mhz",
+		.div	= 10,
+	},
+	[CLOCK_FIXED_250M] = {
+		.suffix	= "250_mhz",
+		.div	= 5,
+	},
+	[CLOCK_FIXED_312_5M] = {
+		.suffix	= "312_5_mhz",
+		.div	= 4,
+	},
+	[CLOCK_FIXED_625M] = {
+		.suffix	= "625_mhz",
+		.div	= 2,
 	},
 };
 #define FIXED_COUNT	ARRAY_SIZE(fixed_init)
