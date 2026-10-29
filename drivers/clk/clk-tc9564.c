@@ -245,30 +245,11 @@ static const struct clk_ops tc9564_clk_ops = {
 	.is_enabled = tc9564_clk_is_enabled,
 };
 
-static int tc9564_clk_probe(struct platform_device *pdev)
+static int tc9564_gate_clock_init(struct device *dev)
 {
 	struct clk_hw_onecell_data *clk_data;
-	struct device *dev = &pdev->dev;
-	struct device_node *parent_np;
 	struct tc9564_clock *clocks;
-	struct regmap *regmap;
 	int ret;
-
-	parent_np = dev_of_node(dev->parent);
-	if (!parent_np)
-		return dev_err_probe(dev, -EINVAL, "no devicetree node\n");
-
-	/* Note: MMIO regmap (no error checking needed when used) */
-	regmap = device_node_to_regmap(parent_np);
-	if (IS_ERR(regmap))
-		return dev_err_probe(dev, PTR_ERR(regmap),
-				     "failed to get config regmap\n");
-	dev_set_drvdata(dev, regmap);
-
-	ret = tc9564_fixed_clock_init(dev);
-	if (ret)
-		return dev_err_probe(dev, ret,
-				     "failed to initialize fixed clocks\n");
 
 	clocks = devm_kzalloc_objs(dev, *clocks, TC9564_CLOCK_COUNT);
 	if (!clocks)
@@ -299,16 +280,46 @@ static int tc9564_clk_probe(struct platform_device *pdev)
 		clock->hw.init = &init;
 
 		ret = devm_clk_hw_register(dev, &clock->hw);
-		if (ret)
-			return dev_err_probe(dev, ret,
-					     "failed to register clock %s\n",
-					     init.name);
+		if (ret) {
+			dev_err(dev, "failed to register clock %s\n", name);
+			return ret;
+		}
 	}
 
 	ret = devm_of_clk_add_hw_provider(dev, of_clk_hw_onecell_get, clk_data);
 	if (ret)
+		dev_err(dev, "failed to add gate clock provider\n");
+
+	return ret;
+}
+
+static int tc9564_clk_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct device_node *parent_np;
+	struct regmap *regmap;
+	int ret;
+
+	parent_np = dev_of_node(dev->parent);
+	if (!parent_np)
+		return dev_err_probe(dev, -EINVAL, "no devicetree node\n");
+
+	/* Note: MMIO regmap (no error checking needed when used) */
+	regmap = device_node_to_regmap(parent_np);
+	if (IS_ERR(regmap))
+		return dev_err_probe(dev, PTR_ERR(regmap),
+				     "failed to get config regmap\n");
+	dev_set_drvdata(dev, regmap);
+
+	ret = tc9564_fixed_clock_init(dev);
+	if (ret)
 		return dev_err_probe(dev, ret,
-				     "failed to add clock provider\n");
+				     "failed to initialize fixed clocks\n");
+
+	ret = tc9564_gate_clock_init(dev);
+	if (ret)
+		return dev_err_probe(dev, ret,
+				     "failed to initialize gate clocks\n");
 
 	return 0;
 }
