@@ -909,33 +909,6 @@
 			clock-output-names = "tc9564_xo_board";
 		};
 
-		tc9564_pll: clock-1250000000 {
-			compatible = "fixed-factor-clock";
-			clocks = <&tc9564_xo_board>;
-			#clock-cells = <0>;
-			clock-mult = <50>;
-			clock-div = <1>;
-			clock-output-names = "tc9564_pll";
-		};
-
-		tc9564_ref_125mhz_clk: clock-125000000 {
-			compatible = "fixed-factor-clock";
-			clocks = <&tc9564_pll>;
-			#clock-cells = <0>;
-			clock-mult = <1>;
-			clock-div = <10>;
-			clock-output-names = "tc9564_125mhz_clk";
-		};
-
-		tc9564_ref_250mhz_clk: clock-250000000 {
-			compatible = "fixed-factor-clock";
-			clocks = <&tc9564_pll>;
-			#clock-cells = <0>;
-			clock-mult = <1>;
-			clock-div = <5>;
-			clock-output-names = "tc9564_250mhz_clk";
-		};
-
 		pcie1_switch0_dsp1: pcie@1,0 {
 			reg = <0x20800 0x0 0x0 0x0 0x0>;
 			#address-cells = <3>;
@@ -1062,8 +1035,8 @@
 						status = "disabled";
 						toshiba,config-syscon = <&tc9564_config_syscon0 0x1070>;
 
-						clocks = <&tc9564_ref_125mhz_clk>,
-							 <&tc9564_ref_250mhz_clk>,
+						clocks = <&tc9564_config_syscon0 CLOCK_125M>,
+							 <&tc9564_config_syscon0 CLOCK_250M>,
 							 <&tc9564_config_syscon0 CLOCK_MAC0_TX>,
 							 <&tc9564_config_syscon0 CLOCK_MAC0_RX>,
 							 <&tc9564_config_syscon0 CLOCK_MAC0_ALL>;
@@ -1209,8 +1182,8 @@
 						reg = <0x48000 0x8000>;
 						toshiba,config-syscon = <&tc9564_config_syscon0 0x1074>;
 
-						clocks = <&tc9564_ref_125mhz_clk>,
-							 <&tc9564_ref_250mhz_clk>,
+						clocks = <&tc9564_config_syscon0 CLOCK_125M>,
+							 <&tc9564_config_syscon0 CLOCK_250M>,
 							 <&tc9564_config_syscon0 CLOCK_MAC1_TX>,
 							 <&tc9564_config_syscon0 CLOCK_MAC1_RX>,
 							 <&tc9564_config_syscon0 CLOCK_MAC1_ALL>,
