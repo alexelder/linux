@@ -21,21 +21,6 @@
 #define CLK_CTRL1_OFFSET	0x100c	/* MAC1 gate clocks */
 
 /*
- * A 25 MHz oscillator supplies the TC9564 chip, and it drives an internal
- * PLL running at 1250 MHz.  A set of fixed rate clocks are derived from
- * the PLL.  All remaining clocks are simple gate clocks, each running at
- * the same rate its parent.
- */
-enum {
-	CLOCK_FIXED_50M,
-	CLOCK_FIXED_62_5M,
-	CLOCK_FIXED_125M,
-	CLOCK_FIXED_250M,
-	CLOCK_FIXED_312_5M,
-	CLOCK_FIXED_625M,
-};
-
-/*
  * All clocks are named with a prefix "tc9564" followed by a single
  * character ('a', 'b', etc.) that differs for each chip/device number.
  * Each clock's "suffix" defines the unique portion of the clock name.
@@ -66,7 +51,7 @@ struct gate_clock {
 };
 
 #define FIXED_INIT(_suffix, _div)			\
-	[CLOCK_FIXED_##_suffix] = {			\
+	[CLOCK_##_suffix] = {				\
 		.suffix = #_suffix,			\
 		.fixed = true,				\
 		.div = (_div),				\
