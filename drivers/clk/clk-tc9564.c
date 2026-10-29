@@ -16,11 +16,11 @@
 
 #include <dt-bindings/clock/toshiba,tc9564.h>
 
-#define CLK_CTRL0_OFFSET	0x1004
-#define CLK_CTRL1_OFFSET	0x100c
+/* Two registers control whether gate clocks are enabled */
+#define CLK_CTRL0_OFFSET	0x1004	/* Common and MAC0 gate clocks */
+#define CLK_CTRL1_OFFSET	0x100c	/* MAC1 gate clocks */
 
 /*
- *
  * A 25 MHz oscillator supplies the TC9564 chip, and it drives an internal
  * PLL running at 1250 MHz.  A set of fixed rate clocks are derived from
  * the PLL.  All remaining clocks are simple gate clocks, each running at
@@ -146,7 +146,7 @@ static int tc9564_fixed_clock_init(struct device *dev)
 struct gate_init {
 	const char suffix[SUFFIX_SIZE];
 	bool critical;
-	u16 offset;		/* CLK_CTRL0_OFFSET or CLK_CTRL1_OFFSET */
+	bool reg0;		/* Controlled by CLK_CTRL0_OFFSET? */
 	u32 mask;
 };
 
@@ -155,17 +155,17 @@ struct gate_clock {
 	const struct gate_init *init;
 };
 
-#define TC9564_CLOCK_INIT0(_suffix, _bit)				\
-	__TC9564_CLOCK_INIT(_suffix, 0, _bit, false)
+#define TC9564_CLOCK_INIT0(_suffix, _bit)			\
+	__TC9564_CLOCK_INIT(_suffix, true, _bit, false)
 #define TC9564_CLOCK_INIT0_CRITICAL(_suffix, _bit)		\
-	__TC9564_CLOCK_INIT(_suffix, 0, _bit, true)
-#define TC9564_CLOCK_INIT1(_suffix, _bit)				\
-	__TC9564_CLOCK_INIT(_suffix, 1, _bit, false)
+	__TC9564_CLOCK_INIT(_suffix, true, _bit, true)
+#define TC9564_CLOCK_INIT1(_suffix, _bit)			\
+	__TC9564_CLOCK_INIT(_suffix, false, _bit, false)
 
-#define __TC9564_CLOCK_INIT(_suffix, _reg, _bit, _critical)	\
+#define __TC9564_CLOCK_INIT(_suffix, _reg0, _bit, _critical)	\
 	[CLOCK_##_suffix] = {					\
 		.suffix		= #_suffix,			\
-		.offset		= CLK_CTRL ## _reg ## _OFFSET,	\
+		.reg0		= _reg0,			\
 		.mask		= BIT(_bit),			\
 		.critical	= _critical,			\
 	}
@@ -210,8 +210,10 @@ static void tc9564_clk_manage(struct clk_hw *hw, bool enable)
 {
 	struct regmap *regmap = dev_get_drvdata(clk_hw_get_dev(hw));
 	const struct gate_clock *clock = hw_to_gate_clock(hw);
-	u32 offset = clock->init->offset;
 	u32 mask = clock->init->mask;
+	u32 offset;
+
+	offset = clock->init->reg0 ? CLK_CTRL0_OFFSET : CLK_CTRL1_OFFSET;
 
 	regmap_update_bits(regmap, offset, mask, enable ? mask : 0);
 }
@@ -232,9 +234,12 @@ static int tc9564_clk_is_enabled(struct clk_hw *hw)
 {
 	struct regmap *regmap = dev_get_drvdata(clk_hw_get_dev(hw));
 	const struct gate_clock *clock = hw_to_gate_clock(hw);
+	u32 offset;
 	u32 val;
 
-	regmap_read(regmap, clock->init->offset, &val);
+	offset = clock->init->reg0 ? CLK_CTRL0_OFFSET : CLK_CTRL1_OFFSET;
+
+	regmap_read(regmap, offset, &val);
 
 	return val & clock->init->mask ? 1 : 0;
 }
