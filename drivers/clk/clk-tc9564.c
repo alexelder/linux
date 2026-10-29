@@ -259,8 +259,6 @@ static int tc9564_gate_clock_init(struct device *dev)
 	if (!clk_data)
 		return -ENOMEM;
 
-	clk_data->num = GATE_COUNT;
-
 	for (u32 i = 0; i < clk_data->num; i++) {
 		struct gate_clock *clock = &clocks[i];
 		struct clk_init_data clk_init = { };
