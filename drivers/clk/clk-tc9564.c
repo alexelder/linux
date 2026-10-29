@@ -245,6 +245,32 @@ static const struct clk_ops tc9564_clk_ops = {
 	.is_enabled = tc9564_clk_is_enabled,
 };
 
+static struct clk_hw *tc9564_gate_register(struct device *dev,
+					   struct gate_clock *clock,
+					   const struct gate_init *init)
+{
+	struct clk_init_data clk_init = { };
+	char name[NAME_SIZE];
+	int ret;
+
+	FORMAT_NAME(name, dev->id, init->suffix);
+
+	clk_init.name = name;
+	clk_init.flags = init->critical ? CLK_IS_CRITICAL : 0;
+	clk_init.ops = &tc9564_clk_ops;
+
+	clock->hw.init = &clk_init;
+	clock->init = init;
+
+	ret = devm_clk_hw_register(dev, &clock->hw);
+	if (ret) {
+		dev_err(dev, "failed to register gate clock %s\n", name);
+		return ERR_PTR(ret);
+	}
+
+	return &clock->hw;
+}
+
 static int tc9564_gate_clock_init(struct device *dev)
 {
 	struct clk_hw_onecell_data *clk_data;
@@ -260,28 +286,15 @@ static int tc9564_gate_clock_init(struct device *dev)
 		return -ENOMEM;
 
 	for (u32 i = 0; i < clk_data->num; i++) {
+		const struct gate_init *init = &gate_init[i];
 		struct gate_clock *clock = &clocks[i];
-		struct clk_init_data clk_init = { };
-		const struct gate_init *init;
-		char name[NAME_SIZE];
+		struct clk_hw *hw;
 
-		clk_data->hws[i] = &clock->hw;
+		hw = tc9564_gate_register(dev, clock, init);
+		if (IS_ERR(hw))
+			return PTR_ERR(hw);
 
-		init = &gate_init[i];
-		clock->init = init;
-
-		FORMAT_NAME(name, dev->id, init->suffix);
-
-		clk_init.name = name;
-		clk_init.flags = init->critical ? CLK_IS_CRITICAL : 0;
-		clk_init.ops = &tc9564_clk_ops;
-		clock->hw.init = &clk_init;
-
-		ret = devm_clk_hw_register(dev, &clock->hw);
-		if (ret) {
-			dev_err(dev, "failed to register clock %s\n", name);
-			return ret;
-		}
+		clk_data->hws[i] = hw;
 	}
 
 	ret = devm_of_clk_add_hw_provider(dev, of_clk_hw_onecell_get, clk_data);
