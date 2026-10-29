@@ -96,15 +96,15 @@ static struct clk_hw *tc9564_pll_register(struct device *dev)
 
 static struct clk_hw *tc9564_fixed_register(struct device *dev,
 					    struct clk_hw *pll_hw,
-					    const struct fixed_init *fixed_init)
+					    const struct fixed_init *init)
 {
 	char name[NAME_SIZE];
 	struct clk_hw *hw;
 
-	FORMAT_NAME(name, dev->id, fixed_init->suffix);
+	FORMAT_NAME(name, dev->id, init->suffix);
 
 	hw = devm_clk_hw_register_fixed_factor_parent_hw(dev, name, pll_hw, 0,
-							 1, fixed_init->div);
+							 1, init->div);
 	if (IS_ERR(hw))
 		dev_err(dev, "failed to register %s\n", name);
 
@@ -126,7 +126,7 @@ static int tc9564_fixed_clock_init(struct device *dev)
 	if (!clk_data)
 		return -ENOMEM;
 
-	for (u32 i = 0; i < FIXED_COUNT; i++) {
+	for (u32 i = 0; i < clk_data->num; i++) {
 		struct clk_hw *hw;
 
 		hw = tc9564_fixed_register(dev, pll_hw, &fixed_init[i]);
