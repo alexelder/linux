@@ -50,10 +50,9 @@ struct gate_clock {
 	const struct clock_init *init;
 };
 
-static struct clk_hw *pll_hw;
-
 struct tc9564_clock {
 	struct regmap *regmap;
+	struct clk_hw *pll_hw;
 };
 
 #define FIXED_INIT(_suffix, _div)			\
@@ -89,9 +88,10 @@ static struct clk_hw *tc9564_pll_register(struct device *dev)
 }
 
 static struct clk_hw *tc9564_fixed_register(struct device *dev,
-					    struct clk_hw *pll_hw,
 					    const struct clock_init *init)
 {
+	struct tc9564_clock *tc9564_clock = dev_get_drvdata(dev);
+	struct clk_hw *pll_hw = tc9564_clock->pll_hw;
 	char name[NAME_SIZE];
 	struct clk_hw *hw;
 
@@ -252,7 +252,7 @@ static int tc9564_clock_init(struct device *dev,
 			continue;
 
 		if (init->fixed)
-			hw = tc9564_fixed_register(dev, pll_hw, init);
+			hw = tc9564_fixed_register(dev, init);
 		else
 			hw = tc9564_gate_register(dev, init);
 		if (IS_ERR(hw))
@@ -271,12 +271,6 @@ static int tc9564_clock_init(struct device *dev,
 static int tc9564_fixed_clock_init(struct device *dev)
 {
 	struct clk_hw_onecell_data *clk_data;
-	int ret;
-
-	/* The PLL is the parent of all the fixed rate clocks */
-	pll_hw = tc9564_pll_register(dev);
-	if (IS_ERR(pll_hw))
-		return PTR_ERR(pll_hw);
 
 	clk_data = devm_kzalloc_flex(dev, *clk_data, hws, FIXED_COUNT);
 	if (!clk_data)
@@ -302,6 +296,7 @@ static int tc9564_clk_probe(struct platform_device *pdev)
 	struct device *dev = &pdev->dev;
 	struct device_node *parent_np;
 	struct regmap *regmap;
+	struct clk_hw *pll_hw;
 	int ret;
 
 	parent_np = dev_of_node(dev->parent);
@@ -318,6 +313,13 @@ static int tc9564_clk_probe(struct platform_device *pdev)
 		return dev_err_probe(dev, PTR_ERR(regmap),
 				     "failed to get config regmap\n");
 	tc9564_clock->regmap = regmap;
+
+	/* The PLL is the parent of all the fixed rate clocks */
+	pll_hw = tc9564_pll_register(dev);
+	if (IS_ERR(pll_hw))
+		return PTR_ERR(pll_hw);
+
+	tc9564_clock->pll_hw = pll_hw;
 
 	dev_set_drvdata(dev, tc9564_clock);
 
