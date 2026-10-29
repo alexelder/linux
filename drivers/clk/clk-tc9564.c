@@ -62,49 +62,6 @@ struct tc9564_clock {
 		.div = (_div),				\
 	}
 
-static const struct clock_init fixed_init[] = {
-	FIXED_INIT(50M, 25),
-	FIXED_INIT(62_5M, 20),
-	FIXED_INIT(125M, 10),
-	FIXED_INIT(250M, 5),
-	FIXED_INIT(312_5M, 4),
-	FIXED_INIT(625M, 2),
-};
-#define FIXED_COUNT	ARRAY_SIZE(fixed_init)
-
-/* Input oscillator runs at 25 MHz; PLL runs at 1250 MHz */
-static struct clk_hw *tc9564_pll_register(struct device *dev)
-{
-	char name[NAME_SIZE];
-	struct clk_hw *hw;
-
-	FORMAT_NAME(name, dev->id, "pll");
-
-	hw = devm_clk_hw_register_fixed_factor_index(dev, name, 0, 0, 500, 1);
-	if (IS_ERR(hw))
-		dev_err(dev, "failed to register PLL\n");
-
-	return hw;
-}
-
-static struct clk_hw *tc9564_fixed_register(struct device *dev,
-					    const struct clock_init *init)
-{
-	struct tc9564_clock *tc9564_clock = dev_get_drvdata(dev);
-	struct clk_hw *pll_hw = tc9564_clock->pll_hw;
-	char name[NAME_SIZE];
-	struct clk_hw *hw;
-
-	FORMAT_NAME(name, dev->id, init->suffix);
-
-	hw = devm_clk_hw_register_fixed_factor_parent_hw(dev, name, pll_hw, 0,
-							 1, init->div);
-	if (IS_ERR(hw))
-		dev_err(dev, "failed to register %s\n", name);
-
-	return hw;
-}
-
 #define GATE_INIT0(_suffix, _bit)	__GATE_INIT(_suffix, true, _bit, false)
 #define GATE_INIT0_CRIT(_suffix, _bit)	__GATE_INIT(_suffix, true, _bit, true)
 #define GATE_INIT1(_suffix, _bit)	__GATE_INIT(_suffix, false, _bit, false)
@@ -117,6 +74,16 @@ static struct clk_hw *tc9564_fixed_register(struct device *dev,
 		.mask = BIT(_bit),			\
 		.critical = _critical,			\
 	}
+
+static const struct clock_init fixed_init[] = {
+	FIXED_INIT(50M, 25),
+	FIXED_INIT(62_5M, 20),
+	FIXED_INIT(125M, 10),
+	FIXED_INIT(250M, 5),
+	FIXED_INIT(312_5M, 4),
+	FIXED_INIT(625M, 2),
+};
+#define FIXED_COUNT	ARRAY_SIZE(fixed_init)
 
 /*
  * The PCIe and I2C clocks are controllable, but we depend on PCIe
@@ -207,6 +174,39 @@ static const struct clk_ops tc9564_clk_ops = {
 	.disable = tc9564_clk_disable,
 	.is_enabled = tc9564_clk_is_enabled,
 };
+
+/* Input oscillator runs at 25 MHz; PLL runs at 1250 MHz */
+static struct clk_hw *tc9564_pll_register(struct device *dev)
+{
+	char name[NAME_SIZE];
+	struct clk_hw *hw;
+
+	FORMAT_NAME(name, dev->id, "pll");
+
+	hw = devm_clk_hw_register_fixed_factor_index(dev, name, 0, 0, 500, 1);
+	if (IS_ERR(hw))
+		dev_err(dev, "failed to register PLL\n");
+
+	return hw;
+}
+
+static struct clk_hw *tc9564_fixed_register(struct device *dev,
+					    const struct clock_init *init)
+{
+	struct tc9564_clock *tc9564_clock = dev_get_drvdata(dev);
+	struct clk_hw *pll_hw = tc9564_clock->pll_hw;
+	char name[NAME_SIZE];
+	struct clk_hw *hw;
+
+	FORMAT_NAME(name, dev->id, init->suffix);
+
+	hw = devm_clk_hw_register_fixed_factor_parent_hw(dev, name, pll_hw, 0,
+							 1, init->div);
+	if (IS_ERR(hw))
+		dev_err(dev, "failed to register %s\n", name);
+
+	return hw;
+}
 
 static struct clk_hw *tc9564_gate_register(struct device *dev,
 					   const struct clock_init *init)
