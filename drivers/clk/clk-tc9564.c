@@ -143,16 +143,16 @@ static int tc9564_fixed_clock_init(struct device *dev)
 	return ret;
 }
 
-struct tc9564_clock_init {
+struct gate_init {
 	const char suffix[SUFFIX_SIZE];
 	bool critical;
 	u16 offset;		/* CLK_CTRL0_OFFSET or CLK_CTRL1_OFFSET */
 	u32 mask;
 };
 
-struct tc9564_clock {
+struct gate_clock {
 	struct clk_hw hw;
-	const struct tc9564_clock_init *init;
+	const struct gate_init *init;
 };
 
 #define TC9564_CLOCK_INIT0(_suffix, _bit)				\
@@ -174,7 +174,7 @@ struct tc9564_clock {
  * The PCIe and I2C clocks are controllable, but we depend on PCIe
  * and that relies on I2C, so we don't allow them to be disabled.
  */
-static const struct tc9564_clock_init tc9564_clock_init[] = {
+static const struct gate_init gate_init[] = {
 	TC9564_CLOCK_INIT0(MCU, 0),
 	TC9564_CLOCK_INIT0(INTC, 4),
 	TC9564_CLOCK_INIT0_CRITICAL(PCIE, 9),
@@ -199,17 +199,17 @@ static const struct tc9564_clock_init tc9564_clock_init[] = {
 	TC9564_CLOCK_INIT1(MAC1_312_5M, 30),
 	TC9564_CLOCK_INIT1(MAC1_ALL, 31),
 };
-#define TC9564_CLOCK_COUNT	ARRAY_SIZE(tc9564_clock_init)
+#define GATE_COUNT	ARRAY_SIZE(gate_init)
 
-static const struct tc9564_clock *hw_to_tc9564_clock(struct clk_hw *hw)
+static const struct gate_clock *hw_to_gate_clock(struct clk_hw *hw)
 {
-	return container_of_const(hw, struct tc9564_clock, hw);
+	return container_of_const(hw, struct gate_clock, hw);
 }
 
 static void tc9564_clk_manage(struct clk_hw *hw, bool enable)
 {
 	struct regmap *regmap = dev_get_drvdata(clk_hw_get_dev(hw));
-	const struct tc9564_clock *clock = hw_to_tc9564_clock(hw);
+	const struct gate_clock *clock = hw_to_gate_clock(hw);
 	u32 offset = clock->init->offset;
 	u32 mask = clock->init->mask;
 
@@ -231,7 +231,7 @@ static void tc9564_clk_disable(struct clk_hw *hw)
 static int tc9564_clk_is_enabled(struct clk_hw *hw)
 {
 	struct regmap *regmap = dev_get_drvdata(clk_hw_get_dev(hw));
-	const struct tc9564_clock *clock = hw_to_tc9564_clock(hw);
+	const struct gate_clock *clock = hw_to_gate_clock(hw);
 	u32 val;
 
 	regmap_read(regmap, clock->init->offset, &val);
@@ -248,36 +248,36 @@ static const struct clk_ops tc9564_clk_ops = {
 static int tc9564_gate_clock_init(struct device *dev)
 {
 	struct clk_hw_onecell_data *clk_data;
-	struct tc9564_clock *clocks;
+	struct gate_clock *clocks;
 	int ret;
 
-	clocks = devm_kzalloc_objs(dev, *clocks, TC9564_CLOCK_COUNT);
+	clocks = devm_kzalloc_objs(dev, *clocks, GATE_COUNT);
 	if (!clocks)
 		return -ENOMEM;
 
-	clk_data = devm_kzalloc_flex(dev, *clk_data, hws, TC9564_CLOCK_COUNT);
+	clk_data = devm_kzalloc_flex(dev, *clk_data, hws, GATE_COUNT);
 	if (!clk_data)
 		return -ENOMEM;
 
-	clk_data->num = TC9564_CLOCK_COUNT;
+	clk_data->num = GATE_COUNT;
 
 	for (u32 i = 0; i < clk_data->num; i++) {
-		const struct tc9564_clock_init *clock_init;
-		struct tc9564_clock *clock = &clocks[i];
-		struct clk_init_data init = { };
+		struct gate_clock *clock = &clocks[i];
+		struct clk_init_data clk_init = { };
+		const struct gate_init *init;
 		char name[NAME_SIZE];
 
 		clk_data->hws[i] = &clock->hw;
 
-		clock_init = &tc9564_clock_init[i];
-		clock->init = clock_init;
+		init = &gate_init[i];
+		clock->init = init;
 
-		FORMAT_NAME(name, dev->id, clock_init->suffix);
+		FORMAT_NAME(name, dev->id, init->suffix);
 
-		init.name = name;
-		init.flags = clock_init->critical ? CLK_IS_CRITICAL : 0;
-		init.ops = &tc9564_clk_ops;
-		clock->hw.init = &init;
+		clk_init.name = name;
+		clk_init.flags = init->critical ? CLK_IS_CRITICAL : 0;
+		clk_init.ops = &tc9564_clk_ops;
+		clock->hw.init = &clk_init;
 
 		ret = devm_clk_hw_register(dev, &clock->hw);
 		if (ret) {
