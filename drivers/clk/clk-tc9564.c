@@ -53,6 +53,7 @@ struct gate_clock {
 struct tc9564_clock {
 	struct regmap *regmap;
 	struct clk_hw *pll_hw;
+	struct clk_hw_onecell_data *clk_data;
 };
 
 #define FIXED_INIT(_suffix, _div)			\
@@ -75,21 +76,14 @@ struct tc9564_clock {
 		.critical = _critical,			\
 	}
 
-static const struct clock_init fixed_init[] = {
+static const struct clock_init clock_init[] = {
 	FIXED_INIT(50M, 25),
 	FIXED_INIT(62_5M, 20),
 	FIXED_INIT(125M, 10),
 	FIXED_INIT(250M, 5),
 	FIXED_INIT(312_5M, 4),
 	FIXED_INIT(625M, 2),
-};
-#define FIXED_COUNT	ARRAY_SIZE(fixed_init)
 
-/*
- * The PCIe and I2C clocks are controllable, but we depend on PCIe
- * and that relies on I2C, so we don't allow them to be disabled.
- */
-static const struct clock_init gate_init[] = {
 	GATE_INIT0(MCU, 0),
 	GATE_INIT0(INTC, 4),
 	GATE_INIT0_CRIT(PCIE, 9),
@@ -114,7 +108,7 @@ static const struct clock_init gate_init[] = {
 	GATE_INIT1(MAC1_312_5M, 30),
 	GATE_INIT1(MAC1_ALL, 31),
 };
-#define GATE_COUNT	ARRAY_SIZE(gate_init)
+#define CLOCK_COUNT	ARRAY_SIZE(clock_init)
 
 static const struct gate_clock *hw_to_gate_clock(struct clk_hw *hw)
 {
@@ -238,11 +232,13 @@ static struct clk_hw *tc9564_gate_register(struct device *dev,
 	return &clock->hw;
 }
 
-static int tc9564_clock_init(struct device *dev,
-			     const struct clock_init clock_init[],
-			     struct clk_hw_onecell_data *clk_data)
+static int tc9564_clock_init(struct device *dev)
 {
+	struct tc9564_clock *tc9564_clock = dev_get_drvdata(dev);
+	struct clk_hw_onecell_data *clk_data;
 	int ret;
+
+	clk_data = tc9564_clock->clk_data;
 
 	for (u32 i = 0; i < clk_data->num; i++) {
 		const struct clock_init *init = &clock_init[i];
@@ -268,30 +264,9 @@ static int tc9564_clock_init(struct device *dev,
 	return ret;
 }
 
-static int tc9564_fixed_clock_init(struct device *dev)
-{
-	struct clk_hw_onecell_data *clk_data;
-
-	clk_data = devm_kzalloc_flex(dev, *clk_data, hws, FIXED_COUNT);
-	if (!clk_data)
-		return -ENOMEM;
-
-	return tc9564_clock_init(dev, fixed_init, clk_data);
-}
-
-static int tc9564_gate_clock_init(struct device *dev)
-{
-	struct clk_hw_onecell_data *clk_data;
-
-	clk_data = devm_kzalloc_flex(dev, *clk_data, hws, GATE_COUNT);
-	if (!clk_data)
-		return -ENOMEM;
-
-	return tc9564_clock_init(dev, gate_init, clk_data);
-}
-
 static int tc9564_clk_probe(struct platform_device *pdev)
 {
+	struct clk_hw_onecell_data *clk_data;
 	struct tc9564_clock *tc9564_clock;
 	struct device *dev = &pdev->dev;
 	struct device_node *parent_np;
@@ -321,17 +296,16 @@ static int tc9564_clk_probe(struct platform_device *pdev)
 
 	tc9564_clock->pll_hw = pll_hw;
 
+	clk_data = devm_kzalloc_flex(dev, *clk_data, hws, CLOCK_COUNT);
+	if (!clk_data)
+		return -ENOMEM;
+	tc9564_clock->clk_data = clk_data;
+
 	dev_set_drvdata(dev, tc9564_clock);
 
-	ret = tc9564_fixed_clock_init(dev);
+	ret = tc9564_clock_init(dev);
 	if (ret)
-		return dev_err_probe(dev, ret,
-				     "failed to initialize fixed clocks\n");
-
-	ret = tc9564_gate_clock_init(dev);
-	if (ret)
-		return dev_err_probe(dev, ret,
-				     "failed to initialize gate clocks\n");
+		return dev_err_probe(dev, ret, "failed to initialize clocks\n");
 
 	return 0;
 }
