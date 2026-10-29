@@ -225,12 +225,16 @@ static const struct clk_ops tc9564_clk_ops = {
 };
 
 static struct clk_hw *tc9564_gate_register(struct device *dev,
-					   struct gate_clock *clock,
 					   const struct clock_init *init)
 {
 	struct clk_init_data clk_init = { };
+	struct gate_clock *clock;
 	char name[NAME_SIZE];
 	int ret;
+
+	clock = devm_kzalloc_obj(*clock);
+	if (!clock)
+		return ERR_PTR(-ENOMEM);
 
 	FORMAT_NAME(name, dev->id, init->suffix);
 
@@ -253,12 +257,7 @@ static struct clk_hw *tc9564_gate_register(struct device *dev,
 static int tc9564_gate_clock_init(struct device *dev)
 {
 	struct clk_hw_onecell_data *clk_data;
-	struct gate_clock *clocks;
 	int ret;
-
-	clocks = devm_kzalloc_objs(dev, *clocks, GATE_COUNT);
-	if (!clocks)
-		return -ENOMEM;
 
 	clk_data = devm_kzalloc_flex(dev, *clk_data, hws, GATE_COUNT);
 	if (!clk_data)
@@ -266,13 +265,12 @@ static int tc9564_gate_clock_init(struct device *dev)
 
 	for (u32 i = 0; i < clk_data->num; i++) {
 		const struct clock_init *init = &gate_init[i];
-		struct gate_clock *clock = &clocks[i];
 		struct clk_hw *hw;
 
 		if (!init->suffix[0])
 			continue;
 
-		hw = tc9564_gate_register(dev, clock, init);
+		hw = tc9564_gate_register(dev, init);
 		if (IS_ERR(hw))
 			return PTR_ERR(hw);
 
