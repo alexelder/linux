@@ -60,37 +60,25 @@ struct clock_init {
 	};
 };
 
+struct gate_clock {
+	struct clk_hw hw;
+	const struct clock_init *init;
+};
+
+#define FIXED_INIT(_suffix, _div)			\
+	[CLOCK_FIXED_##_suffix] = {			\
+		.suffix = #_suffix,			\
+		.fixed = true,				\
+		.div = (_div),				\
+	}
+
 static const struct clock_init fixed_init[] = {
-	[CLOCK_FIXED_50M] = {
-		.suffix = "50_mhz",
-		.fixed = true,
-		.div = 25,
-	},
-	[CLOCK_FIXED_62_5M] = {
-		.suffix = "62_5_mhz",
-		.fixed = true,
-		.div = 20,
-	},
-	[CLOCK_FIXED_125M] = {
-		.suffix = "125_mhz",
-		.fixed = true,
-		.div = 10,
-	},
-	[CLOCK_FIXED_250M] = {
-		.suffix = "250_mhz",
-		.fixed = true,
-		.div = 5,
-	},
-	[CLOCK_FIXED_312_5M] = {
-		.suffix = "312_5_mhz",
-		.fixed = true,
-		.div = 4,
-	},
-	[CLOCK_FIXED_625M] = {
-		.suffix = "625_mhz",
-		.fixed = true,
-		.div = 2,
-	},
+	FIXED_INIT(50M, 25),
+	FIXED_INIT(62_5M, 20),
+	FIXED_INIT(125M, 10),
+	FIXED_INIT(250M, 5),
+	FIXED_INIT(312_5M, 4),
+	FIXED_INIT(625M, 2),
 };
 #define FIXED_COUNT	ARRAY_SIZE(fixed_init)
 
@@ -158,25 +146,17 @@ static int tc9564_fixed_clock_init(struct device *dev)
 	return ret;
 }
 
-struct gate_clock {
-	struct clk_hw hw;
-	const struct clock_init *init;
-};
+#define GATE_INIT0(_suffix, _bit)	__GATE_INIT(_suffix, true, _bit, false)
+#define GATE_INIT0_CRIT(_suffix, _bit)	__GATE_INIT(_suffix, true, _bit, true)
+#define GATE_INIT1(_suffix, _bit)	__GATE_INIT(_suffix, false, _bit, false)
 
-#define TC9564_CLOCK_INIT0(_suffix, _bit)			\
-	__TC9564_CLOCK_INIT(_suffix, true, _bit, false)
-#define TC9564_CLOCK_INIT0_CRITICAL(_suffix, _bit)		\
-	__TC9564_CLOCK_INIT(_suffix, true, _bit, true)
-#define TC9564_CLOCK_INIT1(_suffix, _bit)			\
-	__TC9564_CLOCK_INIT(_suffix, false, _bit, false)
-
-#define __TC9564_CLOCK_INIT(_suffix, _reg0, _bit, _critical)	\
-	[CLOCK_##_suffix] = {					\
-		.suffix = #_suffix,				\
-		.fixed = false,					\
-		.reg0 = _reg0,					\
-		.mask = BIT(_bit),				\
-		.critical = _critical,				\
+#define __GATE_INIT(_suffix, _reg0, _bit, _critical)	\
+	[CLOCK_##_suffix] = {				\
+		.suffix = #_suffix,			\
+		.fixed = false,				\
+		.reg0 = _reg0,				\
+		.mask = BIT(_bit),			\
+		.critical = _critical,			\
 	}
 
 /*
@@ -184,29 +164,29 @@ struct gate_clock {
  * and that relies on I2C, so we don't allow them to be disabled.
  */
 static const struct clock_init gate_init[] = {
-	TC9564_CLOCK_INIT0(MCU, 0),
-	TC9564_CLOCK_INIT0(INTC, 4),
-	TC9564_CLOCK_INIT0_CRITICAL(PCIE, 9),
-	TC9564_CLOCK_INIT0_CRITICAL(I2C, 12),
-	TC9564_CLOCK_INIT0(SRAM, 13),
-	TC9564_CLOCK_INIT0(UART, 16),
-	TC9564_CLOCK_INIT0(MSIGEN, 18),
-	TC9564_CLOCK_INIT0(PLL, 24),
-	TC9564_CLOCK_INIT0(SGMII, 25),
-	TC9564_CLOCK_INIT0(REFCLKO, 26),
+	GATE_INIT0(MCU, 0),
+	GATE_INIT0(INTC, 4),
+	GATE_INIT0_CRIT(PCIE, 9),
+	GATE_INIT0_CRIT(I2C, 12),
+	GATE_INIT0(SRAM, 13),
+	GATE_INIT0(UART, 16),
+	GATE_INIT0(MSIGEN, 18),
+	GATE_INIT0(PLL, 24),
+	GATE_INIT0(SGMII, 25),
+	GATE_INIT0(REFCLKO, 26),
 
-	TC9564_CLOCK_INIT0(MAC0_TX, 7),
-	TC9564_CLOCK_INIT0(MAC0_RX, 14),
-	TC9564_CLOCK_INIT0(MAC0_125M, 29),
-	TC9564_CLOCK_INIT0(MAC0_312_5M, 30),
-	TC9564_CLOCK_INIT0(MAC0_ALL, 31),
+	GATE_INIT0(MAC0_TX, 7),
+	GATE_INIT0(MAC0_RX, 14),
+	GATE_INIT0(MAC0_125M, 29),
+	GATE_INIT0(MAC0_312_5M, 30),
+	GATE_INIT0(MAC0_ALL, 31),
 
-	TC9564_CLOCK_INIT1(MAC1_TX, 7),
-	TC9564_CLOCK_INIT1(MAC1_RX, 14),
-	TC9564_CLOCK_INIT1(MAC1_RMII, 15),
-	TC9564_CLOCK_INIT1(MAC1_125M, 29),
-	TC9564_CLOCK_INIT1(MAC1_312_5M, 30),
-	TC9564_CLOCK_INIT1(MAC1_ALL, 31),
+	GATE_INIT1(MAC1_TX, 7),
+	GATE_INIT1(MAC1_RX, 14),
+	GATE_INIT1(MAC1_RMII, 15),
+	GATE_INIT1(MAC1_125M, 29),
+	GATE_INIT1(MAC1_312_5M, 30),
+	GATE_INIT1(MAC1_ALL, 31),
 };
 #define GATE_COUNT	ARRAY_SIZE(gate_init)
 
