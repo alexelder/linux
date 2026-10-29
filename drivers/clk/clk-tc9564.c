@@ -284,6 +284,9 @@ static int tc9564_gate_clock_init(struct device *dev)
 		struct gate_clock *clock = &clocks[i];
 		struct clk_hw *hw;
 
+		if (!init->suffix[0])
+			continue;
+
 		hw = tc9564_gate_register(dev, clock, init);
 		if (IS_ERR(hw))
 			return PTR_ERR(hw);
