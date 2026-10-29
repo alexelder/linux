@@ -46,34 +46,49 @@ enum {
 	snprintf(_name, NAME_SIZE, "tc9564%c_%.*s",		\
 		'a' + (_id), SUFFIX_SIZE, _suffix)
 
-struct fixed_init {
+struct clock_init {
 	const char suffix[SUFFIX_SIZE];
-	u32 div;	/* Fixed divider */
+	bool fixed;		/* true: fixed rate clock; false: gate clock */
+	union {
+		u32 div;	/* Fixed rate clock divider */
+
+		struct {	/* Gate clock */
+			bool critical;
+			bool reg0;	/* Controlled by CLK_CTRL0_OFFSET? */
+			u32 mask;
+		};
+	};
 };
 
-static const struct fixed_init fixed_init[] = {
+static const struct clock_init fixed_init[] = {
 	[CLOCK_FIXED_50M] = {
 		.suffix = "50_mhz",
+		.fixed = true,
 		.div = 25,
 	},
 	[CLOCK_FIXED_62_5M] = {
 		.suffix = "62_5_mhz",
+		.fixed = true,
 		.div = 20,
 	},
 	[CLOCK_FIXED_125M] = {
 		.suffix = "125_mhz",
+		.fixed = true,
 		.div = 10,
 	},
 	[CLOCK_FIXED_250M] = {
 		.suffix = "250_mhz",
+		.fixed = true,
 		.div = 5,
 	},
 	[CLOCK_FIXED_312_5M] = {
 		.suffix = "312_5_mhz",
+		.fixed = true,
 		.div = 4,
 	},
 	[CLOCK_FIXED_625M] = {
 		.suffix = "625_mhz",
+		.fixed = true,
 		.div = 2,
 	},
 };
@@ -96,7 +111,7 @@ static struct clk_hw *tc9564_pll_register(struct device *dev)
 
 static struct clk_hw *tc9564_fixed_register(struct device *dev,
 					    struct clk_hw *pll_hw,
-					    const struct fixed_init *init)
+					    const struct clock_init *init)
 {
 	char name[NAME_SIZE];
 	struct clk_hw *hw;
@@ -143,16 +158,9 @@ static int tc9564_fixed_clock_init(struct device *dev)
 	return ret;
 }
 
-struct gate_init {
-	const char suffix[SUFFIX_SIZE];
-	bool critical;
-	bool reg0;		/* Controlled by CLK_CTRL0_OFFSET? */
-	u32 mask;
-};
-
 struct gate_clock {
 	struct clk_hw hw;
-	const struct gate_init *init;
+	const struct clock_init *init;
 };
 
 #define TC9564_CLOCK_INIT0(_suffix, _bit)			\
@@ -165,6 +173,7 @@ struct gate_clock {
 #define __TC9564_CLOCK_INIT(_suffix, _reg0, _bit, _critical)	\
 	[CLOCK_##_suffix] = {					\
 		.suffix = #_suffix,				\
+		.fixed = false,					\
 		.reg0 = _reg0,					\
 		.mask = BIT(_bit),				\
 		.critical = _critical,				\
@@ -174,7 +183,7 @@ struct gate_clock {
  * The PCIe and I2C clocks are controllable, but we depend on PCIe
  * and that relies on I2C, so we don't allow them to be disabled.
  */
-static const struct gate_init gate_init[] = {
+static const struct clock_init gate_init[] = {
 	TC9564_CLOCK_INIT0(MCU, 0),
 	TC9564_CLOCK_INIT0(INTC, 4),
 	TC9564_CLOCK_INIT0_CRITICAL(PCIE, 9),
@@ -252,7 +261,7 @@ static const struct clk_ops tc9564_clk_ops = {
 
 static struct clk_hw *tc9564_gate_register(struct device *dev,
 					   struct gate_clock *clock,
-					   const struct gate_init *init)
+					   const struct clock_init *init)
 {
 	struct clk_init_data clk_init = { };
 	char name[NAME_SIZE];
@@ -291,7 +300,7 @@ static int tc9564_gate_clock_init(struct device *dev)
 		return -ENOMEM;
 
 	for (u32 i = 0; i < clk_data->num; i++) {
-		const struct gate_init *init = &gate_init[i];
+		const struct clock_init *init = &gate_init[i];
 		struct gate_clock *clock = &clocks[i];
 		struct clk_hw *hw;
 
