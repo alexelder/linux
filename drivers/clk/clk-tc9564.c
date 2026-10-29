@@ -53,28 +53,28 @@ struct fixed_init {
 
 static const struct fixed_init fixed_init[] = {
 	[CLOCK_FIXED_50M] = {
-		.suffix	= "50_mhz",
-		.div	= 25,
+		.suffix = "50_mhz",
+		.div = 25,
 	},
 	[CLOCK_FIXED_62_5M] = {
-		.suffix	= "62_5_mhz",
-		.div	= 20,
+		.suffix = "62_5_mhz",
+		.div = 20,
 	},
 	[CLOCK_FIXED_125M] = {
-		.suffix	= "125_mhz",
-		.div	= 10,
+		.suffix = "125_mhz",
+		.div = 10,
 	},
 	[CLOCK_FIXED_250M] = {
-		.suffix	= "250_mhz",
-		.div	= 5,
+		.suffix = "250_mhz",
+		.div = 5,
 	},
 	[CLOCK_FIXED_312_5M] = {
-		.suffix	= "312_5_mhz",
-		.div	= 4,
+		.suffix = "312_5_mhz",
+		.div = 4,
 	},
 	[CLOCK_FIXED_625M] = {
-		.suffix	= "625_mhz",
-		.div	= 2,
+		.suffix = "625_mhz",
+		.div = 2,
 	},
 };
 #define FIXED_COUNT	ARRAY_SIZE(fixed_init)
@@ -164,10 +164,10 @@ struct gate_clock {
 
 #define __TC9564_CLOCK_INIT(_suffix, _reg0, _bit, _critical)	\
 	[CLOCK_##_suffix] = {					\
-		.suffix		= #_suffix,			\
-		.reg0		= _reg0,			\
-		.mask		= BIT(_bit),			\
-		.critical	= _critical,			\
+		.suffix = #_suffix,				\
+		.reg0 = _reg0,					\
+		.mask = BIT(_bit),				\
+		.critical = _critical,				\
 	}
 
 /*
