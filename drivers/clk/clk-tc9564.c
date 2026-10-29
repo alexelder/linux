@@ -50,6 +50,8 @@ struct gate_clock {
 	const struct clock_init *init;
 };
 
+static struct clk_hw *pll_hw;
+
 #define FIXED_INIT(_suffix, _div)			\
 	[CLOCK_##_suffix] = {				\
 		.suffix = #_suffix,			\
@@ -97,38 +99,6 @@ static struct clk_hw *tc9564_fixed_register(struct device *dev,
 		dev_err(dev, "failed to register %s\n", name);
 
 	return hw;
-}
-
-static int tc9564_fixed_clock_init(struct device *dev)
-{
-	struct clk_hw_onecell_data *clk_data;
-	struct clk_hw *pll_hw;
-	int ret;
-
-	/* The PLL is the parent of all the fixed rate clocks */
-	pll_hw = tc9564_pll_register(dev);
-	if (IS_ERR(pll_hw))
-		return PTR_ERR(pll_hw);
-
-	clk_data = devm_kzalloc_flex(dev, *clk_data, hws, FIXED_COUNT);
-	if (!clk_data)
-		return -ENOMEM;
-
-	for (u32 i = 0; i < clk_data->num; i++) {
-		struct clk_hw *hw;
-
-		hw = tc9564_fixed_register(dev, pll_hw, &fixed_init[i]);
-		if (IS_ERR(hw))
-			return PTR_ERR(hw);
-
-		clk_data->hws[i] = hw;
-	}
-
-	ret = devm_of_clk_add_hw_provider(dev, of_clk_hw_onecell_get, clk_data);
-	if (ret)
-		dev_err(dev, "failed to add fixed clock provider\n");
-
-	return ret;
 }
 
 #define GATE_INIT0(_suffix, _bit)	__GATE_INIT(_suffix, true, _bit, false)
@@ -254,23 +224,23 @@ static struct clk_hw *tc9564_gate_register(struct device *dev,
 	return &clock->hw;
 }
 
-static int tc9564_gate_clock_init(struct device *dev)
+static int tc9564_clock_init(struct device *dev,
+			     const struct clock_init clock_init[],
+			     struct clk_hw_onecell_data *clk_data)
 {
-	struct clk_hw_onecell_data *clk_data;
 	int ret;
 
-	clk_data = devm_kzalloc_flex(dev, *clk_data, hws, GATE_COUNT);
-	if (!clk_data)
-		return -ENOMEM;
-
 	for (u32 i = 0; i < clk_data->num; i++) {
-		const struct clock_init *init = &gate_init[i];
+		const struct clock_init *init = &clock_init[i];
 		struct clk_hw *hw;
 
 		if (!init->suffix[0])
 			continue;
 
-		hw = tc9564_gate_register(dev, init);
+		if (init->fixed)
+			hw = tc9564_fixed_register(dev, pll_hw, init);
+		else
+			hw = tc9564_gate_register(dev, init);
 		if (IS_ERR(hw))
 			return PTR_ERR(hw);
 
@@ -279,9 +249,37 @@ static int tc9564_gate_clock_init(struct device *dev)
 
 	ret = devm_of_clk_add_hw_provider(dev, of_clk_hw_onecell_get, clk_data);
 	if (ret)
-		dev_err(dev, "failed to add gate clock provider\n");
+		dev_err(dev, "failed to add clock provider\n");
 
 	return ret;
+}
+
+static int tc9564_fixed_clock_init(struct device *dev)
+{
+	struct clk_hw_onecell_data *clk_data;
+	int ret;
+
+	/* The PLL is the parent of all the fixed rate clocks */
+	pll_hw = tc9564_pll_register(dev);
+	if (IS_ERR(pll_hw))
+		return PTR_ERR(pll_hw);
+
+	clk_data = devm_kzalloc_flex(dev, *clk_data, hws, FIXED_COUNT);
+	if (!clk_data)
+		return -ENOMEM;
+
+	return tc9564_clock_init(dev, fixed_init, clk_data);
+}
+
+static int tc9564_gate_clock_init(struct device *dev)
+{
+	struct clk_hw_onecell_data *clk_data;
+
+	clk_data = devm_kzalloc_flex(dev, *clk_data, hws, GATE_COUNT);
+	if (!clk_data)
+		return -ENOMEM;
+
+	return tc9564_clock_init(dev, gate_init, clk_data);
 }
 
 static int tc9564_clk_probe(struct platform_device *pdev)
