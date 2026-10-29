@@ -52,6 +52,10 @@ struct gate_clock {
 
 static struct clk_hw *pll_hw;
 
+struct tc9564_clock {
+	struct regmap *regmap;
+};
+
 #define FIXED_INIT(_suffix, _div)			\
 	[CLOCK_##_suffix] = {				\
 		.suffix = #_suffix,			\
@@ -152,10 +156,15 @@ static const struct gate_clock *hw_to_gate_clock(struct clk_hw *hw)
 
 static void tc9564_clk_manage(struct clk_hw *hw, bool enable)
 {
-	struct regmap *regmap = dev_get_drvdata(clk_hw_get_dev(hw));
 	const struct gate_clock *clock = hw_to_gate_clock(hw);
+	struct device *dev = clk_hw_get_dev(hw);
+	struct tc9564_clock *tc9564_clock;
 	u32 mask = clock->init->mask;
+	struct regmap *regmap;
 	u32 offset;
+
+	tc9564_clock = dev_get_drvdata(dev);
+	regmap = tc9564_clock->regmap;
 
 	offset = clock->init->reg0 ? CLK_CTRL0_OFFSET : CLK_CTRL1_OFFSET;
 
@@ -176,10 +185,15 @@ static void tc9564_clk_disable(struct clk_hw *hw)
 
 static int tc9564_clk_is_enabled(struct clk_hw *hw)
 {
-	struct regmap *regmap = dev_get_drvdata(clk_hw_get_dev(hw));
 	const struct gate_clock *clock = hw_to_gate_clock(hw);
+	struct device *dev = clk_hw_get_dev(hw);
+	struct tc9564_clock *tc9564_clock;
+	struct regmap *regmap;
 	u32 offset;
 	u32 val;
+
+	tc9564_clock = dev_get_drvdata(dev);
+	regmap = tc9564_clock->regmap;
 
 	offset = clock->init->reg0 ? CLK_CTRL0_OFFSET : CLK_CTRL1_OFFSET;
 
@@ -202,7 +216,7 @@ static struct clk_hw *tc9564_gate_register(struct device *dev,
 	char name[NAME_SIZE];
 	int ret;
 
-	clock = devm_kzalloc_obj(*clock);
+	clock = devm_kzalloc_obj(dev, *clock);
 	if (!clock)
 		return ERR_PTR(-ENOMEM);
 
@@ -284,6 +298,7 @@ static int tc9564_gate_clock_init(struct device *dev)
 
 static int tc9564_clk_probe(struct platform_device *pdev)
 {
+	struct tc9564_clock *tc9564_clock;
 	struct device *dev = &pdev->dev;
 	struct device_node *parent_np;
 	struct regmap *regmap;
@@ -293,12 +308,18 @@ static int tc9564_clk_probe(struct platform_device *pdev)
 	if (!parent_np)
 		return dev_err_probe(dev, -EINVAL, "no devicetree node\n");
 
+	tc9564_clock = devm_kzalloc_obj(dev, *tc9564_clock);
+	if (!tc9564_clock)
+		return -ENOMEM;
+
 	/* Note: MMIO regmap (no error checking needed when used) */
 	regmap = device_node_to_regmap(parent_np);
 	if (IS_ERR(regmap))
 		return dev_err_probe(dev, PTR_ERR(regmap),
 				     "failed to get config regmap\n");
-	dev_set_drvdata(dev, regmap);
+	tc9564_clock->regmap = regmap;
+
+	dev_set_drvdata(dev, tc9564_clock);
 
 	ret = tc9564_fixed_clock_init(dev);
 	if (ret)
