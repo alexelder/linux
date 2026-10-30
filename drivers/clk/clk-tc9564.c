@@ -244,9 +244,6 @@ static int tc9564_clock_init(struct device *dev)
 		const struct clock_init *init = &clock_init[i];
 		struct clk_hw *hw;
 
-		if (!init->suffix[0])
-			continue;
-
 		if (init->fixed)
 			hw = tc9564_fixed_register(dev, init);
 		else
