@@ -25,10 +25,10 @@
  * character ('a', 'b', etc.) that differs for each chip/device number.
  * Each clock's "suffix" defines the unique portion of the clock name.
  */
-#define NAME_SIZE	24	/* Enough for formatted name including suffix */
+#define FULL_NAME_SIZE	24	/* Enough for formatted name including suffix */
 #define SUFFIX_SIZE	12
-#define FORMAT_NAME(_name, _id, _suffix)			\
-	snprintf(_name, NAME_SIZE, "tc9564%c_%.*s",		\
+#define FORMAT_FULL_NAME(_name, _id, _suffix)			\
+	snprintf(_name, FULL_NAME_SIZE, "tc9564%c_%.*s",	\
 		'a' + (_id), SUFFIX_SIZE, _suffix)
 
 struct clock_init {
@@ -183,12 +183,13 @@ static const struct clk_ops tc9564_clk_ops = {
 /* Input oscillator runs at 25 MHz; PLL runs at 1250 MHz */
 static struct clk_hw *tc9564_pll_register(struct device *dev)
 {
-	char name[NAME_SIZE];
+	char full_name[FULL_NAME_SIZE];
 	struct clk_hw *hw;
 
-	FORMAT_NAME(name, dev->id, "pll");
+	FORMAT_FULL_NAME(full_name, dev->id, "pll");
 
-	hw = devm_clk_hw_register_fixed_factor_index(dev, name, 0, 0, 500, 1);
+	hw = devm_clk_hw_register_fixed_factor_index(dev, full_name, 0, 0,
+						     500, 1);
 	if (IS_ERR(hw))
 		dev_err(dev, "failed to register PLL\n");
 
@@ -200,15 +201,16 @@ static struct clk_hw *tc9564_fixed_register(struct device *dev,
 {
 	struct tc9564_clock *tc9564_clock = dev_get_drvdata(dev);
 	struct clk_hw *pll_hw = tc9564_clock->pll_hw;
-	char name[NAME_SIZE];
+	char full_name[FULL_NAME_SIZE];
 	struct clk_hw *hw;
 
-	FORMAT_NAME(name, dev->id, init->suffix);
+	FORMAT_FULL_NAME(full_name, dev->id, init->suffix);
 
-	hw = devm_clk_hw_register_fixed_factor_parent_hw(dev, name, pll_hw, 0,
+	hw = devm_clk_hw_register_fixed_factor_parent_hw(dev, full_name,
+							 pll_hw, 0,
 							 1, init->div);
 	if (IS_ERR(hw))
-		dev_err(dev, "failed to register %s\n", name);
+		dev_err(dev, "failed to register %s\n", full_name);
 
 	return hw;
 }
@@ -219,17 +221,17 @@ static struct clk_hw *tc9564_gate_register(struct device *dev,
 	struct tc9564_clock *tc9564_clock = dev_get_drvdata(dev);
 	struct clk_init_data clk_init = { };
 	const struct clk_hw *parent_hw;
+	char full_name[FULL_NAME_SIZE];
 	struct gate_clock *clock;
-	char name[NAME_SIZE];
 	int ret;
 
 	clock = devm_kzalloc_obj(dev, *clock);
 	if (!clock)
 		return ERR_PTR(-ENOMEM);
 
-	FORMAT_NAME(name, dev->id, init->suffix);
+	FORMAT_FULL_NAME(full_name, dev->id, init->suffix);
 
-	clk_init.name = name;
+	clk_init.name = full_name;
 	clk_init.ops = &tc9564_clk_ops;
 	parent_hw = tc9564_clock->clk_data->hws[init->parent];
 	clk_init.parent_hws = &parent_hw;
@@ -241,7 +243,7 @@ static struct clk_hw *tc9564_gate_register(struct device *dev,
 
 	ret = devm_clk_hw_register(dev, &clock->hw);
 	if (ret) {
-		dev_err(dev, "failed to register gate clock %s\n", name);
+		dev_err(dev, "failed to register gate clock %s\n", full_name);
 		return ERR_PTR(ret);
 	}
 
