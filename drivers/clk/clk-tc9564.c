@@ -42,7 +42,6 @@ struct clock_init {
 		u32 div;	/* Fixed rate clock divider */
 
 		struct {	/* Gate clock */
-			bool critical;
 			bool reg0;	/* Controlled by CLK_CTRL0_OFFSET? */
 			u16 parent;	/* Parent clock ID, e.g. CLOCK_50M */
 			u32 mask;
@@ -77,17 +76,14 @@ struct tc9564_clock {
 	}
 
 #define GATE_INIT0(_name, _bit, _pname)				\
-	__GATE_INIT(_name, _bit, _pname, true, false)
-#define GATE_INIT0_CRIT(_name, _bit, _pname)			\
-	__GATE_INIT(_name, _bit, _pname, true, true)
+	__GATE_INIT(_name, _bit, _pname, true)
 #define GATE_INIT1(_name, _bit, _pname)				\
-	__GATE_INIT(_name, _bit, _pname, false, false)
+	__GATE_INIT(_name, _bit, _pname, false)
 
-#define __GATE_INIT(_name, _bit, _pname, _reg0, _critical)	\
+#define __GATE_INIT(_name, _bit, _pname, _reg0)			\
 	[CLOCK_##_name] = {					\
 		.name = #_name,					\
 		.type = GATE,					\
-		.critical = _critical,				\
 		.reg0 = _reg0,					\
 		.parent = CLOCK_##_pname,			\
 		.mask = BIT(_bit),				\
@@ -100,23 +96,12 @@ struct tc9564_clock {
 static const struct clock_init clock_init[] = {
 	PLL_INIT(PLL, 50),		/* Parent is XO input clock */
 
-	FIXED_INIT(25M, 50),		/* Parent of all fixed clocks is PLL */
-	FIXED_INIT(50M, 25),
-	FIXED_INIT(62_5M, 20),
+	FIXED_INIT(62_5M, 20),		/* Parent of all fixed clocks is PLL */
 	FIXED_INIT(125M, 10),
 	FIXED_INIT(250M, 5),
 	FIXED_INIT(312_5M, 4),
-	FIXED_INIT(625M, 2),
 
-	GATE_INIT0(MCU, 0, 250M),
-	GATE_INIT0(INTC, 4, 62_5M),
-	GATE_INIT0_CRIT(PCIE, 9, 250M),
-	GATE_INIT0_CRIT(I2C, 12, 250M),
-	GATE_INIT0(SRAM, 13, 250M),
-	GATE_INIT0(UART, 16, 62_5M),
-	GATE_INIT0(MSIGEN, 18, 250M),		/* ??? */
-	GATE_INIT0(SGMII, 25, 625M),
-	GATE_INIT0(REFCLKO, 26, 25M),
+	GATE_INIT0(MSIGEN, 18, 62_5M),		/* ??? */
 
 	GATE_INIT0(MAC0_TX, 7, 250M),		/* ??? */
 	GATE_INIT0(MAC0_RX, 14, 250M),		/* ??? */
@@ -126,10 +111,10 @@ static const struct clock_init clock_init[] = {
 
 	GATE_INIT1(MAC1_TX, 7, 250M),		/* ??? */
 	GATE_INIT1(MAC1_RX, 14, 250M),		/* ??? */
-	GATE_INIT1(MAC1_RMII, 15, 50M),
 	GATE_INIT1(MAC1_125M, 29, 125M),
 	GATE_INIT1(MAC1_312_5M, 30, 312_5M),
 	GATE_INIT1(MAC1_ALL, 31, 250M),		/* XXX */
+	GATE_INIT1(MAC1_RMII, 15, 125M),
 };
 #define CLOCK_COUNT	ARRAY_SIZE(clock_init)
 
@@ -250,7 +235,6 @@ static struct clk_hw *tc9564_gate_register(struct device *dev,
 	parent_hw = tc9564_clock->clk_data->hws[init->parent];
 	clk_init.parent_hws = &parent_hw;
 	clk_init.num_parents = 1;
-	clk_init.flags = init->critical ? CLK_IS_CRITICAL : 0;
 
 	clock->hw.init = &clk_init;
 	clock->init = init;
