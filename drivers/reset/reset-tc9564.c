@@ -64,27 +64,31 @@ rcdev_to_tc9564_resets(struct reset_controller_dev *rcdev)
 	return container_of_const(rcdev, struct tc9564_resets, rcdev);
 }
 
-static int tc9564_reset_manage(struct reset_controller_dev *rcdev,
-			       unsigned long id, bool assert)
+static void tc9564_reset_manage(struct reset_controller_dev *rcdev,
+				unsigned long id, bool assert)
 {
 	const struct tc9564_resets *resets = rcdev_to_tc9564_resets(rcdev);
 	const struct tc9564_reset *reset = &tc9564_reset[id];
 	u32 mask = reset->mask;
 
-	return regmap_update_bits(resets->regmap, reset->offset, mask,
-				  assert ? mask : 0);
+	regmap_update_bits(resets->regmap, reset->offset, mask,
+			  assert ? mask : 0);
 }
 
 static int tc9564_reset_assert(struct reset_controller_dev *rcdev,
 			       unsigned long id)
 {
-	return tc9564_reset_manage(rcdev, id, true);
+	tc9564_reset_manage(rcdev, id, true);
+
+	return 0;
 }
 
 static int tc9564_reset_deassert(struct reset_controller_dev *rcdev,
 				 unsigned long id)
 {
-	return tc9564_reset_manage(rcdev, id, false);
+	tc9564_reset_manage(rcdev, id, false);
+
+	return 0;
 }
 
 static const struct reset_control_ops tc9564_reset_control_ops = {
@@ -126,6 +130,7 @@ static int tc9564_reset_probe(struct platform_device *pdev)
 	if (!parent_np)
 		return dev_err_probe(dev, -EINVAL, "no devicetree node\n");
 
+	/* Note: MMIO regmap (no error checking needed when used) */
 	regmap = device_node_to_regmap(parent_np);
 	if (IS_ERR(regmap))
 		return dev_err_probe(dev, PTR_ERR(regmap),
