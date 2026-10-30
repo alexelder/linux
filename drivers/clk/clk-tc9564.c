@@ -31,10 +31,14 @@
 	snprintf(_full_name, FULL_NAME_SIZE, "tc9564%c_%.*s",	\
 		'a' + (_id), NAME_SIZE, _name)
 
+enum clock_type { PLL, FIXED, GATE };
+
 struct clock_init {
 	const char name[NAME_SIZE];
-	bool fixed;		/* true: fixed rate clock; false: gate clock */
+	enum clock_type type;
 	union {
+		u32 mult;	/* PLL rate multiplier */
+
 		u32 div;	/* Fixed rate clock divider */
 
 		struct {	/* Gate clock */
@@ -53,15 +57,22 @@ struct gate_clock {
 
 struct tc9564_clock {
 	struct regmap *regmap;
-	struct clk_hw *pll_hw;
 	struct clk_hw_onecell_data *clk_data;
 };
+
+/* There is only one PLL */
+#define PLL_INIT(_name, _mult)					\
+	[CLOCK_##_name] = {					\
+		.name = #_name,					\
+		.type = PLL,					\
+		.mult = (_mult),				\
+	}
 
 /* The PLL is the parent of all the fixed rate clocks */
 #define FIXED_INIT(_name, _div)					\
 	[CLOCK_##_name] = {					\
 		.name = #_name,					\
-		.fixed = true,					\
+		.type = FIXED,					\
 		.div = (_div),					\
 	}
 
@@ -75,7 +86,7 @@ struct tc9564_clock {
 #define __GATE_INIT(_name, _bit, _pname, _reg0, _critical)	\
 	[CLOCK_##_name] = {					\
 		.name = #_name,					\
-		.fixed = false,					\
+		.type = GATE,					\
 		.critical = _critical,				\
 		.reg0 = _reg0,					\
 		.parent = CLOCK_##_pname,			\
@@ -87,7 +98,9 @@ struct tc9564_clock {
  * are expected to be registered before the clocks that refer to them.
  */
 static const struct clock_init clock_init[] = {
-	FIXED_INIT(25M, 50),
+	PLL_INIT(PLL, 50),		/* Parent is XO input clock */
+
+	FIXED_INIT(25M, 50),		/* Parent of all fixed clocks is PLL */
 	FIXED_INIT(50M, 25),
 	FIXED_INIT(62_5M, 20),
 	FIXED_INIT(125M, 10),
@@ -102,7 +115,6 @@ static const struct clock_init clock_init[] = {
 	GATE_INIT0(SRAM, 13, 250M),
 	GATE_INIT0(UART, 16, 62_5M),
 	GATE_INIT0(MSIGEN, 18, 250M),		/* ??? */
-	GATE_INIT0(PLL, 24, 250M),		/* XXX */
 	GATE_INIT0(SGMII, 25, 625M),
 	GATE_INIT0(REFCLKO, 26, 25M),
 
@@ -181,15 +193,16 @@ static const struct clk_ops tc9564_clk_ops = {
 };
 
 /* Input oscillator runs at 25 MHz; PLL runs at 1250 MHz */
-static struct clk_hw *tc9564_pll_register(struct device *dev)
+static struct clk_hw *tc9564_pll_register(struct device *dev,
+					  const struct clock_init *init)
 {
 	char full_name[FULL_NAME_SIZE];
 	struct clk_hw *hw;
 
-	FORMAT_FULL_NAME(full_name, dev->id, "pll");
+	FORMAT_FULL_NAME(full_name, dev->id, init->name);
 
 	hw = devm_clk_hw_register_fixed_factor_index(dev, full_name, 0, 0,
-						     500, 1);
+						     init->mult, 1);
 	if (IS_ERR(hw))
 		dev_err(dev, "failed to register PLL\n");
 
@@ -200,12 +213,13 @@ static struct clk_hw *tc9564_fixed_register(struct device *dev,
 					    const struct clock_init *init)
 {
 	struct tc9564_clock *tc9564_clock = dev_get_drvdata(dev);
-	struct clk_hw *pll_hw = tc9564_clock->pll_hw;
 	char full_name[FULL_NAME_SIZE];
+	struct clk_hw *pll_hw;
 	struct clk_hw *hw;
 
 	FORMAT_FULL_NAME(full_name, dev->id, init->name);
 
+	pll_hw = tc9564_clock->clk_data->hws[CLOCK_PLL];
 	hw = devm_clk_hw_register_fixed_factor_parent_hw(dev, full_name,
 							 pll_hw, 0,
 							 1, init->div);
@@ -262,7 +276,9 @@ static int tc9564_clock_init(struct device *dev)
 		const struct clock_init *init = &clock_init[i];
 		struct clk_hw *hw;
 
-		if (init->fixed)
+		if (init->type == PLL)
+			hw = tc9564_pll_register(dev, init);
+		else if (init->type == FIXED)
 			hw = tc9564_fixed_register(dev, init);
 		else
 			hw = tc9564_gate_register(dev, init);
@@ -286,7 +302,6 @@ static int tc9564_clk_probe(struct platform_device *pdev)
 	struct device *dev = &pdev->dev;
 	struct device_node *parent_np;
 	struct regmap *regmap;
-	struct clk_hw *pll_hw;
 	int ret;
 
 	parent_np = dev_of_node(dev->parent);
@@ -303,12 +318,6 @@ static int tc9564_clk_probe(struct platform_device *pdev)
 		return dev_err_probe(dev, PTR_ERR(regmap),
 				     "failed to get config regmap\n");
 	tc9564_clock->regmap = regmap;
-
-	pll_hw = tc9564_pll_register(dev);
-	if (IS_ERR(pll_hw))
-		return PTR_ERR(pll_hw);
-
-	tc9564_clock->pll_hw = pll_hw;
 
 	clk_data = devm_kzalloc_flex(dev, *clk_data, hws, CLOCK_COUNT);
 	if (!clk_data)
