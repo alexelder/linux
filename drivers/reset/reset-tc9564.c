@@ -109,27 +109,6 @@ static const struct reset_control_ops tc9564_reset_control_ops = {
 	.status = tc9564_reset_status,
 };
 
-/* Assert all resets by updating both reset registers */
-static void tc9564_reset_assert_all(struct tc9564_resets *resets)
-{
-	u32 mask0 = 0;
-	u32 mask1 = 0;
-
-	for (u32 id = 0; id < TC9564_RESET_COUNT; id++) {
-		const struct tc9564_reset *reset = &tc9564_reset[id];
-
-		if (!reset->mask)
-			continue;
-
-		if (reset->offset == RST_CTRL0_OFFSET)
-			mask0 |= reset->mask;
-		else
-			mask1 |= reset->mask;
-	}
-	regmap_update_bits(resets->regmap, RST_CTRL0_OFFSET, mask0, mask0);
-	regmap_update_bits(resets->regmap, RST_CTRL1_OFFSET, mask1, mask1);
-}
-
 static int tc9564_reset_probe(struct platform_device *pdev)
 {
 	struct reset_controller_dev *rcdev;
@@ -160,9 +139,6 @@ static int tc9564_reset_probe(struct platform_device *pdev)
 	rcdev->dev = dev;
 	rcdev->of_node = parent_np;
 	rcdev->nr_resets = TC9564_RESET_COUNT;
-
-	/* Before registering, force all resets to be initially asserted */
-	tc9564_reset_assert_all(resets);
 
 	ret = devm_reset_controller_register(dev, rcdev);
 	if (ret)
