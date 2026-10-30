@@ -9,18 +9,14 @@
 
 /* Reset IDs */
 
-#define RESET_MCU		0
-#define RESET_MCU1		1
-#define RESET_MSIGEN		2
-#define RESET_INTC		3
-#define RESET_UART		4
+#define RESET_MSIGEN		0
 
-#define RESET_MAC0_MAC		5
-#define RESET_MAC0_PMA		6
-#define RESET_MAC0_XPCS		7
+#define RESET_MAC0_MAC		1
+#define RESET_MAC0_PMA		2
+#define RESET_MAC0_XPCS		3
 
-#define RESET_MAC1_MAC		8
-#define RESET_MAC1_PMA		9
-#define RESET_MAC1_XPCS		10
+#define RESET_MAC1_MAC		4
+#define RESET_MAC1_PMA		5
+#define RESET_MAC1_XPCS		6
 
 #endif /* __RESET_TOSHIBA_TC9564_H__*/
