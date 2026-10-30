@@ -21,11 +21,6 @@ struct tc9564_reset {
 	u32 mask;		/* Zero means undefined reset */
 };
 
-struct tc9564_resets {
-	struct regmap *regmap;
-	struct reset_controller_dev rcdev;
-};
-
 #define TC9564_RESET_INIT0(_name, _bit)	__TC9564_RESET_INIT(_name, 0, _bit)
 #define TC9564_RESET_INIT1(_name, _bit)	__TC9564_RESET_INIT(_name, 1, _bit)
 
@@ -58,21 +53,14 @@ static const struct tc9564_reset tc9564_reset[] = {
 };
 #define TC9564_RESET_COUNT	ARRAY_SIZE(tc9564_reset)
 
-static const struct tc9564_resets *
-rcdev_to_tc9564_resets(struct reset_controller_dev *rcdev)
-{
-	return container_of_const(rcdev, struct tc9564_resets, rcdev);
-}
-
 static void tc9564_reset_manage(struct reset_controller_dev *rcdev,
 				unsigned long id, bool assert)
 {
-	const struct tc9564_resets *resets = rcdev_to_tc9564_resets(rcdev);
 	const struct tc9564_reset *reset = &tc9564_reset[id];
+	struct regmap *regmap = dev_get_drvdata(rcdev->dev);
 	u32 mask = reset->mask;
 
-	regmap_update_bits(resets->regmap, reset->offset, mask,
-			  assert ? mask : 0);
+	regmap_update_bits(regmap, reset->offset, mask, assert ? mask : 0);
 }
 
 static int tc9564_reset_assert(struct reset_controller_dev *rcdev,
@@ -94,11 +82,11 @@ static int tc9564_reset_deassert(struct reset_controller_dev *rcdev,
 static int tc9564_reset_status(struct reset_controller_dev *rcdev,
 			       unsigned long id)
 {
-	const struct tc9564_resets *resets = rcdev_to_tc9564_resets(rcdev);
 	const struct tc9564_reset *reset = &tc9564_reset[id];
+	struct regmap *regmap = dev_get_drvdata(rcdev->dev);
 	u32 val;
 
-	regmap_read(resets->regmap, reset->offset, &val);
+	regmap_read(regmap, reset->offset, &val);
 
 	return val & reset->mask ? 1 : 0;
 }
@@ -114,7 +102,6 @@ static int tc9564_reset_probe(struct platform_device *pdev)
 	struct reset_controller_dev *rcdev;
 	struct device *dev = &pdev->dev;
 	struct device_node *parent_np;
-	struct tc9564_resets *resets;
 	struct regmap *regmap;
 	int ret;
 
@@ -128,17 +115,17 @@ static int tc9564_reset_probe(struct platform_device *pdev)
 		return dev_err_probe(dev, PTR_ERR(regmap),
 				     "failed to get config regmap\n");
 
-	resets = devm_kzalloc(dev, sizeof(*resets), GFP_KERNEL);
-	if (!resets)
+	rcdev = devm_kzalloc_obj(dev, *rcdev);
+	if (!rcdev)
 		return -ENOMEM;
-	resets->regmap = regmap;
 
-	rcdev = &resets->rcdev;
 	rcdev->ops = &tc9564_reset_control_ops;
 	rcdev->owner = THIS_MODULE;
 	rcdev->dev = dev;
 	rcdev->of_node = parent_np;
 	rcdev->nr_resets = TC9564_RESET_COUNT;
+
+	dev_set_drvdata(dev, regmap);
 
 	ret = devm_reset_controller_register(dev, rcdev);
 	if (ret)
