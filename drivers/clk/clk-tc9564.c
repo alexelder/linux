@@ -56,6 +56,7 @@ struct tc9564_clock {
 	struct clk_hw_onecell_data *clk_data;
 };
 
+/* The PLL is the parent of all the fixed rate clocks */
 #define FIXED_INIT(_suffix, _div)			\
 	[CLOCK_##_suffix] = {				\
 		.suffix = #_suffix,			\
@@ -63,11 +64,14 @@ struct tc9564_clock {
 		.div = (_div),				\
 	}
 
-#define GATE_INIT0(_suffix, _bit)	__GATE_INIT(_suffix, true, _bit, false)
-#define GATE_INIT0_CRIT(_suffix, _bit)	__GATE_INIT(_suffix, true, _bit, true)
-#define GATE_INIT1(_suffix, _bit)	__GATE_INIT(_suffix, false, _bit, false)
+#define GATE_INIT0(_suffix, _bit)			\
+	__GATE_INIT(_suffix, _bit, true, false)
+#define GATE_INIT0_CRIT(_suffix, _bit)			\
+	__GATE_INIT(_suffix, _bit, true, true)
+#define GATE_INIT1(_suffix, _bit)			\
+	__GATE_INIT(_suffix, _bit, false, false)
 
-#define __GATE_INIT(_suffix, _reg0, _bit, _critical)	\
+#define __GATE_INIT(_suffix, _bit, _reg0, _critical)	\
 	[CLOCK_##_suffix] = {				\
 		.suffix = #_suffix,			\
 		.fixed = false,				\
@@ -286,7 +290,6 @@ static int tc9564_clk_probe(struct platform_device *pdev)
 				     "failed to get config regmap\n");
 	tc9564_clock->regmap = regmap;
 
-	/* The PLL is the parent of all the fixed rate clocks */
 	pll_hw = tc9564_pll_register(dev);
 	if (IS_ERR(pll_hw))
 		return PTR_ERR(pll_hw);
