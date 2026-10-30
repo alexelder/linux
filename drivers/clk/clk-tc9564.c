@@ -40,6 +40,7 @@ struct clock_init {
 		struct {	/* Gate clock */
 			bool critical;
 			bool reg0;	/* Controlled by CLK_CTRL0_OFFSET? */
+			u16 parent;	/* Parent clock ID, e.g. CLOCK_50M */
 			u32 mask;
 		};
 	};
@@ -57,30 +58,36 @@ struct tc9564_clock {
 };
 
 /* The PLL is the parent of all the fixed rate clocks */
-#define FIXED_INIT(_suffix, _div)			\
-	[CLOCK_##_suffix] = {				\
-		.suffix = #_suffix,			\
-		.fixed = true,				\
-		.div = (_div),				\
+#define FIXED_INIT(_suffix, _div)				\
+	[CLOCK_##_suffix] = {					\
+		.suffix = #_suffix,				\
+		.fixed = true,					\
+		.div = (_div),					\
 	}
 
-#define GATE_INIT0(_suffix, _bit)			\
-	__GATE_INIT(_suffix, _bit, true, false)
-#define GATE_INIT0_CRIT(_suffix, _bit)			\
-	__GATE_INIT(_suffix, _bit, true, true)
-#define GATE_INIT1(_suffix, _bit)			\
-	__GATE_INIT(_suffix, _bit, false, false)
+#define GATE_INIT0(_suffix, _bit, _parent)			\
+	__GATE_INIT(_suffix, _bit, _parent, true, false)
+#define GATE_INIT0_CRIT(_suffix, _bit, _parent)			\
+	__GATE_INIT(_suffix, _bit, _parent, true, true)
+#define GATE_INIT1(_suffix, _bit, _parent)			\
+	__GATE_INIT(_suffix, _bit, _parent, false, false)
 
-#define __GATE_INIT(_suffix, _bit, _reg0, _critical)	\
-	[CLOCK_##_suffix] = {				\
-		.suffix = #_suffix,			\
-		.fixed = false,				\
-		.reg0 = _reg0,				\
-		.mask = BIT(_bit),			\
-		.critical = _critical,			\
+#define __GATE_INIT(_suffix, _bit, _parent, _reg0, _critical)	\
+	[CLOCK_##_suffix] = {					\
+		.suffix = #_suffix,				\
+		.fixed = false,					\
+		.critical = _critical,				\
+		.reg0 = _reg0,					\
+		.parent = _parent,				\
+		.mask = BIT(_bit),				\
 	}
 
+/*
+ * Clocks are initialized and registered in numeric order.  Parent clocks
+ * are expected to be registered before the clocks that refer to them.
+ */
 static const struct clock_init clock_init[] = {
+	FIXED_INIT(25M, 50),
 	FIXED_INIT(50M, 25),
 	FIXED_INIT(62_5M, 20),
 	FIXED_INIT(125M, 10),
@@ -88,29 +95,29 @@ static const struct clock_init clock_init[] = {
 	FIXED_INIT(312_5M, 4),
 	FIXED_INIT(625M, 2),
 
-	GATE_INIT0(MCU, 0),
-	GATE_INIT0(INTC, 4),
-	GATE_INIT0_CRIT(PCIE, 9),
-	GATE_INIT0_CRIT(I2C, 12),
-	GATE_INIT0(SRAM, 13),
-	GATE_INIT0(UART, 16),
-	GATE_INIT0(MSIGEN, 18),
-	GATE_INIT0(PLL, 24),
-	GATE_INIT0(SGMII, 25),
-	GATE_INIT0(REFCLKO, 26),
+	GATE_INIT0(MCU, 0, CLOCK_250M),
+	GATE_INIT0(INTC, 4, CLOCK_62_5M),
+	GATE_INIT0_CRIT(PCIE, 9, CLOCK_250M),
+	GATE_INIT0_CRIT(I2C, 12, CLOCK_250M),
+	GATE_INIT0(SRAM, 13, CLOCK_250M),
+	GATE_INIT0(UART, 16, CLOCK_62_5M),
+	GATE_INIT0(MSIGEN, 18, CLOCK_250M),		/* ??? */
+	GATE_INIT0(PLL, 24, CLOCK_250M),		/* XXX */
+	GATE_INIT0(SGMII, 25, CLOCK_625M),
+	GATE_INIT0(REFCLKO, 26, CLOCK_25M),
 
-	GATE_INIT0(MAC0_TX, 7),
-	GATE_INIT0(MAC0_RX, 14),
-	GATE_INIT0(MAC0_125M, 29),
-	GATE_INIT0(MAC0_312_5M, 30),
-	GATE_INIT0(MAC0_ALL, 31),
+	GATE_INIT0(MAC0_TX, 7, CLOCK_250M),		/* ??? */
+	GATE_INIT0(MAC0_RX, 14, CLOCK_250M),		/* ??? */
+	GATE_INIT0(MAC0_125M, 29, CLOCK_125M),
+	GATE_INIT0(MAC0_312_5M, 30, CLOCK_312_5M),
+	GATE_INIT0(MAC0_ALL, 31, CLOCK_250M),		/* XXX */
 
-	GATE_INIT1(MAC1_TX, 7),
-	GATE_INIT1(MAC1_RX, 14),
-	GATE_INIT1(MAC1_RMII, 15),
-	GATE_INIT1(MAC1_125M, 29),
-	GATE_INIT1(MAC1_312_5M, 30),
-	GATE_INIT1(MAC1_ALL, 31),
+	GATE_INIT1(MAC1_TX, 7, CLOCK_250M),		/* ??? */
+	GATE_INIT1(MAC1_RX, 14, CLOCK_250M),		/* ??? */
+	GATE_INIT1(MAC1_RMII, 15, CLOCK_50M),
+	GATE_INIT1(MAC1_125M, 29, CLOCK_125M),
+	GATE_INIT1(MAC1_312_5M, 30, CLOCK_312_5M),
+	GATE_INIT1(MAC1_ALL, 31, CLOCK_250M),		/* XXX */
 };
 #define CLOCK_COUNT	ARRAY_SIZE(clock_init)
 
@@ -209,7 +216,9 @@ static struct clk_hw *tc9564_fixed_register(struct device *dev,
 static struct clk_hw *tc9564_gate_register(struct device *dev,
 					   const struct clock_init *init)
 {
+	struct tc9564_clock *tc9564_clock = dev_get_drvdata(dev);
 	struct clk_init_data clk_init = { };
+	const struct clk_hw *parent_hw;
 	struct gate_clock *clock;
 	char name[NAME_SIZE];
 	int ret;
@@ -221,8 +230,11 @@ static struct clk_hw *tc9564_gate_register(struct device *dev,
 	FORMAT_NAME(name, dev->id, init->suffix);
 
 	clk_init.name = name;
-	clk_init.flags = init->critical ? CLK_IS_CRITICAL : 0;
 	clk_init.ops = &tc9564_clk_ops;
+	parent_hw = tc9564_clock->clk_data->hws[init->parent];
+	clk_init.parent_hws = &parent_hw;
+	clk_init.num_parents = 1;
+	clk_init.flags = init->critical ? CLK_IS_CRITICAL : 0;
 
 	clock->hw.init = &clk_init;
 	clock->init = init;
