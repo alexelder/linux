@@ -90,8 +90,8 @@ struct tc9564_clock {
 	}
 
 /*
- * Clocks are initialized and registered in numeric order.  Parent clocks
- * are expected to be registered before the clocks that refer to them.
+ * Clocks are initialized and registered in the order of their IDs.
+ * Parent clocks must be registered before their children.
  */
 static const struct clock_init clock_init[] = {
 	PLL_INIT(PLL, 50),		/* Parent is XO input clock */
@@ -123,7 +123,7 @@ static const struct gate_clock *hw_to_gate_clock(struct clk_hw *hw)
 	return container_of_const(hw, struct gate_clock, hw);
 }
 
-static void tc9564_clk_manage(struct clk_hw *hw, bool enable)
+static void gate_clk_manage(struct clk_hw *hw, bool enable)
 {
 	const struct gate_clock *clock = hw_to_gate_clock(hw);
 	struct device *dev = clk_hw_get_dev(hw);
@@ -140,19 +140,19 @@ static void tc9564_clk_manage(struct clk_hw *hw, bool enable)
 	regmap_update_bits(regmap, offset, mask, enable ? mask : 0);
 }
 
-static int tc9564_clk_enable(struct clk_hw *hw)
+static int gate_clk_enable(struct clk_hw *hw)
 {
-	tc9564_clk_manage(hw, true);
+	gate_clk_manage(hw, true);
 
 	return 0;
 }
 
-static void tc9564_clk_disable(struct clk_hw *hw)
+static void gate_clk_disable(struct clk_hw *hw)
 {
-	tc9564_clk_manage(hw, false);
+	gate_clk_manage(hw, false);
 }
 
-static int tc9564_clk_is_enabled(struct clk_hw *hw)
+static int gate_clk_is_enabled(struct clk_hw *hw)
 {
 	const struct gate_clock *clock = hw_to_gate_clock(hw);
 	struct device *dev = clk_hw_get_dev(hw);
@@ -171,10 +171,10 @@ static int tc9564_clk_is_enabled(struct clk_hw *hw)
 	return val & clock->init->mask ? 1 : 0;
 }
 
-static const struct clk_ops tc9564_clk_ops = {
-	.enable = tc9564_clk_enable,
-	.disable = tc9564_clk_disable,
-	.is_enabled = tc9564_clk_is_enabled,
+static const struct clk_ops gate_clk_ops = {
+	.enable = gate_clk_enable,
+	.disable = gate_clk_disable,
+	.is_enabled = gate_clk_is_enabled,
 };
 
 /* Input oscillator runs at 25 MHz; PLL runs at 1250 MHz */
@@ -230,9 +230,10 @@ static struct clk_hw *tc9564_gate_register(struct device *dev,
 
 	FORMAT_FULL_NAME(full_name, dev->id, init->name);
 
-	clk_init.name = full_name;
-	clk_init.ops = &tc9564_clk_ops;
 	parent_hw = tc9564_clock->clk_data->hws[init->parent];
+
+	clk_init.name = full_name;
+	clk_init.ops = &gate_clk_ops;
 	clk_init.parent_hws = &parent_hw;
 	clk_init.num_parents = 1;
 
@@ -281,11 +282,9 @@ static int tc9564_clock_init(struct device *dev)
 
 static int tc9564_clk_probe(struct platform_device *pdev)
 {
-	struct clk_hw_onecell_data *clk_data;
 	struct tc9564_clock *tc9564_clock;
 	struct device *dev = &pdev->dev;
 	struct device_node *parent_np;
-	struct regmap *regmap;
 	int ret;
 
 	parent_np = dev_of_node(dev->parent);
@@ -297,16 +296,15 @@ static int tc9564_clk_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	/* Note: MMIO regmap (no error checking needed when used) */
-	regmap = device_node_to_regmap(parent_np);
-	if (IS_ERR(regmap))
-		return dev_err_probe(dev, PTR_ERR(regmap),
+	tc9564_clock->regmap = device_node_to_regmap(parent_np);
+	if (IS_ERR(tc9564_clock->regmap))
+		return dev_err_probe(dev, PTR_ERR(tc9564_clock->regmap),
 				     "failed to get config regmap\n");
-	tc9564_clock->regmap = regmap;
 
-	clk_data = devm_kzalloc_flex(dev, *clk_data, hws, CLOCK_COUNT);
-	if (!clk_data)
+	tc9564_clock->clk_data = devm_kzalloc_flex(dev, *tc9564_clock->clk_data,
+						   hws, CLOCK_COUNT);
+	if (!tc9564_clock->clk_data)
 		return -ENOMEM;
-	tc9564_clock->clk_data = clk_data;
 
 	dev_set_drvdata(dev, tc9564_clock);
 
