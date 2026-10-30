@@ -31,6 +31,16 @@
 #define CLK_CTRL0_OFFSET	0x1004	/* Common and MAC0 gate clocks */
 #define CLK_CTRL1_OFFSET	0x100c	/* MAC1 gate clocks */
 
+struct tc9564_clock {
+	struct regmap *regmap;
+	struct clk_hw_onecell_data *clk_data;
+};
+
+struct gate_clock {
+	struct clk_hw hw;
+	const struct clock_init *init;
+};
+
 enum clock_type { PLL, FIXED, GATE };
 
 struct clock_init {
@@ -49,44 +59,31 @@ struct clock_init {
 	};
 };
 
-struct gate_clock {
-	struct clk_hw hw;
-	const struct clock_init *init;
-};
-
-struct tc9564_clock {
-	struct regmap *regmap;
-	struct clk_hw_onecell_data *clk_data;
-};
-
 /* There is only one PLL */
-#define PLL_INIT(_name, _mult)					\
-	[CLOCK_##_name] = {					\
-		.name = #_name,					\
-		.type = PLL,					\
-		.mult = (_mult),				\
+#define PLL_INIT(_name, _mult)			\
+	[CLOCK_##_name] = {			\
+		.name = #_name,			\
+		.type = PLL,			\
+		.mult = (_mult),		\
 	}
 
 /* The PLL is the parent of all the fixed rate clocks */
-#define FIXED_INIT(_name, _div)					\
-	[CLOCK_##_name] = {					\
-		.name = #_name,					\
-		.type = FIXED,					\
-		.div = (_div),					\
+#define FIXED_INIT(_name, _div)			\
+	[CLOCK_##_name] = {			\
+		.name = #_name,			\
+		.type = FIXED,			\
+		.div = (_div),			\
 	}
 
-#define GATE_INIT0(_name, _bit, _pname)				\
-	__GATE_INIT(_name, _bit, _pname, true)
-#define GATE_INIT1(_name, _bit, _pname)				\
-	__GATE_INIT(_name, _bit, _pname, false)
-
-#define __GATE_INIT(_name, _bit, _pname, _reg0)			\
-	[CLOCK_##_name] = {					\
-		.name = #_name,					\
-		.type = GATE,					\
-		.reg0 = _reg0,					\
-		.parent = CLOCK_##_pname,			\
-		.mask = BIT(_bit),				\
+#define GATE_INIT0(_name, _bit, _pname)	__GATE_INIT(_name, _bit, _pname, true)
+#define GATE_INIT1(_name, _bit, _pname)	__GATE_INIT(_name, _bit, _pname, false)
+#define __GATE_INIT(_name, _bit, _pname, _reg0)	\
+	[CLOCK_##_name] = {			\
+		.name = #_name,			\
+		.type = GATE,			\
+		.reg0 = _reg0,			\
+		.parent = CLOCK_##_pname,	\
+		.mask = BIT(_bit),		\
 	}
 
 /*
