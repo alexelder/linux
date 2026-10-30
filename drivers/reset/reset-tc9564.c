@@ -68,21 +68,11 @@ static int tc9564_reset_manage(struct reset_controller_dev *rcdev,
 			       unsigned long id, bool assert)
 {
 	const struct tc9564_resets *resets = rcdev_to_tc9564_resets(rcdev);
+	const struct tc9564_reset *reset = &tc9564_reset[id];
+	u32 mask = reset->mask;
 
-	if (id < rcdev->nr_resets) {
-		const struct tc9564_reset *reset = &tc9564_reset[id];
-		u32 mask = reset->mask;
-
-		if (mask)
-			return regmap_update_bits(resets->regmap,
-						  reset->offset, mask,
-						  assert ? mask : 0);
-	}
-
-	dev_err(rcdev->dev, "invalid reset (%s id %lu)\n",
-		assert ? "assert" : "deassert", id);
-
-	return -ENXIO;
+	return regmap_update_bits(resets->regmap, reset->offset, mask,
+				  assert ? mask : 0);
 }
 
 static int tc9564_reset_assert(struct reset_controller_dev *rcdev,
