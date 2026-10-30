@@ -9,22 +9,23 @@
 
 /* Clock IDs */
 
-#define CLOCK_25M		0
-#define CLOCK_50M		1
-#define CLOCK_62_5M		2
-#define CLOCK_125M		3
-#define CLOCK_250M		4
-#define CLOCK_312_5M		5
-#define CLOCK_625M		6
+#define CLOCK_PLL		0
 
-#define CLOCK_MCU		7
-#define CLOCK_INTC		8
-#define CLOCK_PCIE		9
-#define CLOCK_I2C		10
-#define CLOCK_SRAM		11
-#define CLOCK_UART		12
-#define CLOCK_MSIGEN		13
-#define CLOCK_PLL		14
+#define CLOCK_25M		1
+#define CLOCK_50M		2
+#define CLOCK_62_5M		3
+#define CLOCK_125M		4
+#define CLOCK_250M		5
+#define CLOCK_312_5M		6
+#define CLOCK_625M		7
+
+#define CLOCK_MCU		8
+#define CLOCK_INTC		9
+#define CLOCK_PCIE		10
+#define CLOCK_I2C		11
+#define CLOCK_SRAM		12
+#define CLOCK_UART		13
+#define CLOCK_MSIGEN		14
 #define CLOCK_SGMII		15
 #define CLOCK_REFCLKO		16
 
