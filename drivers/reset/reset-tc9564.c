@@ -91,9 +91,22 @@ static int tc9564_reset_deassert(struct reset_controller_dev *rcdev,
 	return 0;
 }
 
+static int tc9564_reset_status(struct reset_controller_dev *rcdev,
+			       unsigned long id)
+{
+	const struct tc9564_resets *resets = rcdev_to_tc9564_resets(rcdev);
+	const struct tc9564_reset *reset = &tc9564_reset[id];
+	u32 val;
+
+	regmap_read(resets->regmap, reset->offset, &val);
+
+	return val & reset->mask ? 1 : 0;
+}
+
 static const struct reset_control_ops tc9564_reset_control_ops = {
 	.assert = tc9564_reset_assert,
 	.deassert = tc9564_reset_deassert,
+	.status = tc9564_reset_status,
 };
 
 /* Assert all resets by updating both reset registers */
