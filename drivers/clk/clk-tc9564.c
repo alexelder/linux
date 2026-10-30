@@ -16,20 +16,20 @@
 
 #include <dt-bindings/clock/toshiba,tc9564.h>
 
-/* Two registers control whether gate clocks are enabled */
-#define CLK_CTRL0_OFFSET	0x1004	/* Common and MAC0 gate clocks */
-#define CLK_CTRL1_OFFSET	0x100c	/* MAC1 gate clocks */
-
 /*
  * The full name of every clock has a prefix "tc9564" followed by a single
  * character ('a', 'b', etc.) that differs for each chip/device number.
  * Each clock's "name" defines the unique portion of the clock's full name.
  */
-#define FULL_NAME_SIZE	24	/* Enough for formatted name */
+#define FULL_NAME_SIZE	24	/* Enough for formatted full name */
 #define NAME_SIZE	12	/* Unique portion of the clock name */
 #define FORMAT_FULL_NAME(_full_name, _id, _name)		\
 	snprintf(_full_name, FULL_NAME_SIZE, "tc9564%c_%.*s",	\
 		'a' + (_id), NAME_SIZE, _name)
+
+/* Two registers control whether gate clocks are enabled */
+#define CLK_CTRL0_OFFSET	0x1004	/* Common and MAC0 gate clocks */
+#define CLK_CTRL1_OFFSET	0x100c	/* MAC1 gate clocks */
 
 enum clock_type { PLL, FIXED, GATE };
 
@@ -118,6 +118,43 @@ static const struct clock_init clock_init[] = {
 };
 #define CLOCK_COUNT	ARRAY_SIZE(clock_init)
 
+/* Input oscillator runs at 25 MHz; PLL runs at 1250 MHz */
+static struct clk_hw *tc9564_pll_register(struct device *dev,
+					  const struct clock_init *init)
+{
+	char full_name[FULL_NAME_SIZE];
+	struct clk_hw *hw;
+
+	FORMAT_FULL_NAME(full_name, dev->id, init->name);
+
+	hw = devm_clk_hw_register_fixed_factor_index(dev, full_name, 0, 0,
+						     init->mult, 1);
+	if (IS_ERR(hw))
+		dev_err(dev, "failed to register PLL\n");
+
+	return hw;
+}
+
+static struct clk_hw *tc9564_fixed_register(struct device *dev,
+					    const struct clock_init *init)
+{
+	struct tc9564_clock *tc9564_clock = dev_get_drvdata(dev);
+	char full_name[FULL_NAME_SIZE];
+	struct clk_hw *pll_hw;
+	struct clk_hw *hw;
+
+	FORMAT_FULL_NAME(full_name, dev->id, init->name);
+
+	pll_hw = tc9564_clock->clk_data->hws[CLOCK_PLL];
+	hw = devm_clk_hw_register_fixed_factor_parent_hw(dev, full_name,
+							 pll_hw, 0,
+							 1, init->div);
+	if (IS_ERR(hw))
+		dev_err(dev, "failed to register %s\n", full_name);
+
+	return hw;
+}
+
 static const struct gate_clock *hw_to_gate_clock(struct clk_hw *hw)
 {
 	return container_of_const(hw, struct gate_clock, hw);
@@ -176,43 +213,6 @@ static const struct clk_ops gate_clk_ops = {
 	.disable = gate_clk_disable,
 	.is_enabled = gate_clk_is_enabled,
 };
-
-/* Input oscillator runs at 25 MHz; PLL runs at 1250 MHz */
-static struct clk_hw *tc9564_pll_register(struct device *dev,
-					  const struct clock_init *init)
-{
-	char full_name[FULL_NAME_SIZE];
-	struct clk_hw *hw;
-
-	FORMAT_FULL_NAME(full_name, dev->id, init->name);
-
-	hw = devm_clk_hw_register_fixed_factor_index(dev, full_name, 0, 0,
-						     init->mult, 1);
-	if (IS_ERR(hw))
-		dev_err(dev, "failed to register PLL\n");
-
-	return hw;
-}
-
-static struct clk_hw *tc9564_fixed_register(struct device *dev,
-					    const struct clock_init *init)
-{
-	struct tc9564_clock *tc9564_clock = dev_get_drvdata(dev);
-	char full_name[FULL_NAME_SIZE];
-	struct clk_hw *pll_hw;
-	struct clk_hw *hw;
-
-	FORMAT_FULL_NAME(full_name, dev->id, init->name);
-
-	pll_hw = tc9564_clock->clk_data->hws[CLOCK_PLL];
-	hw = devm_clk_hw_register_fixed_factor_parent_hw(dev, full_name,
-							 pll_hw, 0,
-							 1, init->div);
-	if (IS_ERR(hw))
-		dev_err(dev, "failed to register %s\n", full_name);
-
-	return hw;
-}
 
 static struct clk_hw *tc9564_gate_register(struct device *dev,
 					   const struct clock_init *init)
