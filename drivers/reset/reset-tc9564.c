@@ -23,7 +23,6 @@ struct tc9564_reset {
 
 #define TC9564_RESET_INIT0(_name, _bit)	__TC9564_RESET_INIT(_name, 0, _bit)
 #define TC9564_RESET_INIT1(_name, _bit)	__TC9564_RESET_INIT(_name, 1, _bit)
-
 #define __TC9564_RESET_INIT(_name, _reg, _bit)		\
 	[RESET_##_name] = {				\
 		.offset	= RST_CTRL ## _reg ## _OFFSET,	\
@@ -35,12 +34,6 @@ struct tc9564_reset {
  * and that relies on I2C, so we don't allow them to be asserted.
  */
 static const struct tc9564_reset tc9564_reset[] = {
-	TC9564_RESET_INIT0(MCU, 0),
-	TC9564_RESET_INIT0(MCU1, 1),
-	TC9564_RESET_INIT0(INTC, 4),
-	/* TC9564_RESET_INIT0(PCIE, 9), */
-	/* TC9564_RESET_INIT0(I2C, 12), */
-	TC9564_RESET_INIT0(UART, 16),
 	TC9564_RESET_INIT0(MSIGEN, 18),
 
 	TC9564_RESET_INIT0(MAC0_MAC, 7),
