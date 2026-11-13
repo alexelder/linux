@@ -32,7 +32,6 @@ static void tc9564_function_remove(struct pci_dev *pdev)
 {
 	of_platform_depopulate(&pdev->dev);
 	pci_clear_master(pdev);
-	pci_disable_device(pdev);
 }
 
 static int
@@ -47,7 +46,7 @@ tc9564_function_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 	if (!np)
 		return dev_err_probe(dev, -EINVAL, "no devicetree node\n");
 
-	ret = pci_enable_device(pdev);
+	ret = pcim_enable_device(pdev);
 	if (ret)
 		return dev_err_probe(dev, ret, "failed to enable device\n");
 
