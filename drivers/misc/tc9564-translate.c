@@ -14,14 +14,15 @@
  * The XGMACs access the PCIe bus via an AXI bus.  The AXI bus treats
  * addresses above 64 GB (2^36) as PCIe addresses, and an address
  * translation unit translates between this AXI bus space and PCIe bus
- * space.
+ * space.  This unit must be initialized whenever one of the embedded
+ * PCI endpoint's two functions is enabled, and must be reinitialized
+ * following suspend.
  */
 
 #include <linux/device.h>
 #include <linux/io.h>
 #include <linux/mfd/syscon.h>
 #include <linux/module.h>
-#include <linux/of_address.h>
 #include <linux/of.h>
 #include <linux/platform_device.h>
 
@@ -85,7 +86,7 @@ struct tc9564_translate {
  * base address of the AXI address range.  AXI addresses are translated to
  * the PCIe address range, whose base address we set to be 0x0.
  */
-static void tc9564_translate_config(struct tc9564_translate *translate)
+static int tc9564_translate_config(struct tc9564_translate *translate)
 {
 	void __iomem *ioaddr = translate->ioaddr;
 	u32 val;
@@ -113,44 +114,30 @@ static void tc9564_translate_config(struct tc9564_translate *translate)
 	val |= u32_encode_bits(TRANSLATE_RANGE_BITS - 1, ATR_SIZE_MASK);
 	val |= ATR_IMPL;		/* Enable the entry */
 	writel(val, ioaddr + SRC_ADDR_LO_OFFSET);
+
+	return 0;
 }
 
 static int tc9564_translate_probe(struct platform_device *pdev)
 {
 	struct tc9564_translate *translate;
 	struct device *dev = &pdev->dev;
-	struct device_node *np;
-	void __iomem *ioaddr;
-	int ret;
-
-	np = dev_of_node(dev);
-	if (!np)
-		return dev_err_probe(dev, -EINVAL, "no devicetree node\n");
-
-	ioaddr = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(ioaddr))
-		return dev_err_probe(dev, PTR_ERR(ioaddr),
-				     "failed to map registers\n");
 
 	translate = devm_kzalloc(dev, sizeof(*translate), GFP_KERNEL);
 	if (!translate)
 		return dev_err_probe(dev, -ENOMEM,
 				     "failed to allocate translation data\n");
 
-	translate->ioaddr = ioaddr;
+	translate->ioaddr = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(translate->ioaddr))
+		return dev_err_probe(dev, PTR_ERR(translate->ioaddr),
+				     "failed to map registers\n");
 
 	dev_set_drvdata(dev, translate);
 
-	/* Do the initial configuraiton */
+	/* Do the initial configuration */
 
-	tc9564_translate_config(translate);
-
-	return 0;
-}
-
-static int tc9564_translate_suspend_noirq(struct device *dev)
-{
-	return 0;
+	return tc9564_translate_config(translate);
 }
 
 /* We need to reconfigure address translation when we resume */
@@ -158,13 +145,10 @@ static int tc9564_translate_resume_noirq(struct device *dev)
 {
 	struct tc9564_translate *translate = dev_get_drvdata(dev);
 
-	tc9564_translate_config(translate);
-
-	return 0;
+	return tc9564_translate_config(translate);
 }
 
-static DEFINE_NOIRQ_DEV_PM_OPS(tc9564_translate_pm_ops,
-			       tc9564_translate_suspend_noirq,
+static DEFINE_NOIRQ_DEV_PM_OPS(tc9564_translate_pm_ops, NULL,
 			       tc9564_translate_resume_noirq);
 
 static const struct of_device_id tc9564_translate_match[] = {
