@@ -1,0 +1,64 @@
+# SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+%YAML 1.2
+---
+$id: http://devicetree.org/schemas/clock/toshiba,tc9564-clock.yaml#
+$schema: http://devicetree.org/meta-schemas/core.yaml#
+
+title: Toshiba TC9564 Clock Controller
+
+maintainers:
+  - Lorenzo Bianconi <lorenzo.bianconi@oss.qualcomm.com>
+  - Alex Elder <elder@riscstar.com>
+  - Daniel Thompson <daniel@riscstar.com>
+
+description:
+  The Toshiba TC9564 is an SoC accessed by a host system through the
+  upstream PCIe port on the PCIe switch it implements.  The switch
+  includes an embedded PCIe endpoint that provides access to various
+  SoC peripherals via its BARs.  These peripherals include a simple
+  controller to gate internal clocks.
+
+  The TC9564 chip is supplied by a single input clock.  Internally
+  that clock is multiplied by a PLL, and the PLL signal is divided
+  into a set of fixed rate always-on clocks.
+
+  The clock controller uses two non-contiguous registers to control a
+  set of simple gated clocks, each derived from one of the internal
+  fixed-rate clocks.  A total of 21 gated clocks are implemented
+  within the chip, but support for enabling and disabling only a
+  subset of them is provided at this time.
+
+properties:
+  compatible:
+    items:
+      - const: toshiba,tc9564-clock
+
+  reg:
+    items:
+      - description: The first clock control register
+      - description: The second clock control register
+
+  clocks:
+    maxItems: 1
+
+  "#clock-cells":
+    const: 1
+    description:
+      Clock ids are defined in <dt-bindings/clock/toshiba,tc9564.h>.
+
+required:
+  - compatible
+  - reg
+  - clocks
+  - "#clock-cells"
+
+additionalProperties: false
+
+examples:
+  - |
+    clock-controller@1004 {
+        compatible = "toshiba,tc9564-clock";
+        reg = <0x1004 0x4>, <0x100c 0x4>;
+        clocks = <&tc9564_xo_board>;
+        #clock-cells = <1>;
+    };
