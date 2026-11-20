@@ -8,8 +8,8 @@ title: Toshiba TC9564 Clock and Reset Controller
 
 maintainers:
   - Lorenzo Bianconi <lorenzo.bianconi@oss.qualcomm.com>
-  - Alex Elder <elder@riscstar.com>
-  - Daniel Thompson <daniel@riscstar.com>
+  - Alex Elder <elder@kernel.org>
+  - Daniel Thompson <danielt@kernel.org>
 
 description:
   The Toshiba TC9564 is an SoC accessed by a host system through the
