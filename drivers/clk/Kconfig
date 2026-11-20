@@ -188,6 +188,7 @@ config COMMON_CLK_CDCE706
 config COMMON_CLK_TC9564
 	tristate "Toshiba TC9564 clock and reset support"
 	depends on TC9564_PCI || COMPILE_TEST
+	depends on RESET_CONTROLLER
 	default TC9564_PCI
 	help
 	  This enables support for the clock and reset controllers embedded
