@@ -317,10 +317,6 @@ static int reset_update(struct reset_controller_dev *rcdev,
 	u32 mask;
 	u32 val;
 
-	/* Warn on any attempt to change state of a critical reset */
-	if (WARN_ON(id == RESET_I2C) || WARN_ON(id == RESET_PCIE))
-		return 0;
-
 	clock = dev_get_drvdata(rcdev->dev);
 	reset = &reset_init[id];
 	reg = clock->ioaddr + reset->offset;
@@ -366,6 +362,21 @@ static const struct reset_control_ops reset_control_ops = {
 	.deassert = reset_deassert,
 	.status = reset_status,
 };
+
+static int reset_fwnode_xlate(struct reset_controller_dev *rcdev,
+			    const struct fwnode_reference_args *reset_spec)
+{
+	unsigned int id = reset_spec->args[0];
+
+	if (id >= rcdev->nr_resets)
+		return -EINVAL;
+
+	/* Warn on any attempt to get a critical reset */
+	if (WARN_ON(id == RESET_I2C) || WARN_ON(id == RESET_PCIE))
+		return -EINVAL;
+
+	return id;
+}
 
 static int tc9564_clk_probe(struct platform_device *pdev)
 {
@@ -424,6 +435,9 @@ static int tc9564_clk_probe(struct platform_device *pdev)
 	rcdev->owner = THIS_MODULE;
 	rcdev->dev = dev;
 	rcdev->of_node = np;
+	rcdev->fwnode_reset_n_cells = 1;
+	rcdev->fwnode_xlate = reset_fwnode_xlate;
+
 	rcdev->nr_resets = RESET_COUNT;
 
 	spin_lock_init(&clock->lock);
