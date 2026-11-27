@@ -46,7 +46,7 @@
 struct tc9564_clock {
 	void __iomem *ioaddr;	/* Mapped clock/reset registers */
 	spinlock_t lock;	/* Protects reset register updates */
-	struct clk_hw_onecell_data *pll_data;
+	struct clk_hw *pll_hw;
 	struct clk_hw_onecell_data *clk_data;
 	struct reset_controller_dev rcdev;
 };
@@ -221,30 +221,22 @@ static const char *clock_name(struct device *dev, const char *name)
 static int pll_init(struct device *dev, struct tc9564_clock *clock)
 {
 	const char *name __free(kfree) = clock_name(dev, "pll");
-	struct clk_hw_onecell_data *pll_data;
 	struct clk_hw *hw;
 	int ret;
 
 	if (!name)
 		return -ENOMEM;
 
-	pll_data = devm_kzalloc_flex(dev, *clock->pll_data, hws, 1);
-	if (!pll_data)
-		return -ENOMEM;
-	pll_data->num = 1;
-
 	hw = devm_clk_hw_register_fixed_factor_index(dev, name, 0, 0, 50, 1);
 	if (IS_ERR(hw))
 		return dev_err_probe(dev, PTR_ERR(hw),
 				     "failed to register pll\n");
 
-	pll_data->hws[CLOCK_PLL] = hw;
-
-	ret = devm_of_clk_add_hw_provider(dev, of_clk_hw_onecell_get, pll_data);
+	ret = devm_of_clk_add_hw_provider(dev, of_clk_hw_simple_get, hw);
 	if (ret)
-		return dev_err_probe(dev, ret, "failed to add PLL provider\n");
+		return dev_err_probe(dev, ret, "failed to add pll provider\n");
 
-	clock->pll_data = pll_data;
+	clock->pll_hw = hw;
 
 	return 0;
 }
@@ -253,8 +245,8 @@ static int pll_init(struct device *dev, struct tc9564_clock *clock)
 static int fixed_clock_init(struct device *dev, struct tc9564_clock *clock)
 {
 	struct clk_hw_onecell_data *clk_data = clock->clk_data;
-	struct clk_hw *pll_hw = clock->pll_data->hws[CLOCK_PLL];
 	const struct fixed_init *init = &fixed_init[0];
+	struct clk_hw *pll_hw = clock->pll_hw;
 
 	for (u32 i = 0; i < FIXED_COUNT; i++, init++) {
 		const char *name __free(kfree) = clock_name(dev, init->name);
