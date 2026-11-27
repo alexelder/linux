@@ -312,7 +312,6 @@ static int reset_update(struct reset_controller_dev *rcdev,
 {
 	const struct reset_init *reset;
 	struct tc9564_clock *clock;
-	unsigned long flags;
 	void __iomem *reg;
 	u32 mask;
 	u32 val;
@@ -322,7 +321,7 @@ static int reset_update(struct reset_controller_dev *rcdev,
 	reg = clock->ioaddr + reset->offset;
 	mask = BIT(reset->bit);
 
-	spin_lock_irqsave(&clock->lock, flags);
+	guard(spinlock_irqsave)(&clock->lock);
 
 	val = readl(reg);
 	if (assert)
@@ -330,8 +329,6 @@ static int reset_update(struct reset_controller_dev *rcdev,
 	else
 		val &= ~mask;
 	writel(val, reg);
-
-	spin_unlock_irqrestore(&clock->lock, flags);
 
 	return 0;
 }
