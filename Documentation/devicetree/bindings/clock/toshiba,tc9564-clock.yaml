@@ -34,7 +34,8 @@ description:
   of the resets can currently be managed, and the I2C and PCIE resets
   are treated as critical.
 
-  Clock and reset IDs are defined <dt-bindings/clock/toshiba,tc9564.h>.
+  Clock IDs are defined <dt-bindings/clock/toshiba,tc9564.h>, and reset
+  IDs are defined <dt-bindings/reset/toshiba,tc9564.h>.
 
 properties:
   compatible:

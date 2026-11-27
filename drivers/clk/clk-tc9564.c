@@ -13,6 +13,7 @@
 #include <linux/slab.h>
 
 #include <dt-bindings/clock/toshiba,tc9564.h>
+#include <dt-bindings/reset/toshiba,tc9564.h>
 
 /*
  * Define the offsets for the registers that implement clock enable/disable

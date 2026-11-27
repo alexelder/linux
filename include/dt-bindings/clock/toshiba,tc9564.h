@@ -23,18 +23,4 @@
 #define CLOCK_MAC1_125M		9
 #define CLOCK_MAC1_ALL		10
 
-/* Reset IDs */
-
-#define RESET_I2C		0	/* critical */
-#define RESET_PCIE		1	/* critical */
-#define RESET_MSIGEN		2
-
-#define RESET_MAC0_MAC		3
-#define RESET_MAC0_PMA		4
-#define RESET_MAC0_XPCS		5
-
-#define RESET_MAC1_MAC		6
-#define RESET_MAC1_PMA		7
-#define RESET_MAC1_XPCS		8
-
-#endif /* __CLOCK_TOSHIBA_TC9564_H__*/
+#endif /* __CLOCK_TOSHIBA_TC9564_H__ */
