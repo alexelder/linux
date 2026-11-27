@@ -30,24 +30,13 @@
  * A PLL driven by a 25 MHz input oscillator provides a clock source to
  * the chip.  A set of fixed rate clocks is derived from the PLL, and a
  * set of gate clocks are children of the fixed rate clocks.
- *
- * The clk_hw[] array within a clk_hw_onecell_data structure tracks all
- * of them.  The following definitions describe how these are laid out
- * based on their indexes into the clk_hw[] array.  Gate clocks are first,
- * so their "raw" public IDs can be used as indexes into the array.
  */
-#define GATE_BASE	0
-#define FIXED_BASE	(GATE_BASE + GATE_COUNT)
-#define CLOCK_PLL	0
-
-/* The total number of clocks in the clk_hw[] array */
-#define CLOCK_COUNT	(GATE_COUNT + FIXED_COUNT)
-
 struct tc9564_clock {
 	void __iomem *ioaddr;	/* Mapped clock/reset registers */
 	spinlock_t lock;	/* Protects reset register updates */
 	struct clk_hw *pll_hw;
-	struct clk_hw_onecell_data *clk_data;
+	struct clk_hw_onecell_data *fixed_data;
+	struct clk_hw_onecell_data *gate_data;
 	struct reset_controller_dev rcdev;
 };
 
@@ -77,7 +66,6 @@ struct reset_init {
 	u8 bit;			/* Bit in the control register (0-31) */
 };
 
-/* Add FIXED_BASE to index values to get their index into the clk_hw[] array */
 static const struct fixed_init fixed_init[] = {
 	[CLOCK_312_5M] = {
 		.name = "312.5MHz",
@@ -98,7 +86,6 @@ static const struct fixed_init fixed_init[] = {
 };
 #define FIXED_COUNT	ARRAY_SIZE(fixed_init)
 
-/* Add GATE_BASE to index values to get their index into the clk_hw[] array */
 static const struct gate_init gate_init[] = {
 	[CLOCK_MAC0_TX] = {
 		.name = "MAC0-TX",
@@ -218,7 +205,7 @@ static const char *clock_name(struct device *dev, const char *name)
 }
 
 /* Initialize the PLL (parent is the input oscillator); called from probe */
-static int pll_init(struct device *dev, struct tc9564_clock *clock)
+static int pll_setup(struct device *dev, struct tc9564_clock *clock)
 {
 	const char *name __free(kfree) = clock_name(dev, "pll");
 	struct clk_hw *hw;
@@ -242,11 +229,17 @@ static int pll_init(struct device *dev, struct tc9564_clock *clock)
 }
 
 /* Initialize the fixed rate clocks (PLL is parent); called from probe */
-static int fixed_clock_init(struct device *dev, struct tc9564_clock *clock)
+static int fixed_clock_setup(struct device *dev, struct tc9564_clock *clock)
 {
-	struct clk_hw_onecell_data *clk_data = clock->clk_data;
 	const struct fixed_init *init = &fixed_init[0];
+	struct clk_hw_onecell_data *fixed_data;
 	struct clk_hw *pll_hw = clock->pll_hw;
+	int ret;
+
+	fixed_data = devm_kzalloc_flex(dev, *fixed_data, hws, FIXED_COUNT);
+	if (!fixed_data)
+		return -ENOMEM;
+	fixed_data->num = FIXED_COUNT;
 
 	for (u32 i = 0; i < FIXED_COUNT; i++, init++) {
 		const char *name __free(kfree) = clock_name(dev, init->name);
@@ -260,20 +253,35 @@ static int fixed_clock_init(struct device *dev, struct tc9564_clock *clock)
 								 1, init->div);
 		if (IS_ERR(hw))
 			return dev_err_probe(dev, PTR_ERR(hw),
-					     "failed to register %s\n",
+					     "failed to register fixed %s\n",
 					     init->name);
 
-		clk_data->hws[FIXED_BASE + i] = hw;
+		fixed_data->hws[i] = hw;
 	}
+
+	ret = devm_of_clk_add_hw_provider(dev, of_clk_hw_onecell_get,
+					  fixed_data);
+	if (ret)
+		return dev_err_probe(dev, ret,
+				     "failed to add fixed clock provider\n");
+
+	clock->fixed_data = fixed_data;
 
 	return 0;
 }
 
 /* Initialize the gate clocks; called from probe */
-static int gate_clock_init(struct device *dev, struct tc9564_clock *clock)
+static int gate_clock_setup(struct device *dev, struct tc9564_clock *clock)
 {
-	struct clk_hw_onecell_data *clk_data = clock->clk_data;
+	struct clk_hw_onecell_data *fixed_data = clock->fixed_data;
+	struct clk_hw_onecell_data *gate_data = clock->gate_data;
 	const struct gate_init *init = &gate_init[0];
+	int ret;
+
+	gate_data = devm_kzalloc_flex(dev, *gate_data, hws, GATE_COUNT);
+	if (!gate_data)
+		return -ENOMEM;
+	gate_data->num = GATE_COUNT;
 
 	for (u32 i = 0; i < GATE_COUNT; i++, init++) {
 		const char *name __free(kfree) = clock_name(dev, init->name);
@@ -286,18 +294,26 @@ static int gate_clock_init(struct device *dev, struct tc9564_clock *clock)
 			return -ENOMEM;
 
 		/* Each gate clock's parent is a fixed rate clock */
-		parent_hw = clk_data->hws[FIXED_BASE + init->parent];
+		parent_hw = fixed_data->hws[init->parent];
 
 		hw = devm_clk_hw_register_gate_parent_hw(dev, name, parent_hw,
 							 flags, reg, init->bit,
 							 0, NULL);
 		if (IS_ERR(hw))
 			return dev_err_probe(dev, PTR_ERR(hw),
-					     "failed to register %s\n",
+					     "failed to register gate %s\n",
 					     init->name);
 
-		clk_data->hws[GATE_BASE + i] = hw;
+		gate_data->hws[i] = hw;
 	}
+
+	ret = devm_of_clk_add_hw_provider(dev, of_clk_hw_onecell_get,
+					  gate_data);
+	if (ret)
+		return dev_err_probe(dev, ret,
+				     "failed to add gate clock provider\n");
+
+	clock->gate_data = gate_data;
 
 	return 0;
 }
@@ -370,12 +386,35 @@ static int reset_fwnode_xlate(struct reset_controller_dev *rcdev,
 	return id;
 }
 
+/* Set up and register the reset controller; called from probe */
+static int reset_setup(struct device *dev, struct tc9564_clock *clock)
+{
+	struct reset_controller_dev *rcdev = &clock->rcdev;
+	int ret;
+
+	rcdev->ops = &reset_control_ops;
+	rcdev->owner = THIS_MODULE;
+	rcdev->dev = dev;
+	rcdev->of_node = dev_of_node(dev);
+	rcdev->fwnode_reset_n_cells = 1;
+	rcdev->fwnode_xlate = reset_fwnode_xlate;
+
+	rcdev->nr_resets = RESET_COUNT;
+
+	spin_lock_init(&clock->lock);
+
+	ret = devm_reset_controller_register(dev, rcdev);
+	if (ret)
+		return dev_err_probe(dev, ret,
+				     "failed to register reset controller\n");
+
+	return 0;
+}
+
 static int tc9564_clk_probe(struct platform_device *pdev)
 {
-	struct clk_hw_onecell_data *clk_data;
-	struct reset_controller_dev *rcdev;
-	struct tc9564_clock *clock;
 	struct device *dev = &pdev->dev;
+	struct tc9564_clock *clock;
 	struct device_node *np;
 	int ret;
 
@@ -392,54 +431,23 @@ static int tc9564_clk_probe(struct platform_device *pdev)
 		return dev_err_probe(dev, PTR_ERR(clock->ioaddr),
 				     "failed to map registers\n");
 
-	clk_data = devm_kzalloc_flex(dev, *clock->clk_data, hws,
-				     CLOCK_COUNT);
-	if (!clk_data)
-		return -ENOMEM;
-	clk_data->num = CLOCK_COUNT;
-
-	clock->clk_data = clk_data;
-
 	/* We need the driver data pointer to initialize clocks and resets */
 	dev_set_drvdata(dev, clock);
 
 	/* Set up the clocks and register the provider */
-	ret = pll_init(dev, clock);
+	ret = pll_setup(dev, clock);
 	if (ret)
 		return ret;
 
-	ret = fixed_clock_init(dev, clock);
+	ret = fixed_clock_setup(dev, clock);
 	if (ret)
 		return ret;
 
-	ret = gate_clock_init(dev, clock);
+	ret = gate_clock_setup(dev, clock);
 	if (ret)
 		return ret;
 
-	ret = devm_of_clk_add_hw_provider(dev, of_clk_hw_onecell_get, clk_data);
-	if (ret)
-		return dev_err_probe(dev, ret,
-				     "failed to add clock provider\n");
-
-	/* Set up and register the reset controller */
-	rcdev = &clock->rcdev;
-	rcdev->ops = &reset_control_ops;
-	rcdev->owner = THIS_MODULE;
-	rcdev->dev = dev;
-	rcdev->of_node = np;
-	rcdev->fwnode_reset_n_cells = 1;
-	rcdev->fwnode_xlate = reset_fwnode_xlate;
-
-	rcdev->nr_resets = RESET_COUNT;
-
-	spin_lock_init(&clock->lock);
-
-	ret = devm_reset_controller_register(dev, rcdev);
-	if (ret)
-		return dev_err_probe(dev, ret,
-				     "failed to register reset controller\n");
-
-	return 0;
+	return reset_setup(dev, clock);
 }
 
 static const struct of_device_id tc9564_clock_match[] = {
