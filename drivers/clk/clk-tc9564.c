@@ -219,16 +219,13 @@ static const char *clock_name(struct device *dev, const char *name)
 /* Initialize the PLL (parent is the input oscillator); called from probe */
 static int pll_init(struct device *dev, struct tc9564_clock *clock)
 {
+	const char *name __free(kfree) = clock_name(dev, "pll");
 	struct clk_hw *hw;
-	const char *name;
 
-	/* Initialize the PLL clock first (input oscillator is parent) */
-	name = clock_name(dev, "pll");
 	if (!name)
 		return -ENOMEM;
 
 	hw = devm_clk_hw_register_fixed_factor_index(dev, name, 0, 0, 50, 1);
-	kfree(name);
 	if (IS_ERR(hw))
 		return dev_err_probe(dev, PTR_ERR(hw),
 				     "failed to register pll\n");
@@ -243,20 +240,18 @@ static int fixed_clock_init(struct device *dev, struct tc9564_clock *clock)
 {
 	struct clk_hw_onecell_data *clk_data = clock->clk_data;
 	struct clk_hw *pll_hw = clk_data->hws[CLOCK_PLL];
-	const char *name;
+	const struct fixed_init *init = &fixed_init[0];
 
-	for (u32 i = 0; i < FIXED_COUNT; i++) {
-		const struct fixed_init *init = &fixed_init[i];
+	for (u32 i = 0; i < FIXED_COUNT; i++, init++) {
+		const char *name __free(kfree) = clock_name(dev, init->name);
 		struct clk_hw *hw;
 
-		name = clock_name(dev, init->name);
 		if (!name)
 			return -ENOMEM;
 
 		hw = devm_clk_hw_register_fixed_factor_parent_hw(dev, name,
 								 pll_hw, 0,
 								 1, init->div);
-		kfree(name);
 		if (IS_ERR(hw))
 			return dev_err_probe(dev, PTR_ERR(hw),
 					     "failed to register %s\n",
@@ -272,30 +267,24 @@ static int fixed_clock_init(struct device *dev, struct tc9564_clock *clock)
 static int gate_clock_init(struct device *dev, struct tc9564_clock *clock)
 {
 	struct clk_hw_onecell_data *clk_data = clock->clk_data;
-	struct clk_hw *parent_hw;
-	const char *name;
+	const struct gate_init *init = &gate_init[0];
 
-	for (u32 i = 0; i < GATE_COUNT; i++) {
-		const struct gate_init *init = &gate_init[i];
-		unsigned long flags;
+	for (u32 i = 0; i < GATE_COUNT; i++, init++) {
+		const char *name __free(kfree) = clock_name(dev, init->name);
+		unsigned long flags = init->critical ? CLK_IS_CRITICAL : 0;
+		void __iomem *reg = clock->ioaddr + init->offset;
+		struct clk_hw *parent_hw;
 		struct clk_hw *hw;
-		void __iomem *reg;
-		u32 parent_index;
 
-		name = clock_name(dev, init->name);
 		if (!name)
 			return -ENOMEM;
 
 		/* Each gate clock's parent is a fixed rate clock */
-		parent_index = FIXED_BASE + init->parent;
-		parent_hw = clk_data->hws[parent_index];
-		flags = init->critical ? CLK_IS_CRITICAL : 0;
-		reg = clock->ioaddr + init->offset;
+		parent_hw = clk_data->hws[FIXED_BASE + init->parent];
 
 		hw = devm_clk_hw_register_gate_parent_hw(dev, name, parent_hw,
 							 flags, reg, init->bit,
 							 0, NULL);
-		kfree(name);
 		if (IS_ERR(hw))
 			return dev_err_probe(dev, PTR_ERR(hw),
 					     "failed to register %s\n",
