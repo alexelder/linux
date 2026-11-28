@@ -43,10 +43,10 @@ struct tc9564_clock {
 
 /* Indexes into the fixed_init[] array */
 enum fixed_clock {
-	CLOCK_62_5M,
-	CLOCK_125M,
-	CLOCK_250M,
-	CLOCK_312_5M,
+	TC9564_CLK_62_5M,
+	TC9564_CLK_125M,
+	TC9564_CLK_250M,
+	TC9564_CLK_312_5M,
 };
 
 struct fixed_init {
@@ -68,19 +68,19 @@ struct reset_init {
 };
 
 static const struct fixed_init fixed_init[] = {
-	[CLOCK_312_5M] = {
+	[TC9564_CLK_312_5M] = {
 		.name = "312.5MHz",
 		.div = 4,
 	},
-	[CLOCK_250M] = {
+	[TC9564_CLK_250M] = {
 		.name = "250MHz",
 		.div = 5,
 	},
-	[CLOCK_125M] = {
+	[TC9564_CLK_125M] = {
 		.name = "125MHz",
 		.div = 10,
 	},
-	[CLOCK_62_5M] = {
+	[TC9564_CLK_62_5M] = {
 		.name = "62.5MHz",
 		.div = 20,
 	},
@@ -88,71 +88,71 @@ static const struct fixed_init fixed_init[] = {
 #define FIXED_COUNT	ARRAY_SIZE(fixed_init)
 
 static const struct gate_init gate_init[] = {
-	[CLOCK_MAC0_TX] = {
+	[TC9564_CLK_MAC0_TX] = {
 		.name = "MAC0-TX",
-		.parent = CLOCK_312_5M,
+		.parent = TC9564_CLK_312_5M,
 		.offset = CLOCK0_OFFSET,
 		.bit = 7,
 	},
-	[CLOCK_PCIE] = {
+	[TC9564_CLK_PCIE] = {
 		.name = "PCIe",
-		.parent = CLOCK_250M,
+		.parent = TC9564_CLK_250M,
 		.offset = CLOCK0_OFFSET,
 		.bit = 9,
 		.critical = true,
 	},
-	[CLOCK_I2C] = {
+	[TC9564_CLK_I2C] = {
 		.name = "i2c",
-		.parent = CLOCK_62_5M,
+		.parent = TC9564_CLK_62_5M,
 		.offset = CLOCK0_OFFSET,
 		.bit = 12,
 		.critical = true,
 	},
-	[CLOCK_MAC0_RX] = {
+	[TC9564_CLK_MAC0_RX] = {
 		.name = "MAC0-RX",
-		.parent = CLOCK_312_5M,
+		.parent = TC9564_CLK_312_5M,
 		.offset = CLOCK0_OFFSET,
 		.bit = 14,
 	},
-	[CLOCK_MSIGEN] = {
+	[TC9564_CLK_MSIGEN] = {
 		.name = "msigen",
-		.parent = CLOCK_125M,
+		.parent = TC9564_CLK_125M,
 		.offset = CLOCK0_OFFSET,
 		.bit = 18,
 	},
-	[CLOCK_MAC0_125M] = {
+	[TC9564_CLK_MAC0_125M] = {
 		.name = "MAC0-125MHz",
-		.parent = CLOCK_125M,
+		.parent = TC9564_CLK_125M,
 		.offset = CLOCK0_OFFSET,
 		.bit = 29,
 	},
-	[CLOCK_MAC0_ALL] = {
+	[TC9564_CLK_MAC0_ALL] = {
 		.name = "MAC0-ALL",
-		.parent = CLOCK_250M,
+		.parent = TC9564_CLK_250M,
 		.offset = CLOCK0_OFFSET,
 		.bit = 31,
 	},
-	[CLOCK_MAC1_TX] = {
+	[TC9564_CLK_MAC1_TX] = {
 		.name = "MAC1-TX",
-		.parent = CLOCK_312_5M,
+		.parent = TC9564_CLK_312_5M,
 		.offset = CLOCK1_OFFSET,
 		.bit = 7,
 	},
-	[CLOCK_MAC1_RX] = {
+	[TC9564_CLK_MAC1_RX] = {
 		.name = "MAC1-RX",
-		.parent = CLOCK_312_5M,
+		.parent = TC9564_CLK_312_5M,
 		.offset = CLOCK1_OFFSET,
 		.bit = 14,
 	},
-	[CLOCK_MAC1_125M] = {
+	[TC9564_CLK_MAC1_125M] = {
 		.name = "MAC1-125MHz",
-		.parent = CLOCK_125M,
+		.parent = TC9564_CLK_125M,
 		.offset = CLOCK1_OFFSET,
 		.bit = 29,
 	},
-	[CLOCK_MAC1_ALL] = {
+	[TC9564_CLK_MAC1_ALL] = {
 		.name = "MAC1-ALL",
-		.parent = CLOCK_250M,
+		.parent = TC9564_CLK_250M,
 		.offset = CLOCK1_OFFSET,
 		.bit = 31,
 	},
@@ -160,39 +160,39 @@ static const struct gate_init gate_init[] = {
 #define GATE_COUNT	ARRAY_SIZE(gate_init)
 
 static const struct reset_init reset_init[] = {
-	[RESET_MAC0_MAC] = {
+	[TC9564_RST_MAC0_MAC] = {
 		.offset = RESET0_OFFSET,
 		.bit = 7,
 	},
-	[RESET_PCIE] = {
+	[TC9564_RST_PCIE] = {
 		.offset = RESET0_OFFSET,
 		.bit = 9,
 	},
-	[RESET_I2C] = {
+	[TC9564_RST_I2C] = {
 		.offset = RESET0_OFFSET,
 		.bit = 12,
 	},
-	[RESET_MSIGEN] = {
+	[TC9564_RST_MSIGEN] = {
 		.offset = RESET0_OFFSET,
 		.bit = 18,
 	},
-	[RESET_MAC0_PMA] = {
+	[TC9564_RST_MAC0_PMA] = {
 		.offset = RESET0_OFFSET,
 		.bit = 30,
 	},
-	[RESET_MAC0_XPCS] = {
+	[TC9564_RST_MAC0_XPCS] = {
 		.offset = RESET0_OFFSET,
 		.bit = 31,
 	},
-	[RESET_MAC1_MAC] = {
+	[TC9564_RST_MAC1_MAC] = {
 		.offset = RESET1_OFFSET,
 		.bit = 7,
 	},
-	[RESET_MAC1_PMA] = {
+	[TC9564_RST_MAC1_PMA] = {
 		.offset = RESET1_OFFSET,
 		.bit = 30,
 	},
-	[RESET_MAC1_XPCS] = {
+	[TC9564_RST_MAC1_XPCS] = {
 		.offset = RESET1_OFFSET,
 		.bit = 31,
 	},
@@ -385,7 +385,7 @@ static int reset_fwnode_xlate(struct reset_controller_dev *rcdev,
 		return -EINVAL;
 
 	/* Warn on any attempt to get a critical reset */
-	if (WARN_ON(id == RESET_I2C) || WARN_ON(id == RESET_PCIE))
+	if (WARN_ON(id == TC9564_RST_I2C) || WARN_ON(id == TC9564_RST_PCIE))
 		return -EINVAL;
 
 	return id;

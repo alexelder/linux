@@ -9,16 +9,16 @@
 
 /* Reset IDs */
 
-#define RESET_I2C		0	/* critical */
-#define RESET_PCIE		1	/* critical */
-#define RESET_MSIGEN		2
+#define TC9564_RST_I2C		0	/* critical */
+#define TC9564_RST_PCIE		1	/* critical */
+#define TC9564_RST_MSIGEN	2
 
-#define RESET_MAC0_MAC		3
-#define RESET_MAC0_PMA		4
-#define RESET_MAC0_XPCS		5
+#define TC9564_RST_MAC0_MAC	3
+#define TC9564_RST_MAC0_PMA	4
+#define TC9564_RST_MAC0_XPCS	5
 
-#define RESET_MAC1_MAC		6
-#define RESET_MAC1_PMA		7
-#define RESET_MAC1_XPCS		8
+#define TC9564_RST_MAC1_MAC	6
+#define TC9564_RST_MAC1_PMA	7
+#define TC9564_RST_MAC1_XPCS	8
 
 #endif /* __RESET_TOSHIBA_TC9564_H__ */

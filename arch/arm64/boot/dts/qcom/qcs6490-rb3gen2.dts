@@ -1001,8 +1001,8 @@
 						interrupt-controller;
 						#interrupt-cells = <1>;
 
-						clocks = <&tc9564_clock0 CLOCK_MSIGEN>;
-						resets = <&tc9564_clock0 RESET_MSIGEN>;
+						clocks = <&tc9564_clock0 TC9564_CLK_MSIGEN>;
+						resets = <&tc9564_clock0 TC9564_RST_MSIGEN>;
 					};
 
 					ethernet@40000 {
@@ -1011,18 +1011,18 @@
 						      <0x1070 0x4>;
 						status = "disabled";
 
-						clocks = <&tc9564_clock0 CLOCK_MAC0_125M>,
-							 <&tc9564_clock0 CLOCK_MAC0_ALL>,
-							 <&tc9564_clock0 CLOCK_MAC0_TX>,
-							 <&tc9564_clock0 CLOCK_MAC0_RX>;
+						clocks = <&tc9564_clock0 TC9564_CLK_MAC0_125M>,
+							 <&tc9564_clock0 TC9564_CLK_MAC0_ALL>,
+							 <&tc9564_clock0 TC9564_CLK_MAC0_TX>,
+							 <&tc9564_clock0 TC9564_CLK_MAC0_RX>;
 						clock-names = "stmmaceth",
 							      "ptp_ref",
 							      "mac-tx-clock",
 							      "mac-rx-clock";
 
-						resets = <&tc9564_clock0 RESET_MAC0_MAC>,
-							 <&tc9564_clock0 RESET_MAC0_PMA>,
-							 <&tc9564_clock0 RESET_MAC0_XPCS>;
+						resets = <&tc9564_clock0 TC9564_RST_MAC0_MAC>,
+							 <&tc9564_clock0 TC9564_RST_MAC0_PMA>,
+							 <&tc9564_clock0 TC9564_RST_MAC0_XPCS>;
 						reset-names = "mac",
 							      "pma",
 							      "xpcs";
@@ -1147,8 +1147,8 @@
 						interrupt-controller;
 						#interrupt-cells = <1>;
 
-						clocks = <&tc9564_clock0 CLOCK_MSIGEN>;
-						resets = <&tc9564_clock0 RESET_MSIGEN>;
+						clocks = <&tc9564_clock0 TC9564_CLK_MSIGEN>;
+						resets = <&tc9564_clock0 TC9564_RST_MSIGEN>;
 					};
 
 					ethernet@48000 {
@@ -1156,18 +1156,18 @@
 						reg = <0x48000 0x8000>,
 						      <0x1074 0x4>;
 
-						clocks = <&tc9564_clock0 CLOCK_MAC1_125M>,
-							 <&tc9564_clock0 CLOCK_MAC1_ALL>,
-							 <&tc9564_clock0 CLOCK_MAC1_TX>,
-							 <&tc9564_clock0 CLOCK_MAC1_RX>;
+						clocks = <&tc9564_clock0 TC9564_CLK_MAC1_125M>,
+							 <&tc9564_clock0 TC9564_CLK_MAC1_ALL>,
+							 <&tc9564_clock0 TC9564_CLK_MAC1_TX>,
+							 <&tc9564_clock0 TC9564_CLK_MAC1_RX>;
 						clock-names = "stmmaceth",
 							      "ptp_ref",
 							      "mac-tx-clock",
 							      "mac-rx-clock";
 
-						resets = <&tc9564_clock0 RESET_MAC1_MAC>,
-							 <&tc9564_clock0 RESET_MAC1_PMA>,
-							 <&tc9564_clock0 RESET_MAC1_XPCS>;
+						resets = <&tc9564_clock0 TC9564_RST_MAC1_MAC>,
+							 <&tc9564_clock0 TC9564_RST_MAC1_PMA>,
+							 <&tc9564_clock0 TC9564_RST_MAC1_XPCS>;
 						reset-names = "mac",
 							      "pma",
 							      "xpcs";
